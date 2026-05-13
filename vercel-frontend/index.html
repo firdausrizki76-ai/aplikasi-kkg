@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0">
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- Libraries for Reports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="pages.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
@@ -52,9 +56,11 @@
                     },
                     login: function(...a) { this._call('login', a); },
                     getEventAktif: function(...a) { this._call('getEventAktif', a); },
+                    getAllEvents: function(...a) { this._call('getAllEvents', a); },
                     getDashboardStats: function(...a) { this._call('getDashboardStats', a); },
                     getListGuru: function(...a) { this._call('getListGuru', a); },
                     getDaftarHadirByTanggal: function(...a) { this._call('getDaftarHadirByTanggal', a); },
+                    getLaporanByEvent: function(...a) { this._call('getLaporanByEvent', a); },
                     simpanAbsensi: function(...a) { this._call('simpanAbsensi', a); },
                     buatEvent: function(...a) { this._call('buatEvent', a); },
                 }
@@ -83,6 +89,7 @@
             if (page === 'dashboard') initDashboard();
             if (page === 'hadir') initDaftarHadir();
             if (page === 'guru') initDataGuru();
+            if (page === 'laporan') initLaporan();
             window.scrollTo(0,0);
         }
 
@@ -142,7 +149,6 @@
         function openEventModal() { document.getElementById('eventModal')?.classList.remove('hidden'); }
         function closeEventModal() { document.getElementById('eventModal')?.classList.add('hidden'); }
 
-        // Handle Event Form Submission
         document.addEventListener('submit', (e) => {
             if (e.target.id === 'eventForm') {
                 e.preventDefault();
@@ -180,6 +186,89 @@
             }).getDaftarHadirByTanggal({ tanggal: dateValue });
         }
 
+        // --- LAPORAN LOGIC ---
+        function initLaporan() {
+            google.script.run.withSuccessHandler((events) => {
+                const sel = document.getElementById('eventSelect');
+                if (!sel) return;
+                if (events && events.length > 0) {
+                    sel.innerHTML = '<option value="">-- Pilih Pertemuan --</option>' + 
+                        events.map(e => `<option value="${e.id}">${e.nama} (${e.tanggal})</option>`).join('');
+                } else {
+                    sel.innerHTML = '<option value="">Tidak ada data event.</option>';
+                }
+            }).getAllEvents();
+        }
+
+        let currentLaporan = [];
+        function loadLaporan() {
+            const eventId = document.getElementById('eventSelect').value;
+            if (!eventId) return;
+            const list = document.getElementById('laporanList');
+            list.innerHTML = `<tr><td colspan="5" class="p-12 text-center"><div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div><p class="text-xs text-gray-400">Memuat data...</p></td></tr>`;
+            
+            google.script.run.withSuccessHandler((data) => {
+                currentLaporan = data || [];
+                if (data && data.length > 0) {
+                    list.innerHTML = data.map((item, i) => `
+                        <tr class="hover:bg-gray-50/50 transition-all"><td class="p-4 text-gray-400 font-bold">${i+1}</td><td class="p-4 font-bold text-gray-800">${item.nama}</td><td class="p-4 text-gray-500 font-mono text-xs">${item.nip}</td><td class="p-4 text-gray-600">${item.sekolah}</td><td class="p-4 text-right font-bold text-blue-600 font-mono">${item.jam}</td></tr>
+                    `).join('');
+                } else {
+                    list.innerHTML = `<tr><td colspan="5" class="p-12 text-center text-gray-300 italic text-sm">Tidak ada peserta yang hadir di event ini.</td></tr>`;
+                }
+            }).getLaporanByEvent({ eventId: eventId });
+        }
+
+        function downloadExcel() {
+            if (currentLaporan.length === 0) return alert('Pilih event dan pastikan ada data sebelum download.');
+            const sel = document.getElementById('eventSelect');
+            const eventName = sel.options[sel.selectedIndex].text;
+            
+            const wsData = [
+                ["LAPORAN KEHADIRAN KKG"],
+                ["Agenda:", eventName],
+                [""],
+                ["NO", "NAMA PESERTA", "NIP", "ASAL SEKOLAH", "JAM HADIR"]
+            ];
+            
+            currentLaporan.forEach((item, i) => {
+                wsData.push([i+1, item.nama, item.nip, item.sekolah, item.jam]);
+            });
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+            XLSX.writeFile(wb, `Laporan_KKG_${eventName.replace(/ /g, '_')}.xlsx`);
+        }
+
+        function downloadPDF() {
+            if (currentLaporan.length === 0) return alert('Pilih event dan pastikan ada data sebelum download.');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const sel = document.getElementById('eventSelect');
+            const eventName = sel.options[sel.selectedIndex].text;
+
+            doc.setFontSize(18);
+            doc.text("LAPORAN KEHADIRAN KKG", 14, 20);
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+            doc.text(`Agenda: ${eventName}`, 14, 28);
+            
+            const head = [['NO', 'NAMA PESERTA', 'NIP', 'SEKOLAH', 'JAM']];
+            const body = currentLaporan.map((item, i) => [i+1, item.nama, item.nip, item.sekolah, item.jam]);
+            
+            doc.autoTable({
+                startY: 35,
+                head: head,
+                body: body,
+                theme: 'striped',
+                headStyles: { fillColor: [37, 99, 235] }
+            });
+            
+            doc.save(`Laporan_KKG_${eventName.replace(/ /g, '_')}.pdf`);
+        }
+
+        // --- OTHER LOGIC ---
         let allGuru = [];
         function initDataGuru() {
             google.script.run.withSuccessHandler((d) => { allGuru = d || []; renderGuruList(); }).getListGuru();
@@ -218,9 +307,7 @@
         async function onScanSuccess(text) {
             if (!isScanning) return;
             isScanning = false;
-            
             showStatus(true, 'DIPROSES', 'Memverifikasi data peserta...');
-            
             google.script.run.withSuccessHandler((res) => {
                 if (res && res.success) {
                     showStatus(true, 'BERHASIL!', res.message || 'Presensi berhasil dicatat.');

@@ -131,19 +131,20 @@ function handleAction(action, params) {
   switch(action) {
     case 'login': return login(params.email, params.password);
     case 'getEventAktif': return getEventAktif();
+    case 'getAllEvents': return getAllEvents();
     case 'getDashboardStats': return getDashboardStats();
     case 'getListGuru': return getListGuru();
     case 'getDaftarHadirByTanggal': return getDaftarHadirByTanggal(params.tanggal);
     case 'getDaftarHadirByEvent': return getDaftarHadirByEvent(params.eventId);
+    case 'getLaporanByEvent': return getLaporanByEvent(params.eventId);
     case 'simpanGuru': return simpanGuru(params);
     case 'buatEvent': return buatEvent(params);
     case 'simpanAbsensi': 
       const activeEvent = getEventAktif();
       if (!activeEvent || activeEvent.error) {
-        return { success: false, message: 'GAGAL: Tidak ada Agenda/Event aktif hari ini. Silakan buat event dulu di Dashboard.' };
+        return { success: false, message: 'GAGAL: Tidak ada Agenda aktif hari ini. Silakan buat event dulu.' };
       }
-      const eventId = params.eventId || activeEvent.id;
-      return prosesScan(params.barcode, eventId);
+      return prosesScan(params.barcode, activeEvent.id);
     default: return { error: 'Action not found: ' + action };
   }
 }
@@ -517,29 +518,55 @@ function buatEvent(params) {
     lock.waitLock(10000);
     const ss = getSS();
     const sheet = ss.getSheetByName(SHEET_EVENT);
-    
-    // Nonaktifkan semua event lain dulu (biar cuma ada 1 yg aktif)
     const data = sheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
       sheet.getRange(i + 1, 6).setValue('NON-AKTIF');
     }
-    
     const newId = 'EVT-' + Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'ssSSS');
-    sheet.appendRow([
-      newId,
-      params.nama,
-      params.tanggal || new Date(),
-      params.lokasi || '-',
-      params.keterangan || '-',
-      'AKTIF'
-    ]);
-    
+    sheet.appendRow([newId, params.nama, params.tanggal || new Date(), params.lokasi || '-', params.keterangan || '-', 'AKTIF']);
     return { success: true, id: newId };
-  } catch (e) {
-    return { success: false, message: e.toString() };
-  } finally {
-    lock.releaseLock();
-  }
+  } catch (e) { return { success: false, message: e.toString() }; }
+  finally { lock.releaseLock(); }
+}
+
+function getAllEvents() {
+  try {
+    const ss = getSS();
+    const sheet = ss.getSheetByName(SHEET_EVENT);
+    const data = sheet.getDataRange().getValues();
+    const result = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][0]) continue;
+      result.push({
+        id: data[i][0],
+        nama: data[i][1],
+        tanggal: data[i][2] ? Utilities.formatDate(new Date(data[i][2]), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : '-',
+        lokasi: data[i][3],
+        status: data[i][5]
+      });
+    }
+    return result.reverse(); 
+  } catch (e) { return []; }
+}
+
+function getLaporanByEvent(eventId) {
+  try {
+    const ss = getSS();
+    const sheet = ss.getSheetByName(SHEET_ABSENSI);
+    const data = sheet.getDataRange().getValues();
+    const result = [];
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][1]) === String(eventId)) {
+        result.push({
+          nip: data[i][3],
+          nama: data[i][4],
+          sekolah: data[i][5],
+          jam: data[i][7]
+        });
+      }
+    }
+    return result;
+  } catch (e) { return []; }
 }
 
 function getAllEvents() {

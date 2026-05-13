@@ -184,14 +184,39 @@ const PAGES = {
         <div class="flex font-['Inter'] text-gray-800">
             ${getSidebarHTML('laporan')}
             <main class="flex-1 lg:ml-64 p-5 lg:p-8 bg-gray-50 min-h-screen pb-24 lg:pb-8">
-                <header class="mb-6 lg:mb-8">
-                    <h2 class="text-2xl font-bold text-gray-900">Laporan</h2>
-                    <p class="text-gray-500 text-sm">Analisis kehadiran peserta.</p>
+                <header class="mb-6 lg:mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Rekap Laporan</h2>
+                        <p class="text-gray-500 text-sm">Download data kehadiran per event.</p>
+                    </div>
+                    <div class="flex gap-2 w-full lg:w-auto">
+                        <button onclick="downloadExcel()" class="flex-1 bg-green-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-green-100 active:scale-95">
+                            <span class="material-symbols-outlined text-sm">description</span> Excel
+                        </button>
+                        <button onclick="downloadPDF()" class="flex-1 bg-red-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-100 active:scale-95">
+                            <span class="material-symbols-outlined text-sm">picture_as_pdf</span> PDF
+                        </button>
+                    </div>
                 </header>
-                <div class="bg-white rounded-2xl p-16 text-center border shadow-sm">
-                    <span class="material-symbols-outlined text-5xl text-gray-200 mb-2">analytics</span>
-                    <h3 class="text-lg font-bold text-gray-800">Menu Laporan</h3>
-                    <p class="text-sm text-gray-400">Sedang disinkronisasi.</p>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border mb-6">
+                    <div class="space-y-1 max-w-md">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Pertemuan/Event</label>
+                        <select id="eventSelect" onchange="loadLaporan()" class="w-full p-3 bg-gray-50 border rounded-xl outline-none text-sm font-bold appearance-none">
+                            <option value="">-- Memuat Daftar Event --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
+                    <table id="laporanTable" class="w-full text-left text-sm min-w-[500px]">
+                        <thead class="bg-gray-50 text-gray-400 font-bold uppercase text-[10px] tracking-wider">
+                            <tr><th class="p-4">No</th><th class="p-4">Nama Peserta</th><th class="p-4">NIP</th><th class="p-4">Sekolah</th><th class="p-4 text-right">Jam Hadir</th></tr>
+                        </thead>
+                        <tbody id="laporanList" class="divide-y divide-gray-50">
+                            <tr><td colspan="5" class="p-12 text-center text-gray-300 italic text-sm">Pilih event untuk melihat data.</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </main>
         </div>
