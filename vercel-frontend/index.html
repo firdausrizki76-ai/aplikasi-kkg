@@ -111,10 +111,10 @@
                                 <span class="material-symbols-outlined text-[200px]">event_available</span>
                             </div>
                             <p class="text-sm uppercase tracking-widest opacity-80 mb-4 font-bold">Event Aktif Hari Ini</p>
-                            <h3 class="text-5xl font-black mb-6 leading-tight">\${event.nama}</h3>
+                            <h3 class="text-5xl font-black mb-6 leading-tight">${event.nama}</h3>
                             <div class="flex gap-8 text-lg font-medium">
-                                <span class="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl"><span class="material-symbols-outlined">location_on</span> \${event.lokasi}</span>
-                                <span class="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl"><span class="material-symbols-outlined">calendar_today</span> \${event.tanggal}</span>
+                                <span class="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl"><span class="material-symbols-outlined">location_on</span> ${event.lokasi}</span>
+                                <span class="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl"><span class="material-symbols-outlined">calendar_today</span> ${event.tanggal}</span>
                             </div>
                         </div>
                     `;
@@ -135,13 +135,13 @@
                 if (data && data.length > 0) {
                     list.innerHTML = data.map((item, i) => `
                         <tr class="hover:bg-gray-50 transition-all">
-                            <td class="p-4 font-bold text-gray-400">\${i+1}</td>
+                            <td class="p-4 font-bold text-gray-400">${i+1}</td>
                             <td class="p-4">
-                                <p class="font-bold text-gray-800">\${item.nama}</p>
-                                <p class="text-xs text-gray-500">\${item.nip}</p>
+                                <p class="font-bold text-gray-800">${item.nama}</p>
+                                <p class="text-xs text-gray-500">${item.nip}</p>
                             </td>
-                            <td class="p-4 text-gray-600 font-medium">\${item.sekolah}</td>
-                            <td class="p-4 text-right font-mono font-bold text-blue-600">\${item.jam}</td>
+                            <td class="p-4 text-gray-600 font-medium">${item.sekolah}</td>
+                            <td class="p-4 text-right font-mono font-bold text-blue-600">${item.jam}</td>
                         </tr>
                     `).join('');
                 } else {
@@ -174,16 +174,16 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition-all">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 font-bold text-xl">
-                                \${g.nama.charAt(0)}
+                                ${g.nama.charAt(0)}
                             </div>
                             <div>
-                                <h4 class="font-bold text-gray-800">\${g.nama}</h4>
-                                <p class="text-xs text-gray-500 font-mono">\${g.nip}</p>
+                                <h4 class="font-bold text-gray-800">${g.nama}</h4>
+                                <p class="text-xs text-gray-500 font-mono">${g.nip}</p>
                             </div>
                         </div>
                         <div class="text-sm text-gray-600 space-y-1 border-t pt-4">
-                            <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">school</span> \${g.sekolah}</p>
-                            <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">location_city</span> \${g.kota || '-'}</p>
+                            <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">school</span> ${g.sekolah}</p>
+                            <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">location_city</span> ${g.kota || '-'}</p>
                         </div>
                     </div>
                 `).join('');
