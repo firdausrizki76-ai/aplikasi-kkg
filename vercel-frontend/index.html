@@ -11,16 +11,14 @@
     <script src="pages.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
     <div id="app">
         <div class="h-screen flex items-center justify-center">
-            <div class="text-center animate-pulse">
-                <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading...</p>
+            <div class="text-center">
+                <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Inisialisasi...</p>
             </div>
         </div>
     </div>
@@ -57,12 +55,14 @@
 
         function navigate(page) {
             const template = PAGES[page] || `<h1>404</h1>`;
-            // Secure evaluation of templates
-            document.getElementById('app').innerHTML = eval('`'+template+'`');
+            // Simple injection to avoid eval issues
+            document.getElementById('app').innerHTML = template;
+            
             if (page === 'login') initLogin();
             if (page === 'dashboard') initDashboard();
             if (page === 'hadir') initDaftarHadir();
             if (page === 'guru') initDataGuru();
+            window.scrollTo(0,0);
         }
 
         function logout() { localStorage.removeItem('userKKG'); navigate('login'); }
@@ -73,13 +73,13 @@
             form.onsubmit = (e) => {
                 e.preventDefault();
                 const btn = e.target.querySelector('button');
-                btn.disabled = true; btn.innerHTML = 'Mohon tunggu...';
+                btn.disabled = true; btn.innerHTML = 'Otentikasi...';
                 google.script.run.withSuccessHandler((res) => {
                     if (res && res.success) {
                         localStorage.setItem('userKKG', JSON.stringify(res));
                         navigate('dashboard');
                     } else {
-                        alert('Gagal: ' + (res?.error || 'Cek kembali data Anda'));
+                        alert('Gagal: ' + (res?.error || 'Email/Password Salah'));
                         btn.disabled = false; btn.innerHTML = 'Masuk';
                     }
                 }).login({ email: document.getElementById('email').value, password: document.getElementById('password').value });
@@ -105,26 +105,26 @@
                         </div>
                     `;
                 } else {
-                    html = `<div class="bg-white p-8 rounded-2xl border-2 border-dashed text-center text-gray-400 text-sm">Belum ada agenda aktif hari ini.</div>`;
+                    html = `<div class="bg-white p-8 rounded-2xl border-2 border-dashed text-center text-gray-400 text-sm">Belum ada agenda aktif.</div>`;
                 }
 
                 google.script.run.withSuccessHandler((stats) => {
                     container.innerHTML = html + `
                         <div class="grid grid-cols-3 gap-4">
                             <div class="bg-white p-5 rounded-2xl border shadow-sm">
-                                <div class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined">person_check</span></div>
+                                <div class="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined">person_check</span></div>
                                 <p class="text-2xl font-bold text-gray-800">${stats.hadir || 0}</p>
                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Hadir Hari Ini</p>
                             </div>
                             <div class="bg-white p-5 rounded-2xl border shadow-sm">
                                 <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined">groups</span></div>
                                 <p class="text-2xl font-bold text-gray-800">${stats.totalGuru || 0}</p>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Total Guru</p>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Total Anggota</p>
                             </div>
                             <div class="bg-white p-5 rounded-2xl border shadow-sm">
-                                <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined">analytics</span></div>
+                                <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined">verified_user</span></div>
                                 <p class="text-2xl font-bold text-gray-800">${stats.persentase || 0}%</p>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Presentase</p>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Kehadiran</p>
                             </div>
                         </div>
                     `;
@@ -139,17 +139,17 @@
                 if (!list) return;
                 if (data && data.length > 0) {
                     list.innerHTML = data.map((item, i) => `
-                        <tr>
+                        <tr class="hover:bg-gray-50/50">
                             <td class="p-4 text-gray-400 font-bold">${i+1}</td>
                             <td class="p-4">
                                 <p class="font-bold text-gray-800">${item.nama}</p>
-                                <p class="text-[10px] text-gray-400 font-mono">${item.nip}</p>
+                                <p class="text-[10px] text-gray-400">${item.nip}</p>
                             </td>
-                            <td class="p-4 text-gray-600 font-medium">${item.sekolah}</td>
+                            <td class="p-4 text-gray-600">${item.sekolah}</td>
                             <td class="p-4 text-right font-bold text-blue-600 font-mono">${item.jam}</td>
                         </tr>
                     `).join('');
-                } else { list.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-gray-300 italic text-sm">Tidak ada data.</td></tr>`; }
+                } else { list.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-gray-300 italic text-sm">Tidak ada data presensi.</td></tr>`; }
             }).getDaftarHadirByTanggal({ tanggal: date.value });
         }
 
@@ -165,35 +165,34 @@
             const filtered = allGuru.filter(g => g.nama.toLowerCase().includes(kw) || g.sekolah.toLowerCase().includes(kw) || g.nip.includes(kw));
             if (filtered.length > 0) {
                 container.innerHTML = filtered.map(g => `
-                    <div class="bg-white p-5 rounded-2xl border shadow-sm hover:border-blue-200 transition-all">
+                    <div class="bg-white p-5 rounded-2xl border shadow-sm">
                         <div class="flex items-center gap-3 mb-4">
                             <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold">${g.nama.charAt(0)}</div>
                             <div>
                                 <h4 class="font-bold text-gray-800 text-sm leading-tight">${g.nama}</h4>
-                                <p class="text-[10px] text-gray-400 font-bold">${g.nip}</p>
+                                <p class="text-[10px] text-gray-400">${g.nip}</p>
                             </div>
                         </div>
                         <div class="text-[11px] text-gray-500 space-y-1 border-t pt-3">
                             <p class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">school</span> ${g.sekolah}</p>
-                            <p class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">location_city</span> ${g.kota || '-'}</p>
                         </div>
                     </div>
                 `).join('');
-            } else { container.innerHTML = `<div class="col-span-full p-10 text-center text-gray-300 text-sm">Data tidak ditemukan.</div>`; }
+            } else { container.innerHTML = `<div class="col-span-full p-10 text-center text-gray-300">Data tidak ditemukan.</div>`; }
         }
 
         let html5QrCode;
         async function startScanner() {
             const btn = document.getElementById('btnStart');
-            btn.disabled = true; btn.innerHTML = 'Membuka...';
+            btn.disabled = true; btn.innerHTML = 'Menghubungkan...';
             try {
                 if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
                 await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 250, height: 250 } }, (text) => {
                     html5QrCode.stop();
-                    alert('Sukses: ' + text);
+                    alert('Presensi Berhasil: ' + text);
                     google.script.run.withSuccessHandler(() => { navigate('hadir'); }).simpanAbsensi({ barcode: text });
                 });
-                btn.innerHTML = 'Stop'; btn.classList.replace('bg-blue-600', 'bg-red-600'); btn.onclick = stopScanner; btn.disabled = false;
+                btn.innerHTML = 'Stop Scanner'; btn.classList.replace('bg-blue-600', 'bg-red-600'); btn.onclick = stopScanner; btn.disabled = false;
             } catch (e) { alert(e); btn.disabled = false; btn.innerHTML = 'Mulai'; }
         }
 
@@ -206,7 +205,7 @@
         function processManual() {
             const input = document.getElementById('manualInput');
             if (!input.value) return;
-            google.script.run.withSuccessHandler(() => { alert('Sukses!'); navigate('hadir'); }).simpanAbsensi({ barcode: input.value });
+            google.script.run.withSuccessHandler(() => { alert('Berhasil!'); navigate('hadir'); }).simpanAbsensi({ barcode: input.value });
         }
 
         window.onload = () => {
