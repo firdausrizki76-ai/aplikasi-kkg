@@ -12,21 +12,21 @@
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
         ::-webkit-scrollbar { width: 0px; background: transparent; }
-        #reader { background-color: black !important; border-radius: 1rem; overflow: hidden; }
+        #reader { background-color: black !important; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
         #reader video { object-fit: cover !important; }
-        .scan-status { transition: all 0.3s ease; transform: translateY(20px); opacity: 0; pointer-events: none; }
-        .scan-status.active { transform: translateY(0); opacity: 1; }
+        .scan-status { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: translate(-50%, -20px); opacity: 0; pointer-events: none; }
+        .scan-status.active { transform: translate(-50%, 0); opacity: 1; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
     <div id="app"></div>
 
-    <!-- Status Toast -->
-    <div id="statusToast" class="scan-status fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm p-4 rounded-2xl shadow-2xl border flex items-center gap-3">
-        <div id="statusIcon" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"></div>
+    <!-- Status Toast - Fixed Alignment for Mobile -->
+    <div id="statusToast" class="scan-status fixed top-6 left-1/2 z-[100] w-[88%] max-w-sm p-4 rounded-2xl shadow-2xl border-2 flex items-center gap-4">
+        <div id="statusIcon" class="w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-sm"></div>
         <div class="flex-1">
-            <p id="statusTitle" class="font-bold text-sm leading-tight"></p>
-            <p id="statusMsg" class="text-[10px] opacity-80 font-medium"></p>
+            <p id="statusTitle" class="font-bold text-sm leading-tight tracking-tight"></p>
+            <p id="statusMsg" class="text-[10px] opacity-90 font-semibold mt-0.5"></p>
         </div>
     </div>
 
@@ -66,9 +66,9 @@
             const tTitle = document.getElementById('statusTitle');
             const tMsg = document.getElementById('statusMsg');
             
-            toast.className = `scan-status active fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm p-4 rounded-2xl shadow-2xl border flex items-center gap-3 ${success ? 'bg-green-600 border-green-500 text-white' : 'bg-red-600 border-red-500 text-white'}`;
-            icon.className = `w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-white/20`;
-            icon.innerHTML = `<span class="material-symbols-outlined">${success ? 'check_circle' : 'error'}</span>`;
+            toast.className = `scan-status active fixed top-6 left-1/2 z-[100] w-[88%] max-w-sm p-4 rounded-2xl shadow-2xl border-2 flex items-center gap-4 ${success ? 'bg-green-600 border-green-400 text-white' : 'bg-red-600 border-red-400 text-white'}`;
+            icon.className = `w-11 h-11 rounded-full flex items-center justify-center shrink-0 bg-white/20`;
+            icon.innerHTML = `<span class="material-symbols-outlined text-2xl">${success ? 'verified' : 'report'}</span>`;
             tTitle.innerText = title;
             tMsg.innerText = msg;
 
@@ -93,7 +93,7 @@
             form.onsubmit = (e) => {
                 e.preventDefault();
                 const btn = e.target.querySelector('button');
-                btn.disabled = true; btn.innerHTML = 'MEMPROSES...';
+                btn.disabled = true; btn.innerHTML = 'MEMVALIDASI...';
                 google.script.run.withSuccessHandler((res) => {
                     if (res && res.success) {
                         localStorage.setItem('userKKG', JSON.stringify(res));
@@ -131,7 +131,7 @@
                         <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                             <div class="bg-white p-4 lg:p-5 rounded-2xl border shadow-sm"><div class="w-8 h-8 lg:w-10 lg:h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined text-lg">person_check</span></div><p class="text-xl lg:text-2xl font-bold text-gray-800">${stats.hadirHariIni || 0}</p><p class="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Hadir</p></div>
                             <div class="bg-white p-4 lg:p-5 rounded-2xl border shadow-sm"><div class="w-8 h-8 lg:w-10 lg:h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined text-lg">groups</span></div><p class="text-xl lg:text-2xl font-bold text-gray-800">${stats.totalGuru || 0}</p><p class="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Total Guru</p></div>
-                            <div class="col-span-2 lg:col-span-1 bg-white p-4 lg:p-5 rounded-2xl border shadow-sm flex lg:block items-center justify-between"><div class="w-8 h-8 lg:w-10 lg:h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center lg:mb-3"><span class="material-symbols-outlined text-lg">verified_user</span></div><div class="text-right lg:text-left"><p class="text-xl lg:text-2xl font-bold text-gray-800">${Math.round((stats.hadirHariIni / (stats.totalGuru || 1)) * 100)}%</p><p class="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Persentase</p></div></div>
+                            <div class="col-span-2 lg:col-span-1 bg-white p-4 lg:p-5 rounded-2xl border shadow-sm flex lg:block items-center justify-between"><div class="w-8 h-8 lg:w-10 lg:h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center lg:mb-3"><span class="material-symbols-outlined text-lg">verified_user</span></div><div class="text-right lg:text-left"><p class="text-xl lg:text-2xl font-bold text-gray-800">${Math.round((stats.hadirHariIni / (stats.totalGuru || 1)) * 100)}%</p><p class="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Presensi</p></div></div>
                         </div>
                     `;
                 }).getDashboardStats();
@@ -140,7 +140,7 @@
 
         function initDaftarHadir() {
             const date = document.getElementById('dateFilter');
-            const dateValue = date ? date.value : new Date().toISOString().split('T')[0];
+            const dateValue = date && date.value ? date.value : new Date().toISOString().split('T')[0];
             google.script.run.withSuccessHandler((data) => {
                 const list = document.getElementById('hadirList');
                 if (!list) return;
@@ -148,7 +148,7 @@
                     list.innerHTML = data.map((item, i) => `
                         <tr class="hover:bg-gray-50/50 transition-all"><td class="p-4 text-gray-400 font-bold">${i+1}</td><td class="p-4"><p class="font-bold text-gray-800">${item.nama}</p><p class="text-[10px] text-gray-400">${item.nip}</p></td><td class="p-4 text-gray-600">${item.sekolah}</td><td class="p-4 text-right font-bold text-blue-600 font-mono">${item.jam}</td></tr>
                     `).join('');
-                } else { list.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-gray-300 italic text-sm">Belum ada data presensi.</td></tr>`; }
+                } else { list.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-gray-300 italic text-sm">Belum ada data presensi untuk tanggal ini.</td></tr>`; }
             }).getDaftarHadirByTanggal({ tanggal: dateValue });
         }
 
@@ -176,29 +176,29 @@
             const btn = document.getElementById('btnStart');
             if (!btn || isScanning) return;
             
-            btn.disabled = true; btn.innerHTML = 'Membuka Kamera...';
+            btn.disabled = true; btn.innerHTML = 'MENYIAPKAN...';
             try {
                 if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-                const qrConfig = { fps: 20, qrbox: (vw, vh) => ({ width: Math.min(vw, vh) * 0.7, height: Math.min(vw, vh) * 0.7 }) };
+                const qrConfig = { fps: 20, qrbox: (vw, vh) => ({ width: Math.min(vw, vh) * 0.75, height: Math.min(vw, vh) * 0.75 }) };
                 
                 await html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
                 isScanning = true;
-                btn.innerHTML = 'Stop Scanner'; btn.classList.replace('bg-blue-600', 'bg-red-600'); btn.onclick = stopScanner; btn.disabled = false;
-            } catch (e) { showStatus(false, 'Kamera Error', e); btn.disabled = false; btn.innerHTML = 'Mulai Scanner'; }
+                btn.innerHTML = 'STOP SCANNER'; btn.classList.replace('bg-blue-600', 'bg-red-600'); btn.onclick = stopScanner; btn.disabled = false;
+            } catch (e) { showStatus(false, 'Kamera Gagal', 'Pastikan izin kamera sudah diberikan.'); btn.disabled = false; btn.innerHTML = 'MULAI SCANNER'; }
         }
 
         async function onScanSuccess(text) {
             if (!isScanning) return;
-            isScanning = false; // Pause scanning while processing
+            isScanning = false;
             
-            showStatus(true, 'Scanning...', 'Sedang memproses data...');
+            showStatus(true, 'DIPROSES', 'Memverifikasi data peserta...');
             
             google.script.run.withSuccessHandler((res) => {
                 if (res && res.success) {
-                    showStatus(true, 'BERHASIL!', res.message || 'Presensi tercatat.');
+                    showStatus(true, 'BERHASIL!', res.message || 'Presensi berhasil dicatat.');
                     setTimeout(() => { isScanning = true; }, 1500);
                 } else {
-                    showStatus(false, 'DITOLAK!', res?.message || 'Gagal mencatat.');
+                    showStatus(false, 'DITOLAK!', res?.message || 'Data tidak dapat dicatat.');
                     setTimeout(() => { isScanning = true; }, 2000);
                 }
             }).simpanAbsensi({ barcode: text });
@@ -208,14 +208,14 @@
             if (html5QrCode) await html5QrCode.stop();
             isScanning = false;
             const btn = document.getElementById('btnStart');
-            if (btn) { btn.innerHTML = 'Mulai Scanner'; btn.classList.replace('bg-red-600', 'bg-blue-600'); btn.onclick = startScanner; }
+            if (btn) { btn.innerHTML = 'MULAI SCANNER'; btn.classList.replace('bg-red-600', 'bg-blue-600'); btn.onclick = startScanner; }
         }
 
         function processManual() {
             const input = document.getElementById('manualInput');
             if (!input.value) return;
             google.script.run.withSuccessHandler((res) => {
-                if (res && res.success) { showStatus(true, 'BERHASIL!', 'Presensi manual tercatat.'); input.value = ''; }
+                if (res && res.success) { showStatus(true, 'BERHASIL!', 'Presensi manual dicatat.'); input.value = ''; }
                 else { showStatus(false, 'DITOLAK!', res?.message || 'Gagal mencatat.'); }
             }).simpanAbsensi({ barcode: input.value });
         }

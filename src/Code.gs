@@ -744,16 +744,24 @@ function getDaftarHadirByTanggal(tanggal) {
     const ss = getSS();
     const sheet = ss.getSheetByName(SHEET_ABSENSI);
     const data = sheet.getDataRange().getValues();
+    const tz = ss.getSpreadsheetTimeZone();
     
-    const checkDate = new Date(tanggal);
-    checkDate.setHours(0, 0, 0, 0);
+    // Pastikan format tanggal pencarian konsisten
+    const checkDateStr = Utilities.formatDate(new Date(tanggal), tz, 'yyyy-MM-dd');
     
     const result = [];
     for (let i = 1; i < data.length; i++) {
-      const absenDate = new Date(data[i][6]);
-      absenDate.setHours(0, 0, 0, 0);
+      if (!data[i][6]) continue;
       
-      if (absenDate.getTime() === checkDate.getTime()) {
+      let absenDate;
+      try {
+        absenDate = new Date(data[i][6]);
+        if (absenDate.getFullYear() < 2000) continue;
+      } catch(e) { continue; }
+
+      const absenDateStr = Utilities.formatDate(absenDate, tz, 'yyyy-MM-dd');
+      
+      if (absenDateStr === checkDateStr) {
         result.push({
           no: result.length + 1,
           id: data[i][0],
