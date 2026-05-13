@@ -78,11 +78,43 @@ const PAGES = {
         <div class="flex font-['Inter'] text-gray-800">
             ${getSidebarHTML('dashboard')}
             <main class="flex-1 lg:ml-64 p-5 lg:p-8 bg-gray-50 min-h-screen pb-24 lg:pb-8">
-                <header class="mb-6 lg:mb-8">
-                    <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
-                    <p class="text-gray-500 text-sm">Ringkasan aktivitas hari ini.</p>
+                <header class="mb-6 lg:mb-8 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+                        <p class="text-gray-500 text-sm">Ringkasan aktivitas.</p>
+                    </div>
+                    <button onclick="openEventModal()" class="bg-blue-600 text-white p-2 lg:px-4 lg:py-2 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg shadow-blue-100 active:scale-95">
+                        <span class="material-symbols-outlined text-sm">add_circle</span> <span class="hidden lg:inline">Buat Event</span>
+                    </button>
                 </header>
                 <div id="dashboardContent" class="space-y-6"></div>
+
+                <!-- Modal Buat Event -->
+                <div id="eventModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 lg:p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold">Buat Agenda Baru</h3>
+                            <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><span class="material-symbols-outlined">close</span></button>
+                        </div>
+                        <form id="eventForm" class="space-y-4">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Event</label>
+                                <input type="text" id="evNama" required class="w-full p-3 bg-gray-50 border rounded-xl outline-none text-sm" placeholder="Contoh: KKG Pertemuan 1">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</label>
+                                    <input type="date" id="evTgl" required class="w-full p-3 bg-gray-50 border rounded-xl outline-none text-sm">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lokasi</label>
+                                    <input type="text" id="evLok" required class="w-full p-3 bg-gray-50 border rounded-xl outline-none text-sm" placeholder="Nama Sekolah">
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold mt-4 shadow-lg active:scale-95">SIMPAN AGENDA</button>
+                        </form>
+                    </div>
+                </div>
             </main>
         </div>
     `,

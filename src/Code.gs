@@ -139,7 +139,10 @@ function handleAction(action, params) {
     case 'buatEvent': return buatEvent(params);
     case 'simpanAbsensi': 
       const activeEvent = getEventAktif();
-      const eventId = params.eventId || (activeEvent ? activeEvent.id : 'EVT-001');
+      if (!activeEvent || activeEvent.error) {
+        return { success: false, message: 'GAGAL: Tidak ada Agenda/Event aktif hari ini. Silakan buat event dulu di Dashboard.' };
+      }
+      const eventId = params.eventId || activeEvent.id;
       return prosesScan(params.barcode, eventId);
     default: return { error: 'Action not found: ' + action };
   }
@@ -508,29 +511,34 @@ function getEventAktif() {
   }
 }
 
-function buatEvent(nama, tanggal, lokasi, keterangan) {
+function buatEvent(params) {
+  const lock = LockService.getScriptLock();
   try {
+    lock.waitLock(10000);
     const ss = getSS();
     const sheet = ss.getSheetByName(SHEET_EVENT);
-    const lastRow = sheet.getLastRow();
     
-    const newId = 'EVT-' + String(lastRow).padStart(3, '0');
+    // Nonaktifkan semua event lain dulu (biar cuma ada 1 yg aktif)
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      sheet.getRange(i + 1, 6).setValue('NON-AKTIF');
+    }
     
+    const newId = 'EVT-' + Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'ssSSS');
     sheet.appendRow([
       newId,
-      nama,
-      new Date(tanggal),
-      lokasi,
-      keterangan,
+      params.nama,
+      params.tanggal || new Date(),
+      params.lokasi || '-',
+      params.keterangan || '-',
       'AKTIF'
     ]);
     
-    tuliLog('BUAT_EVENT', '', 'Event baru dibuat: ' + nama);
-    
-    return { success: true, id: newId, message: 'Event berhasil dibuat' };
+    return { success: true, id: newId };
   } catch (e) {
-    Logger.log('Error buatEvent: ' + e.toString());
-    return { success: false, message: 'Gagal membuat event: ' + e.toString() };
+    return { success: false, message: e.toString() };
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -746,22 +754,23 @@ function getDaftarHadirByTanggal(tanggal) {
     const data = sheet.getDataRange().getValues();
     const tz = ss.getSpreadsheetTimeZone();
     
-    // Pastikan format tanggal pencarian konsisten
-    const checkDateStr = Utilities.formatDate(new Date(tanggal), tz, 'yyyy-MM-dd');
+    // INPUT: yyyy-MM-dd dari HTML5
+    // TARGET: yyyy-MM-dd dari Spreadsheet
+    const targetDateStr = String(tanggal).split('T')[0]; // Ambil bagian yyyy-MM-dd saja
     
     const result = [];
     for (let i = 1; i < data.length; i++) {
       if (!data[i][6]) continue;
       
-      let absenDate;
+      let rowDate;
       try {
-        absenDate = new Date(data[i][6]);
-        if (absenDate.getFullYear() < 2000) continue;
+        rowDate = new Date(data[i][6]);
+        if (rowDate.getFullYear() < 2000) continue;
       } catch(e) { continue; }
 
-      const absenDateStr = Utilities.formatDate(absenDate, tz, 'yyyy-MM-dd');
+      const rowDateStr = Utilities.formatDate(rowDate, tz, 'yyyy-MM-dd');
       
-      if (absenDateStr === checkDateStr) {
+      if (rowDateStr === targetDateStr) {
         result.push({
           no: result.length + 1,
           id: data[i][0],

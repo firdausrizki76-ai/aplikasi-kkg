@@ -21,7 +21,7 @@
 <body class="bg-gray-50 text-gray-800">
     <div id="app"></div>
 
-    <!-- Status Toast - Fixed Alignment for Mobile -->
+    <!-- Status Toast -->
     <div id="statusToast" class="scan-status fixed top-6 left-1/2 z-[100] w-[88%] max-w-sm p-4 rounded-2xl shadow-2xl border-2 flex items-center gap-4">
         <div id="statusIcon" class="w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-sm"></div>
         <div class="flex-1">
@@ -56,6 +56,7 @@
                     getListGuru: function(...a) { this._call('getListGuru', a); },
                     getDaftarHadirByTanggal: function(...a) { this._call('getDaftarHadirByTanggal', a); },
                     simpanAbsensi: function(...a) { this._call('simpanAbsensi', a); },
+                    buatEvent: function(...a) { this._call('buatEvent', a); },
                 }
             }
         };
@@ -119,12 +120,12 @@
                             <h3 class="text-xl lg:text-2xl font-bold mb-4 leading-tight">${event.nama}</h3>
                             <div class="flex flex-col lg:flex-row gap-2 lg:gap-4 text-[10px] lg:text-xs font-semibold">
                                 <span class="bg-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-sm">location_on</span> ${event.lokasi}</span>
-                                <span class="bg-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-sm">calendar_today</span> ${event.tanggal}</span>
+                                <span class="bg-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-sm">calendar_today</span> ${event.tanggal.split('T')[0]}</span>
                             </div>
                         </div>
                     `;
                 } else {
-                    html = `<div class="bg-white p-10 rounded-2xl border-2 border-dashed text-center text-gray-400 text-sm font-medium">Belum ada agenda aktif.</div>`;
+                    html = `<div class="bg-white p-10 rounded-2xl border-2 border-dashed text-center text-gray-400 text-sm font-medium">Belum ada agenda aktif. Silakan buat event baru.</div>`;
                 }
                 google.script.run.withSuccessHandler((stats) => {
                     container.innerHTML = html + `
@@ -137,6 +138,33 @@
                 }).getDashboardStats();
             }).getEventAktif();
         }
+
+        function openEventModal() { document.getElementById('eventModal')?.classList.remove('hidden'); }
+        function closeEventModal() { document.getElementById('eventModal')?.classList.add('hidden'); }
+
+        // Handle Event Form Submission
+        document.addEventListener('submit', (e) => {
+            if (e.target.id === 'eventForm') {
+                e.preventDefault();
+                const btn = e.target.querySelector('button');
+                btn.disabled = true; btn.innerText = 'MENYIMPAN...';
+                const data = {
+                    nama: document.getElementById('evNama').value,
+                    tanggal: document.getElementById('evTgl').value,
+                    lokasi: document.getElementById('evLok').value
+                };
+                google.script.run.withSuccessHandler((res) => {
+                    if (res && res.success) {
+                        showStatus(true, 'BERHASIL!', 'Agenda baru telah diaktifkan.');
+                        closeEventModal();
+                        initDashboard();
+                    } else {
+                        showStatus(false, 'GAGAL!', res?.message || 'Gagal membuat agenda.');
+                        btn.disabled = false; btn.innerText = 'SIMPAN AGENDA';
+                    }
+                }).buatEvent(data);
+            }
+        });
 
         function initDaftarHadir() {
             const date = document.getElementById('dateFilter');
