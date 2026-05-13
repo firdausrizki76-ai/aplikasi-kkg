@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan - KKG Portal</title>
+    <?!= include('Stylesheet'); ?>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Sidebar -->
+    <aside class="h-screen w-64 fixed left-0 top-0 bg-white shadow-lg flex flex-col py-6 z-50 no-print">
+        <div class="px-6 mb-8">
+            <h1 class="text-2xl font-bold text-primary">KKG Portal</h1>
+            <p class="text-sm text-gray-600">Teacher Working Group</p>
+        </div>
+        
+        <nav class="flex-1 space-y-1 px-3">
+            <a href="?page=dashboard" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="?page=scanner" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">qr_code_scanner</span>
+                <span>QR Scanner</span>
+            </a>
+            <a href="?page=hadir" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">assignment</span>
+                <span>Daftar Hadir</span>
+            </a>
+            <a href="?page=guru" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">groups</span>
+                <span>Data Guru</span>
+            </a>
+            <a href="?page=laporan" class="flex items-center gap-3 px-4 py-3 text-primary font-semibold border-r-4 border-primary bg-blue-50 rounded-l-lg">
+                <span class="material-symbols-outlined">description</span>
+                <span>Laporan</span>
+            </a>
+        </nav>
+        
+        <div class="mt-auto border-t pt-4 px-3">
+            <a href="?page=login" class="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">logout</span>
+                <span>Keluar</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Laporan Kehadiran</h2>
+            <p class="text-gray-600">Rekap kehadiran guru per bulan</p>
+        </div>
+
+        <!-- Filter -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8 no-print">
+            <div class="flex items-center gap-4">
+                <div class="flex-1 max-w-xs">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih Bulan</label>
+                    <input 
+                        type="month" 
+                        id="filterBulan" 
+                        onchange="loadLaporan()" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                </div>
+                
+                <div class="flex gap-3 mt-7">
+                    <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all flex items-center gap-2">
+                        <span class="material-symbols-outlined">print</span>
+                        Cetak
+                    </button>
+                    <button onclick="exportToSheets()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-all flex items-center gap-2">
+                        <span class="material-symbols-outlined">table_view</span>
+                        Buka di Sheets
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-blue-600 text-2xl">event</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-500">BULAN INI</span>
+                </div>
+                <h4 id="statTotalEvent" class="text-4xl font-bold text-gray-800 mb-1">0</h4>
+                <p class="text-gray-600">Total Event KKG</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-green-600 text-2xl">groups</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-500">TERDAFTAR</span>
+                </div>
+                <h4 id="statTotalGuru" class="text-4xl font-bold text-gray-800 mb-1">0</h4>
+                <p class="text-gray-600">Total Guru</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-purple-600 text-2xl">percent</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-500">RATA-RATA</span>
+                </div>
+                <h4 id="statRataKehadiran" class="text-4xl font-bold text-gray-800 mb-1">0%</h4>
+                <p class="text-gray-600">Kehadiran</p>
+            </div>
+        </div>
+
+        <!-- Report Header (for print) -->
+        <div class="bg-white rounded-xl shadow-md p-8 mb-8">
+            <div class="text-center mb-6 print-header">
+                <h3 class="text-2xl font-bold text-gray-800 mb-2">LAPORAN KEHADIRAN GURU</h3>
+                <h4 class="text-xl font-semibold text-gray-700 mb-1">Kelompok Kerja Guru (KKG)</h4>
+                <p id="periodeLaporan" class="text-gray-600">Periode: -</p>
+            </div>
+            
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 border-b-2 border-gray-300">
+                            <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">No</th>
+                            <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Nama Guru</th>
+                            <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">NIP</th>
+                            <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Sekolah</th>
+                            <th class="px-4 py-3 text-center text-sm font-bold text-gray-700">Hadir</th>
+                            <th class="px-4 py-3 text-center text-sm font-bold text-gray-700">Persentase</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="6" class="px-4 py-12 text-center text-gray-500">
+                                <span class="material-symbols-outlined text-4xl mb-2">hourglass_empty</span>
+                                <p>Pilih bulan untuk melihat laporan</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Footer (for print) -->
+            <div class="mt-8 pt-6 border-t print-footer">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-600">Dicetak pada: <span id="printDate"></span></p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-600 mb-12">Mengetahui,</p>
+                        <p class="text-sm font-semibold text-gray-800 border-t border-gray-400 pt-2 px-8">
+                            Koordinator KKG
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <style>
+        @media print {
+            body {
+                background: white;
+            }
+            .no-print {
+                display: none !important;
+            }
+            main {
+                margin-left: 0 !important;
+                padding: 20px !important;
+            }
+            .shadow-md {
+                box-shadow: none !important;
+            }
+            .print-header {
+                margin-bottom: 30px;
+            }
+            .print-footer {
+                margin-top: 50px;
+            }
+        }
+    </style>
+
+    <script>
+        window.onload = function() {
+            // Set bulan ini sebagai default
+            const today = new Date();
+            const currentMonth = today.toISOString().slice(0, 7);
+            document.getElementById('filterBulan').value = currentMonth;
+            
+            // Set print date
+            document.getElementById('printDate').textContent = formatTanggalLengkap(today);
+            
+            // Load laporan
+            loadLaporan();
+        };
+
+        function loadLaporan() {
+            const bulan = document.getElementById('filterBulan').value;
+            if (!bulan) return;
+            
+            // Update periode laporan
+            const [tahun, bln] = bulan.split('-');
+            const namaBulan = new Date(tahun, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            document.getElementById('periodeLaporan').textContent = `Periode: ${namaBulan}`;
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    renderLaporan(data);
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error:', error);
+                    alert('Gagal memuat laporan: ' + error.message);
+                })
+                .getLaporan(bulan);
+        }
+
+        function renderLaporan(data) {
+            // Update stats
+            document.getElementById('statTotalEvent').textContent = data.totalEvent;
+            document.getElementById('statTotalGuru').textContent = data.totalGuru;
+            
+            // Hitung rata-rata kehadiran
+            if (data.perGuru.length > 0 && data.totalEvent > 0) {
+                const totalHadir = data.perGuru.reduce((sum, guru) => sum + guru.hadir, 0);
+                const rataKehadiran = Math.round((totalHadir / (data.perGuru.length * data.totalEvent)) * 100);
+                document.getElementById('statRataKehadiran').textContent = rataKehadiran + '%';
+            } else {
+                document.getElementById('statRataKehadiran').textContent = '0%';
+            }
+            
+            // Render table
+            const tbody = document.getElementById('tableBody');
+            
+            if (data.perGuru.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-4 py-12 text-center text-gray-500">
+                            <span class="material-symbols-outlined text-4xl mb-2">inbox</span>
+                            <p>Tidak ada data kehadiran untuk bulan ini</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = data.perGuru.map(guru => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-800">${guru.no}</td>
+                    <td class="px-4 py-3">
+                        <p class="font-semibold text-gray-800">${guru.nama}</p>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600 font-mono text-sm">${guru.nip}</td>
+                    <td class="px-4 py-3 text-gray-600">${guru.sekolah}</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="font-bold text-gray-800">${guru.hadir}</span>
+                        <span class="text-gray-500 text-sm">/${data.totalEvent}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${guru.persentase}%"></div>
+                            </div>
+                            <span class="font-bold text-gray-800 text-sm">${guru.persentase}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function exportToSheets() {
+            const url = 'https://docs.google.com/spreadsheets/d/' + '<?= SPREADSHEET_ID ?>';
+            window.open(url, '_blank');
+        }
+
+        function formatTanggalLengkap(date) {
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return date.toLocaleDateString('id-ID', options);
+        }
+    </script>
+
+</body>
+</html>

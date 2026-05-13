@@ -1,0 +1,25 @@
+{
+  "name": "aplikasi-absensi-kkg",
+  "version": "1.0.0",
+  "description": "Aplikasi Absensi KKG berbasis Google Apps Script",
+  "scripts": {
+    "push": "clasp push",
+    "pull": "clasp pull",
+    "open": "clasp open",
+    "watch": "clasp push --watch",
+    "deploy": "clasp push && clasp deploy",
+    "login": "clasp login",
+    "logout": "clasp logout"
+  },
+  "keywords": [
+    "google-apps-script",
+    "attendance",
+    "barcode",
+    "education"
+  ],
+  "author": "KKG Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@google/clasp": "^2.4.2"
+  }
+}

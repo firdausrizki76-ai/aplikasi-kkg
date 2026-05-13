@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - KKG Portal</title>
+    <?!= include('Stylesheet'); ?>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Sidebar -->
+    <aside class="h-screen w-64 fixed left-0 top-0 bg-white shadow-lg flex flex-col py-6 z-50">
+        <div class="px-6 mb-8">
+            <h1 class="text-2xl font-bold text-primary">KKG Portal</h1>
+            <p class="text-sm text-gray-600">Teacher Working Group</p>
+        </div>
+        
+        <nav class="flex-1 space-y-1 px-3">
+            <a href="#" onclick="navigate('dashboard'); return false;" class="flex items-center gap-3 px-4 py-3 text-primary font-semibold border-r-4 border-primary bg-blue-50 rounded-l-lg">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" onclick="navigate('scanner'); return false;" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">qr_code_scanner</span>
+                <span>QR Scanner</span>
+            </a>
+            <a href="#" onclick="navigate('hadir'); return false;" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">assignment</span>
+                <span>Daftar Hadir</span>
+            </a>
+            <a href="#" onclick="navigate('guru'); return false;" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">groups</span>
+                <span>Data Guru</span>
+            </a>
+            <a href="#" onclick="navigate('laporan'); return false;" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">description</span>
+                <span>Laporan</span>
+            </a>
+        </nav>
+        
+        <div class="mt-auto border-t pt-4 px-3">
+            <a href="#" onclick="logout(); return false;" class="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">logout</span>
+                <span>Keluar</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+<main class="ml-64 p-8">
+<div id="view-dashboard" class="page-view">
+
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Dashboard</h2>
+            <p class="text-gray-600">Selamat datang di Sistem Absensi KKG</p>
+        </div>
+
+        <!-- Event Hari Ini -->
+        <div id="eventCard" class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-6 mb-8 text-white">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined">event</span>
+                        <span class="text-sm font-semibold uppercase tracking-wide">Event Hari Ini</span>
+                    </div>
+                    <h3 id="eventNama" class="text-2xl font-bold mb-2">Memuat...</h3>
+                    <div class="flex items-center gap-4 text-sm">
+                        <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-lg">location_on</span>
+                            <span id="eventLokasi">-</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-lg">schedule</span>
+                            <span id="eventTanggal">-</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="showBuatEventModal()" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined">add</span>
+                    Buat Event
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-green-600 text-2xl">person_check</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-500">HARI INI</span>
+                </div>
+                <h4 id="statHadir" class="text-4xl font-bold text-gray-800 mb-1">0</h4>
+                <p class="text-gray-600">Guru Hadir</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-blue-600 text-2xl">groups</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-500">TOTAL</span>
+                </div>
+                <h4 id="statTotal" class="text-4xl font-bold text-gray-800 mb-1">0</h4>
+                <p class="text-gray-600">Guru Terdaftar</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-purple-600 text-2xl">percent</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-500">PERSENTASE</span>
+                </div>
+                <h4 id="statPersen" class="text-4xl font-bold text-gray-800 mb-1">0%</h4>
+                <p class="text-gray-600">Kehadiran</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <a href="#" onclick="navigate('scanner'); return false;" class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-all group">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-white text-3xl">qr_code_scanner</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">Mulai Scan Barcode</h3>
+                        <p class="text-gray-600">Scan kartu guru untuk absensi</p>
+                    </div>
+                </div>
+            </a>
+            
+            <a href="#" onclick="navigate('hadir'); return false;" class="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-all group">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-600 to-green-800 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-white text-3xl">assignment</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">Lihat Daftar Hadir</h3>
+                        <p class="text-gray-600">Cek kehadiran guru hari ini</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Absensi Terbaru -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-800">Absensi Terbaru</h3>
+                <a href="#" onclick="navigate('hadir'); return false;" class="text-blue-600 hover:text-blue-800 font-semibold text-sm">Lihat Semua →</a>
+            </div>
+            
+            <div id="recentList" class="space-y-3">
+                <div class="text-center py-8 text-gray-500">
+                    <span class="material-symbols-outlined text-4xl mb-2">hourglass_empty</span>
+                    <p>Memuat data...</p>
+                </div>
+            </div>
+        </div>
+
+    
+</div>
+<div id="view-scanner" class="page-view hidden">
+
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">QR Scanner</h2>
+            <p class="text-gray-600">Scan barcode kartu guru untuk absensi</p>
+        </div>
+
+        <!-- Event Info -->
+        <div id="eventInfo" class="bg-blue-600 text-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="material-symbols-outlined">event</span>
+                <span class="font-semibold">Event Hari Ini</span>
+            </div>
+            <h3 id="eventNama" class="text-2xl font-bold mb-2">Memuat...</h3>
+            <div class="flex items-center gap-4 text-sm">
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-lg">location_on</span>
+                    <span id="eventLokasi">-</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-lg">schedule</span>
+                    <span id="eventTanggal">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scanner Container -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Camera Section -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">Kamera Scanner</h3>
+                    <div id="scanStatus" class="flex items-center gap-2">
+                        <span class="w-3 h-3 bg-gray-400 rounded-full"></span>
+                        <span class="text-sm text-gray-600">Tidak Aktif</span>
+                    </div>
+                </div>
+                
+                <!-- QR Reader -->
+                <div id="reader" class="mb-4"></div>
+                
+                <!-- Control Buttons -->
+                <div class="flex gap-3">
+                    <button id="btnStart" onclick="startScanner()" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">play_arrow</span>
+                        Mulai Scan
+                    </button>
+                    <button id="btnStop" onclick="stopScanner()" class="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-all flex items-center justify-center gap-2 hidden">
+                        <span class="material-symbols-outlined">stop</span>
+                        Stop Scan
+                    </button>
+                </div>
+                
+                <!-- Manual Input -->
+                <div class="mt-4 pt-4 border-t">
+                    <p class="text-sm text-gray-600 mb-2">Atau masukkan barcode manual:</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="manualInput" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Paste barcode di sini...">
+                        <button onclick="processManualInput()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-all">
+                            Proses
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log Section -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">Log Scan Hari Ini</h3>
+                
+                <div id="scanLog" class="space-y-3 max-h-[500px] overflow-y-auto">
+                    <div class="text-center py-8 text-gray-500">
+                        <span class="material-symbols-outlined text-4xl mb-2">qr_code_scanner</span>
+                        <p>Belum ada scan hari ini</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    
+</div>
+<div id="view-hadir" class="page-view hidden">
+
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Daftar Kehadiran</h2>
+            <p class="text-gray-600">Monitoring kehadiran guru per event atau tanggal</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih Event</label>
+                    <select id="filterEvent" onchange="loadDaftarHadir()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Memuat...</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Atau Pilih Tanggal</label>
+                    <input type="date" id="filterTanggal" onchange="loadByTanggal()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Cari Nama/Sekolah</label>
+                    <input type="text" id="searchKeyword" onkeyup="filterTable()" placeholder="Ketik untuk mencari..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-gray-600">TOTAL HADIR</span>
+                    <span class="material-symbols-outlined text-green-600">person_check</span>
+                </div>
+                <h4 id="statHadir" class="text-3xl font-bold text-gray-800">0</h4>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-gray-600">TERLAMBAT</span>
+                    <span class="material-symbols-outlined text-orange-600">schedule</span>
+                </div>
+                <h4 id="statTerlambat" class="text-3xl font-bold text-gray-800">0</h4>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-gray-600">IZIN/SAKIT</span>
+                    <span class="material-symbols-outlined text-blue-600">event_busy</span>
+                </div>
+                <h4 id="statIzin" class="text-3xl font-bold text-gray-800">0</h4>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-gray-600">PERSENTASE</span>
+                    <span class="material-symbols-outlined text-purple-600">percent</span>
+                </div>
+                <h4 id="statPersen" class="text-3xl font-bold text-gray-800">0%</h4>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-6 border-b flex items-center justify-between">
+                <h3 class="text-xl font-bold text-gray-800">Data Kehadiran</h3>
+                <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined">print</span>
+                    Cetak
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">No</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Nama Guru</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">NIP</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Sekolah</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">Jam Hadir</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                <span class="material-symbols-outlined text-4xl mb-2">hourglass_empty</span>
+                                <p>Memuat data...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    
+</div>
+<div id="view-guru" class="page-view hidden">
+
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Data Guru</h2>
+            <p class="text-gray-600">Daftar semua guru yang terdaftar di sistem</p>
+        </div>
+
+        <!-- Search & Stats -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-blue-600 text-3xl">groups</span>
+                    </div>
+                    <div>
+                        <h3 id="totalGuru" class="text-3xl font-bold text-gray-800">0</h3>
+                        <p class="text-gray-600">Total Guru Terdaftar</p>
+                    </div>
+                </div>
+                
+                <div class="flex-1 max-w-md ml-8">
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            onkeyup="searchGuru()" 
+                            placeholder="Cari nama, NIP, atau sekolah..." 
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-6 border-b">
+                <h3 class="text-xl font-bold text-gray-800">Daftar Guru</h3>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">No</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Nama Guru</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Gelar</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">NIP</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Sekolah</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Kota</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Tgl Daftar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                                <span class="material-symbols-outlined text-4xl mb-2">hourglass_empty</span>
+                                <p>Memuat data...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="p-6 border-t bg-gray-50 flex items-center justify-between">
+                <p id="paginationInfo" class="text-sm text-gray-600">Menampilkan 0 dari 0 guru</p>
+                <div id="paginationButtons" class="flex gap-2">
+                    <!-- Pagination buttons will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+    
+</div>
+<div id="view-laporan" class="page-view hidden">
+
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Laporan Kehadiran</h2>
+            <p class="text-gray-600">Rekap kehadiran guru per bulan</p>
+        </div>
+
+        <!-- Filter -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8 no-print">
+            <div class="flex items-center gap-4">
+                <div class="flex-1 max-w-xs">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih Bulan</label>
+                    <input 
+                        type="month" 
+                        id="filterBulan" 
+                        onchange="loadLaporan()" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                </div>
+                
+                <div class="flex gap-3 mt-7">
+                    <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all flex items-center gap-2">
+                        <span class="material-symbols-outlined">print</span>
+                        Cetak
+                    </button>
+                    <button onclick="exportToSheets()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-all flex items-center gap-2">
+                        <span class="material-symbols-outlined">table_view</span>
+                        Buka di Sheets
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-blue-600 text-2xl">event</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-500">BULAN INI</span>
+                </div>
+                <h4 id="statTotalEvent" class="text-4xl font-bold text-gray-800 mb-1">0</h4>
+                <p class="text-gray-600">Total Event KKG</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-green-600 text-2xl">groups</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-500">TERDAFTAR</span>
+                </div>
+                <h4 id="statTotalGuru" class="text-4xl font-bold text-gray-800 mb-1">0</h4>
+                <p class="text-gray-600">Total Guru</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-purple-600 text-2xl">percent</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-500">RATA-RATA</span>
+                </div>
+                <h4 id="statRataKehadiran" class="text-4xl font-bold text-gray-800 mb-1">0%</h4>
+                <p class="text-gray-600">Kehadiran</p>
+            </div>
+        </div>
+
+        <!-- Report Header (for print) -->
+        <div class="bg-white rounded-xl shadow-md p-8 mb-8">
+            <div class="text-center mb-6 print-header">
+                <h3 class="text-2xl font-bold text-gray-800 mb-2">LAPORAN KEHADIRAN GURU</h3>
+                <h4 class="text-xl font-semibold text-gray-700 mb-1">Kelompok Kerja Guru (KKG)</h4>
+                <p id="periodeLaporan" class="text-gray-600">Periode: -</p>
+            </div>
+            
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 border-b-2 border-gray-300">
+                            <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">No</th>
+                            <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Nama Guru</th>
+                            <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">NIP</th>
+                            <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Sekolah</th>
+                            <th class="px-4 py-3 text-center text-sm font-bold text-gray-700">Hadir</th>
+                            <th class="px-4 py-3 text-center text-sm font-bold text-gray-700">Persentase</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="6" class="px-4 py-12 text-center text-gray-500">
+                                <span class="material-symbols-outlined text-4xl mb-2">hourglass_empty</span>
+                                <p>Pilih bulan untuk melihat laporan</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Footer (for print) -->
+            <div class="mt-8 pt-6 border-t print-footer">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-600">Dicetak pada: <span id="printDate"></span></p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-600 mb-12">Mengetahui,</p>
+                        <p class="text-sm font-semibold text-gray-800 border-t border-gray-400 pt-2 px-8">
+                            Koordinator KKG
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    
+</div>
+</main>
+<script>
+        // Load data saat halaman dibuka
+        window.onload = function() {
+            loadEventAktif();
+            loadDashboardStats();
+        };
+
+        function loadEventAktif() {
+            google.script.run
+                .withSuccessHandler(function(event) {
+                    if (event) {
+                        document.getElementById('eventNama').textContent = event.nama;
+                        document.getElementById('eventLokasi').textContent = event.lokasi;
+                        document.getElementById('eventTanggal').textContent = formatTanggal(event.tanggal);
+                    } else {
+                        document.getElementById('eventNama').textContent = 'Belum ada event hari ini';
+                        document.getElementById('eventLokasi').textContent = '-';
+                        document.getElementById('eventTanggal').textContent = '-';
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error:', error);
+                    document.getElementById('eventNama').textContent = 'Error memuat event';
+                })
+                .getEventAktif();
+        }
+
+        function loadDashboardStats() {
+            google.script.run
+                .withSuccessHandler(function(stats) {
+                    document.getElementById('statHadir').textContent = stats.hadirHariIni;
+                    document.getElementById('statTotal').textContent = stats.totalGuru;
+                    
+                    const persen = stats.totalGuru > 0 ? Math.round((stats.hadirHariIni / stats.totalGuru) * 100) : 0;
+                    document.getElementById('statPersen').textContent = persen + '%';
+                    
+                    // Tampilkan recent absensi
+                    const recentList = document.getElementById('recentList');
+                    if (stats.recentAbsensi.length > 0) {
+                        recentList.innerHTML = stats.recentAbsensi.map(item => `
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                                        ${item.nama.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-800">${item.nama}</p>
+                                        <p class="text-sm text-gray-600">${item.sekolah}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-semibold text-gray-800">${item.jam}</p>
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full badge-hadir">
+                                        ${item.status}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        recentList.innerHTML = `
+                            <div class="text-center py-8 text-gray-500">
+                                <span class="material-symbols-outlined text-4xl mb-2">inbox</span>
+                                <p>Belum ada absensi hari ini</p>
+                            </div>
+                        `;
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error:', error);
+                })
+                .getDashboardStats();
+        }
+
+        function showBuatEventModal() {
+            document.getElementById('modalBuatEvent').classList.remove('hidden');
+            // Set tanggal hari ini sebagai default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inputTanggal').value = today;
+        }
+
+        function closeBuatEventModal() {
+            document.getElementById('modalBuatEvent').classList.add('hidden');
+            document.getElementById('formBuatEvent').reset();
+        }
+
+        function handleBuatEvent(event) {
+            event.preventDefault();
+            
+            const nama = document.getElementById('inputNamaEvent').value;
+            const tanggal = document.getElementById('inputTanggal').value;
+            const lokasi = document.getElementById('inputLokasi').value;
+            const keterangan = document.getElementById('inputKeterangan').value;
+            
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        alert('Event berhasil dibuat!');
+                        closeBuatEventModal();
+                        loadEventAktif();
+                    } else {
+                        alert('Gagal membuat event: ' + response.message);
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    alert('Terjadi kesalahan: ' + error.message);
+                })
+                .buatEvent(nama, tanggal, lokasi, keterangan);
+        }
+
+        function formatTanggal(date) {
+            const d = new Date(date);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return d.toLocaleDateString('id-ID', options);
+        }
+    </script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+        let html5QrCode;
+        let currentEventId = null;
+        let lastScanTime = 0;
+        const SCAN_COOLDOWN = 3000; // 3 detik cooldown
+
+        // Load event aktif saat halaman dibuka
+        window.onload = function() {
+            loadEventAktif();
+            loadScanLog();
+        };
+
+        function loadEventAktif() {
+            google.script.run
+                .withSuccessHandler(function(event) {
+                    if (event) {
+                        currentEventId = event.id;
+                        document.getElementById('eventNama').textContent = event.nama;
+                        document.getElementById('eventLokasi').textContent = event.lokasi;
+                        document.getElementById('eventTanggal').textContent = formatTanggal(event.tanggal);
+                    } else {
+                        document.getElementById('eventNama').textContent = 'Belum ada event hari ini';
+                        document.getElementById('eventLokasi').textContent = '-';
+                        document.getElementById('eventTanggal').textContent = '-';
+                        document.getElementById('btnStart').disabled = true;
+                        document.getElementById('btnStart').classList.add('opacity-50', 'cursor-not-allowed');
+                        alert('Belum ada event KKG hari ini. Silakan buat event terlebih dahulu di Dashboard.');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error:', error);
+                    alert('Gagal memuat event: ' + error.message);
+                })
+                .getEventAktif();
+        }
+
+        function startScanner() {
+            if (!currentEventId) {
+                alert('Belum ada event aktif hari ini!');
+                return;
+            }
+
+            html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                onScanSuccess,
+                onScanError
+            ).then(() => {
+                document.getElementById('btnStart').classList.add('hidden');
+                document.getElementById('btnStop').classList.remove('hidden');
+                updateScanStatus(true);
+            }).catch(err => {
+                alert('Gagal mengakses kamera: ' + err);
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('btnStart').classList.remove('hidden');
+                    document.getElementById('btnStop').classList.add('hidden');
+                    updateScanStatus(false);
+                }).catch(err => {
+                    console.error('Error stopping scanner:', err);
+                });
+            }
+        }
+
+        function updateScanStatus(isActive) {
+            const status = document.getElementById('scanStatus');
+            if (isActive) {
+                status.innerHTML = `
+                    <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                    <span class="text-sm text-green-600 font-semibold">Aktif</span>
+                `;
+            } else {
+                status.innerHTML = `
+                    <span class="w-3 h-3 bg-gray-400 rounded-full"></span>
+                    <span class="text-sm text-gray-600">Tidak Aktif</span>
+                `;
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Debounce - cegah scan ganda
+            const now = Date.now();
+            if (now - lastScanTime < SCAN_COOLDOWN) {
+                return;
+            }
+            lastScanTime = now;
+
+            // Proses scan
+            processScan(decodedText);
+        }
+
+        function onScanError(errorMessage) {
+            // Ignore scan errors (terlalu banyak noise)
+        }
+
+        function processManualInput() {
+            const input = document.getElementById('manualInput').value.trim();
+            if (!input) {
+                alert('Masukkan barcode terlebih dahulu!');
+                return;
+            }
+            processScan(input);
+            document.getElementById('manualInput').value = '';
+        }
+
+        function processScan(rawBarcode) {
+            if (!currentEventId) {
+                alert('Belum ada event aktif!');
+                return;
+            }
+
+            // Tampilkan loading
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                    
+                    if (response.success) {
+                        showScanResult(response);
+                        loadScanLog(); // Refresh log
+                    } else {
+                        alert('Gagal: ' + response.message);
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                    alert('Terjadi kesalahan: ' + error.message);
+                })
+                .prosesScan(rawBarcode, currentEventId);
+        }
+
+        function showScanResult(response) {
+            const resultCard = document.getElementById('scanResult');
+            const resultIcon = document.getElementById('resultIcon');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            const resultDetails = document.getElementById('resultDetails');
+
+            // Set warna dan icon berdasarkan status
+            if (response.sudahAbsen) {
+                resultCard.querySelector('.bg-white').classList.add('border-yellow-500');
+                resultIcon.classList.add('bg-yellow-100', 'text-yellow-600');
+                resultIcon.innerHTML = '<span class="material-symbols-outlined text-2xl">info</span>';
+                resultTitle.textContent = 'Sudah Absen';
+                resultMessage.textContent = response.message;
+            } else if (response.isNewGuru) {
+                resultCard.querySelector('.bg-white').classList.add('border-green-500');
+                resultIcon.classList.add('bg-green-100', 'text-green-600');
+                resultIcon.innerHTML = '<span class="material-symbols-outlined text-2xl">person_add</span>';
+                resultTitle.textContent = 'Guru Baru - Otomatis Terdaftar';
+                resultMessage.textContent = 'Absensi berhasil dicatat';
+            } else {
+                resultCard.querySelector('.bg-white').classList.add('border-blue-500');
+                resultIcon.classList.add('bg-blue-100', 'text-blue-600');
+                resultIcon.innerHTML = '<span class="material-symbols-outlined text-2xl">check_circle</span>';
+                resultTitle.textContent = 'Hadir - Selamat Datang';
+                resultMessage.textContent = 'Absensi berhasil dicatat';
+            }
+
+            // Set details
+            resultDetails.innerHTML = `
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600">Nama:</span>
+                    <span class="font-semibold">${response.guru.nama} ${response.guru.gelar || ''}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600">NIP:</span>
+                    <span class="font-semibold">${response.guru.nip}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b">
+                    <span class="text-gray-600">Sekolah:</span>
+                    <span class="font-semibold">${response.guru.sekolah}</span>
+                </div>
+                <div class="flex justify-between py-2">
+                    <span class="text-gray-600">Jam:</span>
+                    <span class="font-semibold text-blue-600">${response.jam}</span>
+                </div>
+            `;
+
+            // Tampilkan card dengan animasi
+            resultCard.classList.remove('hidden');
+            resultCard.classList.add('slide-in');
+
+            // Auto hide setelah 4 detik
+            setTimeout(() => {
+                closeScanResult();
+            }, 4000);
+        }
+
+        function closeScanResult() {
+            const resultCard = document.getElementById('scanResult');
+            resultCard.classList.add('hidden');
+            
+            // Reset classes
+            const bgWhite = resultCard.querySelector('.bg-white');
+            bgWhite.className = 'bg-white rounded-xl shadow-2xl p-6 border-l-4';
+            
+            const icon = document.getElementById('resultIcon');
+            icon.className = 'w-12 h-12 rounded-full flex items-center justify-center';
+        }
+
+        function loadScanLog() {
+            const today = new Date().toISOString().split('T')[0];
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    const logContainer = document.getElementById('scanLog');
+                    
+                    if (data.length > 0) {
+                        logContainer.innerHTML = data.map((item, index) => `
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                                        ${index + 1}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-800">${item.nama}</p>
+                                        <p class="text-sm text-gray-600">${item.sekolah}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-semibold text-gray-800">${item.jam}</p>
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full badge-hadir">
+                                        ${item.status}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        logContainer.innerHTML = `
+                            <div class="text-center py-8 text-gray-500">
+                                <span class="material-symbols-outlined text-4xl mb-2">qr_code_scanner</span>
+                                <p>Belum ada scan hari ini</p>
+                            </div>
+                        `;
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error loading log:', error);
+                })
+                .getDaftarHadirByTanggal(today);
+        }
+
+        function formatTanggal(date) {
+            const d = new Date(date);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return d.toLocaleDateString('id-ID', options);
+        }
+    </script>
+<script>
+        let allData = [];
+
+        window.onload = function() {
+            loadEvents();
+            // Set tanggal hari ini sebagai default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filterTanggal').value = today;
+        };
+
+        function loadEvents() {
+            google.script.run
+                .withSuccessHandler(function(events) {
+                    const select = document.getElementById('filterEvent');
+                    select.innerHTML = '<option value="">-- Pilih Event --</option>';
+                    
+                    events.forEach(event => {
+                        const option = document.createElement('option');
+                        option.value = event.id;
+                        option.textContent = `${event.nama} - ${formatTanggal(event.tanggal)}`;
+                        select.appendChild(option);
+                    });
+                    
+                    // Auto load event hari ini jika ada
+                    const today = new Date().toISOString().split('T')[0];
+                    const todayEvent = events.find(e => {
+                        const eventDate = new Date(e.tanggal).toISOString().split('T')[0];
+                        return eventDate === today;
+                    });
+                    
+                    if (todayEvent) {
+                        select.value = todayEvent.id;
+                        loadDaftarHadir();
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error:', error);
+                })
+                .getAllEvents();
+        }
+
+        function loadDaftarHadir() {
+            const eventId = document.getElementById('filterEvent').value;
+            if (!eventId) return;
+            
+            // Reset tanggal filter
+            document.getElementById('filterTanggal').value = '';
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    allData = data;
+                    renderTable(data);
+                    updateStats(data);
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error:', error);
+                    alert('Gagal memuat data: ' + error.message);
+                })
+                .getDaftarHadir(eventId);
+        }
+
+        function loadByTanggal() {
+            const tanggal = document.getElementById('filterTanggal').value;
+            if (!tanggal) return;
+            
+            // Reset event filter
+            document.getElementById('filterEvent').value = '';
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    allData = data;
+                    renderTable(data);
+                    updateStats(data);
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error:', error);
+                    alert('Gagal memuat data: ' + error.message);
+                })
+                .getDaftarHadirByTanggal(tanggal);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <span class="material-symbols-outlined text-4xl mb-2">inbox</span>
+                            <p>Tidak ada data kehadiran</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = data.map(item => `
+                <tr class="border-b hover:bg-gray-50 transition-all">
+                    <td class="px-6 py-4 text-gray-800">${item.no}</td>
+                    <td class="px-6 py-4">
+                        <p class="font-semibold text-gray-800">${item.nama}</p>
+                    </td>
+                    <td class="px-6 py-4 text-gray-600">${item.nip}</td>
+                    <td class="px-6 py-4 text-gray-600">${item.sekolah}</td>
+                    <td class="px-6 py-4 text-center font-semibold text-gray-800">${item.jam}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full ${getStatusClass(item.status)}">
+                            ${item.status}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterTable() {
+            const keyword = document.getElementById('searchKeyword').value.toLowerCase();
+            const filtered = allData.filter(item => 
+                item.nama.toLowerCase().includes(keyword) ||
+                item.nip.includes(keyword) ||
+                item.sekolah.toLowerCase().includes(keyword)
+            );
+            renderTable(filtered);
+        }
+
+        function updateStats(data) {
+            const hadir = data.filter(item => item.status === 'HADIR').length;
+            const terlambat = data.filter(item => item.status === 'TERLAMBAT').length;
+            const izin = data.filter(item => item.status === 'IZIN' || item.status === 'SAKIT').length;
+            
+            document.getElementById('statHadir').textContent = hadir;
+            document.getElementById('statTerlambat').textContent = terlambat;
+            document.getElementById('statIzin').textContent = izin;
+            
+            // Hitung persentase (asumsi total guru = data yang ada)
+            const total = data.length;
+            const persen = total > 0 ? Math.round((hadir / total) * 100) : 0;
+            document.getElementById('statPersen').textContent = persen + '%';
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'HADIR': return 'badge-hadir';
+                case 'TERLAMBAT': return 'badge-terlambat';
+                case 'IZIN': case 'SAKIT': return 'badge-izin';
+                default: return 'badge-alpha';
+            }
+        }
+
+        function formatTanggal(date) {
+            const d = new Date(date);
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return d.toLocaleDateString('id-ID', options);
+        }
+    </script>
+<script>
+        let allGuru = [];
+        let filteredGuru = [];
+        let currentPage = 1;
+        const itemsPerPage = 20;
+
+        window.onload = function() {
+            loadAllGuru();
+        };
+
+        function loadAllGuru() {
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    allGuru = data;
+                    filteredGuru = data;
+                    document.getElementById('totalGuru').textContent = data.length;
+                    renderTable();
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error:', error);
+                    alert('Gagal memuat data: ' + error.message);
+                })
+                .getListGuru('');
+        }
+
+        function searchGuru() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (keyword === '') {
+                filteredGuru = allGuru;
+            } else {
+                filteredGuru = allGuru.filter(guru => 
+                    guru.nama.toLowerCase().includes(keyword) ||
+                    guru.nip.includes(keyword) ||
+                    guru.sekolah.toLowerCase().includes(keyword) ||
+                    (guru.kota && guru.kota.toLowerCase().includes(keyword))
+                );
+            }
+            
+            currentPage = 1;
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            
+            if (filteredGuru.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <span class="material-symbols-outlined text-4xl mb-2">search_off</span>
+                            <p>Tidak ada data guru ditemukan</p>
+                        </td>
+                    </tr>
+                `;
+                updatePagination(0, 0);
+                return;
+            }
+            
+            // Pagination
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredGuru.length);
+            const pageData = filteredGuru.slice(startIndex, endIndex);
+            
+            tbody.innerHTML = pageData.map((guru, index) => `
+                <tr class="border-b hover:bg-gray-50 transition-all">
+                    <td class="px-6 py-4 text-gray-800">${startIndex + index + 1}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                                ${guru.nama.charAt(0)}
+                            </div>
+                            <p class="font-semibold text-gray-800">${guru.nama}</p>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-gray-600">${guru.gelar || '-'}</td>
+                    <td class="px-6 py-4 text-gray-600 font-mono text-sm">${guru.nip}</td>
+                    <td class="px-6 py-4 text-gray-600">${guru.sekolah}</td>
+                    <td class="px-6 py-4 text-gray-600">${guru.kota || '-'}</td>
+                    <td class="px-6 py-4 text-gray-600 text-sm">${formatTanggal(guru.tglDaftar)}</td>
+                </tr>
+            `).join('');
+            
+            updatePagination(startIndex + 1, endIndex);
+        }
+
+        function updatePagination(start, end) {
+            const total = filteredGuru.length;
+            const totalPages = Math.ceil(total / itemsPerPage);
+            
+            document.getElementById('paginationInfo').textContent = 
+                `Menampilkan ${start}-${end} dari ${total} guru`;
+            
+            const buttonsContainer = document.getElementById('paginationButtons');
+            
+            if (totalPages <= 1) {
+                buttonsContainer.innerHTML = '';
+                return;
+            }
+            
+            let buttons = '';
+            
+            // Previous button
+            buttons += `
+                <button 
+                    onclick="changePage(${currentPage - 1})" 
+                    ${currentPage === 1 ? 'disabled' : ''}
+                    class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+            `;
+            
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    buttons += `
+                        <button 
+                            onclick="changePage(${i})" 
+                            class="px-4 py-2 border rounded-lg font-semibold ${i === currentPage ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 hover:bg-gray-100'}"
+                        >
+                            ${i}
+                        </button>
+                    `;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    buttons += '<span class="px-2 py-2">...</span>';
+                }
+            }
+            
+            // Next button
+            buttons += `
+                <button 
+                    onclick="changePage(${currentPage + 1})" 
+                    ${currentPage === totalPages ? 'disabled' : ''}
+                    class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            `;
+            
+            buttonsContainer.innerHTML = buttons;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredGuru.length / itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            renderTable();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function formatTanggal(date) {
+            if (!date) return '-';
+            const d = new Date(date);
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return d.toLocaleDateString('id-ID', options);
+        }
+    </script>
+<script>
+        window.onload = function() {
+            // Set bulan ini sebagai default
+            const today = new Date();
+            const currentMonth = today.toISOString().slice(0, 7);
+            document.getElementById('filterBulan').value = currentMonth;
+            
+            // Set print date
+            document.getElementById('printDate').textContent = formatTanggalLengkap(today);
+            
+            // Load laporan
+            loadLaporan();
+        };
+
+        function loadLaporan() {
+            const bulan = document.getElementById('filterBulan').value;
+            if (!bulan) return;
+            
+            // Update periode laporan
+            const [tahun, bln] = bulan.split('-');
+            const namaBulan = new Date(tahun, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            document.getElementById('periodeLaporan').textContent = `Periode: ${namaBulan}`;
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    renderLaporan(data);
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error:', error);
+                    alert('Gagal memuat laporan: ' + error.message);
+                })
+                .getLaporan(bulan);
+        }
+
+        function renderLaporan(data) {
+            // Update stats
+            document.getElementById('statTotalEvent').textContent = data.totalEvent;
+            document.getElementById('statTotalGuru').textContent = data.totalGuru;
+            
+            // Hitung rata-rata kehadiran
+            if (data.perGuru.length > 0 && data.totalEvent > 0) {
+                const totalHadir = data.perGuru.reduce((sum, guru) => sum + guru.hadir, 0);
+                const rataKehadiran = Math.round((totalHadir / (data.perGuru.length * data.totalEvent)) * 100);
+                document.getElementById('statRataKehadiran').textContent = rataKehadiran + '%';
+            } else {
+                document.getElementById('statRataKehadiran').textContent = '0%';
+            }
+            
+            // Render table
+            const tbody = document.getElementById('tableBody');
+            
+            if (data.perGuru.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-4 py-12 text-center text-gray-500">
+                            <span class="material-symbols-outlined text-4xl mb-2">inbox</span>
+                            <p>Tidak ada data kehadiran untuk bulan ini</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = data.perGuru.map(guru => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-800">${guru.no}</td>
+                    <td class="px-4 py-3">
+                        <p class="font-semibold text-gray-800">${guru.nama}</p>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600 font-mono text-sm">${guru.nip}</td>
+                    <td class="px-4 py-3 text-gray-600">${guru.sekolah}</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="font-bold text-gray-800">${guru.hadir}</span>
+                        <span class="text-gray-500 text-sm">/${data.totalEvent}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${guru.persentase}%"></div>
+                            </div>
+                            <span class="font-bold text-gray-800 text-sm">${guru.persentase}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function exportToSheets() {
+            const url = 'https://docs.google.com/spreadsheets/d/' + '<?= SPREADSHEET_ID ?>';
+            window.open(url, '_blank');
+        }
+
+        function formatTanggalLengkap(date) {
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return date.toLocaleDateString('id-ID', options);
+        }
+    </script>
+
+<script>
+function navigate(page) {
+  document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
+  document.getElementById('view-' + page).classList.remove('hidden');
+  
+  // Update sidebar active state
+  document.querySelectorAll('aside nav a').forEach(el => {
+    el.classList.remove('text-primary', 'font-semibold', 'border-r-4', 'border-primary', 'bg-blue-50', 'rounded-l-lg');
+    el.classList.add('text-gray-600', 'hover:bg-gray-50', 'rounded-lg');
+  });
+  
+  let activeLink = document.querySelector('aside nav a[onclick*="navigate(\'' + page + '\')"]');
+  if (activeLink) {
+    activeLink.classList.remove('text-gray-600', 'hover:bg-gray-50', 'rounded-lg');
+    activeLink.classList.add('text-primary', 'font-semibold', 'border-r-4', 'border-primary', 'bg-blue-50', 'rounded-l-lg');
+  }
+  
+  // Call initialization functions if they exist
+  if (page === 'dashboard' && typeof loadDashboardStats === 'function') {
+     loadDashboardStats();
+  }
+  if (page === 'hadir' && typeof loadHadir === 'function') {
+     loadHadir();
+  }
+  if (page === 'guru' && typeof loadGuru === 'function') {
+     loadGuru();
+  }
+  if (page === 'laporan' && typeof loadLaporan === 'function') {
+     // loadLaporan doesn't exist yet but just in case
+  }
+}
+</script>
+</body>
+</html>

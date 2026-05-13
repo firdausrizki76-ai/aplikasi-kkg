@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+.clasp.json
+clasp.json
+# Keep src/ but ignore root level temporary copies if any
+# Code.gs 
+dist/
+.vercel/

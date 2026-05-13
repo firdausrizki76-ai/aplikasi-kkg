@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKG Portal - Vercel Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="pages.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div id="app">
+        <!-- Content will be injected here -->
+        <div class="h-screen flex items-center justify-center">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p class="text-gray-600">Menyiapkan Aplikasi...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbytBf7EJUkxO7I-fC4Odx0PQ4HnEd6qiaXNr_0TV6wczseqJM-d7Ctc1mzXBBVKzN4/exec';
+
+        // Bridge to Google Apps Script
+        const google = {
+            script: {
+                run: {
+                    withSuccessHandler: function(callback) {
+                        this._success = callback;
+                        return this;
+                    },
+                    withFailureHandler: function(callback) {
+                        this._failure = callback;
+                        return this;
+                    },
+                    _call: async function(action, args) {
+                        try {
+                            const url = new URL(API_URL);
+                            url.searchParams.append('action', action);
+                            
+                            // For simplicity in this early version, we use GET with params for everything
+                            // or POST for more complex data. GAS doGet handles params well.
+                            if (args.length > 0) {
+                                // Add parameters from first argument if it's an object
+                                if (typeof args[0] === 'object') {
+                                    Object.keys(args[0]).forEach(key => url.searchParams.append(key, args[0][key]));
+                                } else {
+                                    url.searchParams.append('param1', args[0]);
+                                }
+                            }
+
+                            const response = await fetch(url);
+                            const data = await response.json();
+                            if (this._success) this._success(data);
+                        } catch (err) {
+                            console.error('API Error:', err);
+                            if (this._failure) this._failure(err);
+                        }
+                    },
+                    login: function(...args) { this._call('login', args); },
+                    getEventAktif: function(...args) { this._call('getEventAktif', args); },
+                    getDashboardStats: function(...args) { this._call('getDashboardStats', args); },
+                    getListGuru: function(...args) { this._call('getListGuru', args); },
+                    simpanAbsensi: function(...args) { this._call('simpanAbsensi', args); },
+                    // Add other functions as needed...
+                }
+            }
+        };
+
+        // Navigation logic
+        function navigate(page) {
+            console.log('Navigating to:', page);
+            document.getElementById('app').innerHTML = PAGES[page] || `<h1>404</h1>`;
+            
+            if (page === 'login') initLogin();
+            if (page === 'dashboard') initDashboard();
+        }
+
+        function logout() {
+            localStorage.removeItem('userKKG');
+            navigate('login');
+        }
+
+        function initLogin() {
+            document.getElementById('loginForm').onsubmit = (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                google.script.run.withSuccessHandler((res) => {
+                    if (res.success) {
+                        localStorage.setItem('userKKG', JSON.stringify(res));
+                        navigate('dashboard');
+                    } else {
+                        alert('Login Gagal: ' + (res.error || 'Cek email/password'));
+                    }
+                }).login({ email, password });
+            };
+        }
+
+        function initDashboard() {
+            google.script.run.withSuccessHandler((event) => {
+                const container = document.getElementById('dashboardContent');
+                if (event && !event.error) {
+                    container.innerHTML = `
+                        <div class="bg-blue-600 rounded-2xl p-8 text-white shadow-lg">
+                            <p class="text-sm uppercase tracking-widest opacity-80 mb-2">Event Aktif</p>
+                            <h3 class="text-4xl font-bold mb-4">${event.nama}</h3>
+                            <div class="flex gap-6 text-sm">
+                                <span class="flex items-center gap-2"><span class="material-symbols-outlined">location_on</span> ${event.lokasi}</span>
+                                <span class="flex items-center gap-2"><span class="material-symbols-outlined">schedule</span> ${event.tanggal}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `<p class="text-gray-500 italic">Belum ada event hari ini.</p>`;
+                }
+            }).getEventAktif();
+        }
+
+        let html5QrCode;
+        async function startScanner() {
+            const btn = document.getElementById('btnStart');
+            btn.disabled = true;
+            btn.innerHTML = 'Menghubungkan Kamera...';
+
+            try {
+                if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    (text) => {
+                        alert('Scan Berhasil: ' + text);
+                        google.script.run.withSuccessHandler(() => {
+                            alert('Absensi Berhasil!');
+                        }).simpanAbsensi({ barcode: text });
+                    }
+                );
+                btn.innerHTML = 'Stop Scanner';
+                btn.onclick = stopScanner;
+                btn.disabled = false;
+            } catch (err) {
+                alert('Gagal buka kamera: ' + err);
+                btn.disabled = false;
+                btn.innerHTML = 'Mulai Scanner';
+            }
+        }
+
+        async function stopScanner() {
+            if (html5QrCode) await html5QrCode.stop();
+            const btn = document.getElementById('btnStart');
+            btn.innerHTML = 'Mulai Scanner';
+            btn.onclick = startScanner;
+        }
+
+        // Initialize
+        window.onload = () => {
+            const user = localStorage.getItem('userKKG');
+            if (!user) navigate('login');
+            else navigate('dashboard');
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Attendance List - KKG Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed": "#380d00",
+                      "on-surface-variant": "#444653",
+                      "on-surface": "#1a1b22",
+                      "outline": "#757684",
+                      "surface": "#fbf8ff",
+                      "surface-container-low": "#f4f2fc",
+                      "error": "#ba1a1a",
+                      "secondary": "#5d5f5f",
+                      "on-secondary-container": "#616363",
+                      "on-tertiary": "#ffffff",
+                      "surface-container": "#eeedf7",
+                      "surface-tint": "#3755c3",
+                      "on-tertiary-container": "#ffa583",
+                      "secondary-fixed": "#e2e2e2",
+                      "primary-container": "#1e40af",
+                      "on-background": "#1a1b22",
+                      "surface-container-high": "#e8e7f1",
+                      "on-secondary": "#ffffff",
+                      "secondary-fixed-dim": "#c6c6c7",
+                      "inverse-primary": "#b8c4ff",
+                      "on-secondary-fixed": "#1a1c1c",
+                      "surface-variant": "#e3e1eb",
+                      "background": "#fbf8ff",
+                      "on-primary": "#ffffff",
+                      "primary": "#00288e",
+                      "tertiary": "#611e00",
+                      "on-primary-container": "#a8b8ff",
+                      "primary-fixed": "#dde1ff",
+                      "outline-variant": "#c4c5d5",
+                      "tertiary-container": "#872d00",
+                      "primary-fixed-dim": "#b8c4ff",
+                      "surface-dim": "#dad9e3",
+                      "on-error": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "surface-container-highest": "#e3e1eb",
+                      "secondary-container": "#dfe0e0",
+                      "inverse-surface": "#2f3037",
+                      "on-primary-fixed": "#001453",
+                      "on-primary-fixed-variant": "#173bab",
+                      "inverse-on-surface": "#f1f0fa",
+                      "tertiary-fixed-dim": "#ffb59a",
+                      "on-tertiary-fixed-variant": "#802a00",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-fixed-variant": "#454747",
+                      "tertiary-fixed": "#ffdbce",
+                      "error-container": "#ffdad6",
+                      "surface-bright": "#fbf8ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "8px",
+                      "stack-lg": "24px",
+                      "gutter": "16px",
+                      "stack-sm": "4px",
+                      "container-padding": "24px",
+                      "stack-md": "12px"
+              },
+              "fontFamily": {
+                      "headline-xl": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "label-md": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface dark:bg-inverse-surface shadow-sm flex flex-col py-stack-lg z-50">
+<div class="px-container-padding mb-stack-lg">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">KKG Portal</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Teacher Working Group</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-base px-container-padding py-stack-md text-on-surface-variant dark:text-on-secondary-fixed-variant hover:bg-secondary-container dark:hover:bg-secondary-fixed-dim/20 transition-colors duration-200 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span class="font-body-md text-body-md">QR Scanner</span>
+</a>
+<!-- Active State: Attendance List -->
+<a class="flex items-center gap-base px-container-padding py-stack-md text-primary font-bold border-r-4 border-primary dark:text-primary-fixed dark:border-primary-fixed-dim bg-primary-container/10 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="font-body-md text-body-md">Attendance List</span>
+</a>
+<a class="flex items-center gap-base px-container-padding py-stack-md text-on-surface-variant dark:text-on-secondary-fixed-variant hover:bg-secondary-container dark:hover:bg-secondary-fixed-dim/20 transition-colors duration-200 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-body-md text-body-md">Teacher Directory</span>
+</a>
+<a class="flex items-center gap-base px-container-padding py-stack-md text-on-surface-variant dark:text-on-secondary-fixed-variant hover:bg-secondary-container dark:hover:bg-secondary-fixed-dim/20 transition-colors duration-200 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md text-body-md">Reports</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant pt-stack-md">
+<button class="mx-container-padding mb-stack-lg w-[calc(100%-48px)] bg-primary-container text-white py-stack-md rounded-lg font-label-md flex justify-center items-center gap-base hover:opacity-90 transition-opacity"><span class="material-symbols-outlined" data-icon="add">add</span> Catat Kehadiran</button>
+<a class="flex items-center gap-base px-container-padding py-stack-sm text-on-surface-variant dark:text-on-secondary-fixed-variant hover:bg-secondary-container transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Pengaturan</span>
+</a>
+<a class="flex items-center gap-base px-container-padding py-stack-sm text-on-surface-variant dark:text-on-secondary-fixed-variant hover:bg-secondary-container transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-label-md text-label-md">Keluar</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-64 h-16 bg-surface-container-lowest dark:bg-surface-dim border-b border-outline-variant dark:border-outline flex justify-between items-center px-container-padding z-40">
+<h2 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">Attendance Management System</h2>
+<div class="flex items-center gap-stack-lg">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container rounded-full border-none focus:ring-2 focus:ring-primary w-64 text-label-md" placeholder="Cari data..." type="text"/>
+</div>
+<div class="flex items-center gap-base">
+<button class="p-2 hover:bg-surface-container rounded-full transition-all text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 hover:bg-surface-container rounded-full transition-all text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-primary-container overflow-hidden border-2 border-white shadow-sm ml-base">
+<img alt="Teacher Profile Picture" class="w-full h-full object-cover" data-alt="A professional headshot of a teacher for a profile picture. The lighting is bright and clean, typical of a professional corporate directory. The teacher has a friendly expression, set against a soft, neutral studio background in a light-mode aesthetic that complements a modern blue-themed educational software." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7hSRpgOjrg-lVIIoC_E6G_yoPg2VRknQW-zVc0ZXLTxq6LzTGFDYs-twVLFZh1bF1br64OMYLN_QXp4z8nLo4OvhuEituNMUSx-PHYG64aCVtosNR8Bma6U7ur3F6EDaA-NXxkcOCkAQJQzVIlYHHauZGt6wYXjhs3jdvU7axUs1kY9hIk0dF87E38ob530YGHA94-Tk5NdvtSISpGupejNQz7McDPSTx8eM8anRLWj0QT-NdwaykvKCUBp0U6mo8_aj-4ogYqEMX"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-16 min-h-screen bg-background">
+<div class="p-container-padding max-w-[1200px] mx-auto">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-gutter mb-stack-lg">
+<div>
+<h3 class="font-headline-lg text-headline-lg text-primary mb-1">Daftar Kehadiran Guru</h3>
+<p class="text-on-surface-variant font-body-md">Monitoring kehadiran real-time Kelompok Kerja Guru (KKG) hari ini.</p>
+</div>
+<!-- Filters -->
+<div class="flex flex-wrap gap-base items-center">
+<div class="flex items-center bg-white border border-outline-variant rounded-lg px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary-fixed">
+<span class="material-symbols-outlined text-on-surface-variant mr-2" data-icon="calendar_today">calendar_today</span>
+<input class="border-none p-0 focus:ring-0 text-label-md bg-transparent" type="date" value="2023-10-27"/>
+</div>
+<button class="flex items-center gap-base bg-white border border-outline-variant rounded-lg px-4 py-2 text-label-md font-bold text-on-surface-variant hover:bg-surface-container transition-all shadow-sm">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+                        Filter Sekolah
+                    </button>
+<button class="bg-primary text-white rounded-lg px-6 py-2 font-bold text-label-md hover:bg-primary-container transition-all shadow-sm flex items-center gap-base">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                        Export PDF
+                    </button>
+</div>
+</div>
+<!-- Modern Data Table -->
+<div class="bg-white rounded-xl border border-outline-variant shadow-[0px_4px_12px_rgba(30,64,175,0.05)] overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full border-collapse text-left">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="px-gutter py-4 font-label-md text-on-surface-variant uppercase tracking-wider">Foto</th>
+<th class="px-gutter py-4 font-label-md text-on-surface-variant uppercase tracking-wider">Nama Guru</th>
+<th class="px-gutter py-4 font-label-md text-on-surface-variant uppercase tracking-wider">Sekolah</th>
+<th class="px-gutter py-4 font-label-md text-on-surface-variant uppercase tracking-wider text-center">Waktu Scan</th>
+<th class="px-gutter py-4 font-label-md text-on-surface-variant uppercase tracking-wider text-center">Status</th>
+<th class="px-gutter py-4 font-label-md text-on-surface-variant uppercase tracking-wider text-right">Aksi</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-neutral-50 transition-colors group">
+<td class="px-gutter py-4">
+<div class="w-12 h-12 rounded-lg overflow-hidden border border-outline-variant shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A portrait of a male teacher in professional attire, smiling warmly. The image is captured in a high-key setting with soft natural light coming from a large window. The background is a clean school office, featuring a blue-toned modern aesthetic with minimalist furniture, perfectly aligning with the professional and organized feel of the KKG portal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6zKf1XJLyXHyxaHtdPdb67zoqEM1tbR-yQPt0ojl8w0t587vUAmSFXKYpH1hDe1jPY1s4jRnTk5Gu1EPwMbGFtXiA3zy-cybv0u2shyo_mqZRSblyaEyFFcngx4C8-VUnqTmnRJwExgEQPv_pTwdqpz7d85KYtA0Vv35bkfqrV1c9LIBeJe3xBWzu90NlBlM5ZmRHCpnc40dsG3Bo0Ai6wZD1lEm4zCB_hoVhY3WV350B3jrzq8woQtULt_65ZrR3xQCtwn85JPs2"/>
+</div>
+</td>
+<td class="px-gutter py-4">
+<div class="font-bold text-on-surface font-body-md">Ahmad Subarjo, S.Pd.</div>
+<div class="text-on-surface-variant text-label-sm">NIP: 198205122010011005</div>
+</td>
+<td class="px-gutter py-4">
+<div class="text-on-surface font-label-md">SDN 01 Menteng</div>
+</td>
+<td class="px-gutter py-4 text-center">
+<div class="text-on-surface font-body-md font-medium">07:15:22</div>
+</td>
+<td class="px-gutter py-4 text-center">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 font-label-sm">
+<span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                                        Hadir
+                                    </span>
+</td>
+<td class="px-gutter py-4 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-neutral-50 transition-colors group">
+<td class="px-gutter py-4">
+<div class="w-12 h-12 rounded-lg overflow-hidden border border-outline-variant shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A professional portrait of a female teacher in a crisp white shirt, sitting in a bright and airy modern library. The soft daylight illuminates her cheerful expression and scholarly environment. The visual style is contemporary and minimalist, emphasizing authority and accessibility through a blue and neutral color palette that matches a professional corporate UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwm81edFt49RPRh5ewjkHJlLMGHJyVc1PjSqjBLoIlzNPJQyTMNTD61kGBBMcXXSx_QHcjyK4RFxD9DoQKz1BGh0gCDQkT-UM8-SOIZP4eCcG8FHlWe0WmmxYul3j3Jo26aXrf-vNvOzBMTxpLl6Dl80x_-4mJU3nu7oFzQEgNKjNplPTWte4yt7_YxqL1BmUiNq6F4jfDvL9bBZoheSe9EYqWpvKmvNGy2s2rL7zLZtc30IWIPpT1lLfjXqCYRtlEUfQX4M3NpVa6"/>
+</div>
+</td>
+<td class="px-gutter py-4">
+<div class="font-bold text-on-surface font-body-md">Siti Aminah, M.Pd.</div>
+<div class="text-on-surface-variant text-label-sm">NIP: 198501232014022003</div>
+</td>
+<td class="px-gutter py-4">
+<div class="text-on-surface font-label-md">SD Muhammadiyah 5</div>
+</td>
+<td class="px-gutter py-4 text-center">
+<div class="text-on-surface font-body-md font-medium">07:42:10</div>
+</td>
+<td class="px-gutter py-4 text-center">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-orange-100 text-orange-700 font-label-sm">
+<span class="w-2 h-2 rounded-full bg-orange-500 mr-2"></span>
+                                        Terlambat
+                                    </span>
+</td>
+<td class="px-gutter py-4 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-neutral-50 transition-colors group">
+<td class="px-gutter py-4">
+<div class="w-12 h-12 rounded-lg overflow-hidden border border-outline-variant shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A clean, studio-lit professional headshot of an educator. The subject is wearing a navy blue blazer, posing against a light gray background with subtle blue gradients. The lighting is balanced and professional, projecting an image of academic authority and digital efficiency. This minimalist and modern portrait style is consistent with high-end corporate dashboard designs." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyUqXIp_CZUByt6Iq-ATADedElY8OAH9RbXOY8BSK8t6PictgvNRKp8bFOZdKHEKg0C4Df-2BOiZjLVhyRklndUu8lYkJ6QkSjLsCRaM5dxnf8efvyq7yEC_kVX_g52vHCoAEmKTl-RkfOW4JC93so5K8TU8KEnl7fF0peV0xB9hcmV36p3ObB8yay5zglSh3Baid07xI8yQRXm0FILxVm2_gzU1tcMbDe1Ia0wQWwnj9NgmGbzJRUYtNiRzZwCEei22SgYxBDBxf6"/>
+</div>
+</td>
+<td class="px-gutter py-4">
+<div class="font-bold text-on-surface font-body-md">Budi Setiawan, S.Pd.</div>
+<div class="text-on-surface-variant text-label-sm">NIP: 197809302008011012</div>
+</td>
+<td class="px-gutter py-4">
+<div class="text-on-surface font-label-md">SDN 03 Gondangdia</div>
+</td>
+<td class="px-gutter py-4 text-center">
+<div class="text-on-surface font-body-md font-medium">07:05:55</div>
+</td>
+<td class="px-gutter py-4 text-center">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 font-label-sm">
+<span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                                        Hadir
+                                    </span>
+</td>
+<td class="px-gutter py-4 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-neutral-50 transition-colors group">
+<td class="px-gutter py-4">
+<div class="w-12 h-12 rounded-lg overflow-hidden border border-outline-variant shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a middle-aged teacher with a confident smile. The background is slightly blurred showing a modern classroom setting with subtle navy blue and white elements. The lighting is bright and even, creating a clean look for a digital directory. This image embodies professional efficiency and academic authority, using a disciplined corporate color scheme." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJ0FhP5OYF5UK0F0RC-OFhd9yOeDQ6XjVfHLQpM2bmYBAmSWcyYIswUpBII3IcP-2z1-UDC8wrI_mgG9lHk_8pPZMrcB60bpNObaRMAqqYoQJfIkRWTb3yjaVaXWJQlQD13XtSR3s_N3cSL2zZYW4yI6nQeFH1fhxMeyBoW1jQIhr2oKXNzF7mZAuHR--xnit-0N8p_ZT29150dcKtI3MaRUnunJ4xYtt0aZ-8tPHe0XpNlh12wL4BgooYW3Mo3vZxYYXspbNRmlPe"/>
+</div>
+</td>
+<td class="px-gutter py-4">
+<div class="font-bold text-on-surface font-body-md">Dewi Lestari, S.Pd.SD</div>
+<div class="text-on-surface-variant text-label-sm">NIP: 199011152019032014</div>
+</td>
+<td class="px-gutter py-4">
+<div class="text-on-surface font-label-md">SDN 05 Kebon Sirih</div>
+</td>
+<td class="px-gutter py-4 text-center">
+<div class="text-on-surface font-body-md font-medium">07:22:45</div>
+</td>
+<td class="px-gutter py-4 text-center">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 font-label-sm">
+<span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                                        Hadir
+                                    </span>
+</td>
+<td class="px-gutter py-4 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-between px-gutter py-4 bg-surface-container-lowest border-t border-outline-variant">
+<p class="text-label-md text-on-surface-variant">Menampilkan 1-4 dari 128 guru</p>
+<div class="flex gap-stack-sm">
+<button class="p-2 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="px-4 py-2 rounded-lg bg-primary text-white font-bold text-label-md">1</button>
+<button class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container font-bold text-label-md">2</button>
+<button class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container font-bold text-label-md">3</button>
+<button class="p-2 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Summary Stats (Bento Grid Style) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mt-stack-lg">
+<div class="bg-primary text-white p-container-padding rounded-xl shadow-sm">
+<p class="text-primary-fixed-dim text-label-md mb-2">Total Hadir</p>
+<div class="flex items-end justify-between">
+<h4 class="text-headline-lg font-bold">112</h4>
+<span class="material-symbols-outlined text-4xl opacity-50" data-icon="person_check">person_check</span>
+</div>
+</div>
+<div class="bg-white border border-outline-variant p-container-padding rounded-xl shadow-sm">
+<p class="text-on-surface-variant text-label-md mb-2">Terlambat</p>
+<div class="flex items-end justify-between">
+<h4 class="text-headline-lg font-bold text-on-surface">12</h4>
+<span class="material-symbols-outlined text-4xl text-orange-500 opacity-50" data-icon="schedule">schedule</span>
+</div>
+</div>
+<div class="bg-white border border-outline-variant p-container-padding rounded-xl shadow-sm">
+<p class="text-on-surface-variant text-label-md mb-2">Izin / Sakit</p>
+<div class="flex items-end justify-between">
+<h4 class="text-headline-lg font-bold text-on-surface">4</h4>
+<span class="material-symbols-outlined text-4xl text-blue-500 opacity-50" data-icon="event_busy">event_busy</span>
+</div>
+</div>
+<div class="bg-white border border-outline-variant p-container-padding rounded-xl shadow-sm">
+<p class="text-on-surface-variant text-label-md mb-2">Tanpa Keterangan</p>
+<div class="flex items-end justify-between">
+<h4 class="text-headline-lg font-bold text-on-surface">0</h4>
+<span class="material-symbols-outlined text-4xl text-error opacity-50" data-icon="person_off">person_off</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>
