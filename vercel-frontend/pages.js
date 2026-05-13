@@ -1,94 +1,122 @@
 const getSidebar = (active) => `
-    <aside class="w-64 bg-white border-r flex flex-col p-6 h-screen fixed left-0 top-0 z-50">
-        <div class="mb-8">
-            <h1 class="text-2xl font-bold text-blue-600">KKG Portal</h1>
-            <p class="text-xs text-gray-500 uppercase tracking-widest font-bold">Vercel Edition</p>
+    <aside class="h-screen w-64 fixed left-0 top-0 bg-white shadow-xl flex flex-col py-6 z-50 transition-all border-r border-gray-100">
+        <div class="px-6 mb-10">
+            <h1 class="text-2xl font-black text-blue-600 tracking-tight">KKG Portal</h1>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] -mt-1">Vercel Edition</p>
         </div>
-        <nav class="space-y-1 flex-1">
-            <button onclick="navigate('dashboard')" class="w-full flex items-center gap-3 p-3 ${active === 'dashboard' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-50'} rounded-xl transition-all font-semibold">
-                <span class="material-symbols-outlined">dashboard</span> Dashboard
+        
+        <nav class="flex-1 space-y-2 px-3">
+            <button onclick="navigate('dashboard')" class="w-full flex items-center gap-3 px-4 py-3 transition-all \${active === 'dashboard' ? 'text-blue-600 font-bold border-r-4 border-blue-600 bg-blue-50 rounded-l-xl' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-xl'}">
+                <span class="material-symbols-outlined text-[22px]">dashboard</span>
+                <span class="text-sm">Dashboard</span>
             </button>
-            <button onclick="navigate('scanner')" class="w-full flex items-center gap-3 p-3 ${active === 'scanner' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-50'} rounded-xl transition-all font-semibold">
-                <span class="material-symbols-outlined">qr_code_scanner</span> QR Scanner
+            <button onclick="navigate('scanner')" class="w-full flex items-center gap-3 px-4 py-3 transition-all \${active === 'scanner' ? 'text-blue-600 font-bold border-r-4 border-blue-600 bg-blue-50 rounded-l-xl' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-xl'}">
+                <span class="material-symbols-outlined text-[22px]">qr_code_scanner</span>
+                <span class="text-sm">QR Scanner</span>
             </button>
-            <button onclick="navigate('hadir')" class="w-full flex items-center gap-3 p-3 ${active === 'hadir' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-50'} rounded-xl transition-all font-semibold">
-                <span class="material-symbols-outlined">assignment</span> Daftar Hadir
+            <button onclick="navigate('hadir')" class="w-full flex items-center gap-3 px-4 py-3 transition-all \${active === 'hadir' ? 'text-blue-600 font-bold border-r-4 border-blue-600 bg-blue-50 rounded-l-xl' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-xl'}">
+                <span class="material-symbols-outlined text-[22px]">assignment</span>
+                <span class="text-sm">Daftar Hadir</span>
             </button>
-            <button onclick="navigate('guru')" class="w-full flex items-center gap-3 p-3 ${active === 'guru' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-50'} rounded-xl transition-all font-semibold">
-                <span class="material-symbols-outlined">groups</span> Data Guru
+            <button onclick="navigate('guru')" class="w-full flex items-center gap-3 px-4 py-3 transition-all \${active === 'guru' ? 'text-blue-600 font-bold border-r-4 border-blue-600 bg-blue-50 rounded-l-xl' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-xl'}">
+                <span class="material-symbols-outlined text-[22px]">groups</span>
+                <span class="text-sm">Data Guru</span>
             </button>
-            <button onclick="navigate('laporan')" class="w-full flex items-center gap-3 p-3 ${active === 'laporan' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-50'} rounded-xl transition-all font-semibold">
-                <span class="material-symbols-outlined">description</span> Laporan
+            <button onclick="navigate('laporan')" class="w-full flex items-center gap-3 px-4 py-3 transition-all \${active === 'laporan' ? 'text-blue-600 font-bold border-r-4 border-blue-600 bg-blue-50 rounded-l-xl' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-xl'}">
+                <span class="material-symbols-outlined text-[22px]">description</span>
+                <span class="text-sm">Laporan</span>
             </button>
         </nav>
-        <button onclick="logout()" class="flex items-center gap-3 p-3 text-red-600 hover:bg-red-50 rounded-xl transition-all font-bold mt-auto">
-            <span class="material-symbols-outlined">logout</span> Keluar
-        </button>
+        
+        <div class="mt-auto border-t border-gray-50 pt-4 px-3">
+            <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-all font-bold">
+                <span class="material-symbols-outlined text-[22px]">logout</span>
+                <span class="text-sm">Keluar Aplikasi</span>
+            </button>
+        </div>
     </aside>
 `;
 
 const PAGES = {
     login: `
-        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800 p-4">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-                <div class="text-center mb-8">
-                    <div class="w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <span class="material-symbols-outlined text-blue-600 text-4xl">school</span>
+        <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4 font-['Inter']">
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-10 border border-gray-100">
+                <div class="text-center mb-10">
+                    <div class="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-200">
+                        <span class="material-symbols-outlined text-white text-4xl">school</span>
                     </div>
-                    <h1 class="text-3xl font-bold text-gray-800">KKG Portal</h1>
-                    <p class="text-gray-500 text-xs font-bold uppercase tracking-widest text-blue-600">Vercel Edition</p>
+                    <h1 class="text-4xl font-black text-gray-900 tracking-tight">KKG Portal</h1>
+                    <p class="text-gray-400 font-medium mt-2">Sistem Absensi Digital KKG</p>
                 </div>
-                <form id="loginForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
-                        <input type="email" id="email" required class="w-full p-3 border-2 border-gray-100 rounded-xl focus:border-blue-500 outline-none transition-all">
+                <form id="loginForm" class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Email Administrator</label>
+                        <input type="email" id="email" required placeholder="admin@kkg.com" class="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-blue-500 focus:bg-white outline-none transition-all text-gray-700 font-semibold">
                     </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-                        <input type="password" id="password" required class="w-full p-3 border-2 border-gray-100 rounded-xl focus:border-blue-500 outline-none transition-all">
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Kata Sandi</label>
+                        <input type="password" id="password" required placeholder="••••••••" class="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-blue-500 focus:bg-white outline-none transition-all text-gray-700 font-semibold">
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">Masuk</button>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 mt-4 active:scale-[0.98]">MASUK SEKARANG</button>
                 </form>
             </div>
         </div>
     `,
     dashboard: `
-        <div class="flex">
+        <div class="flex font-['Inter']">
             \${getSidebar('dashboard')}
-            <main class="flex-1 ml-64 p-8 bg-gray-50 min-h-screen">
-                <header class="mb-8">
-                    <h2 class="text-3xl font-bold text-gray-800">Dashboard</h2>
-                    <p class="text-gray-500">Selamat datang di KKG Portal Vercel.</p>
+            <main class="flex-1 ml-64 p-10 bg-gray-50 min-h-screen">
+                <header class="mb-10">
+                    <h2 class="text-4xl font-black text-gray-900 tracking-tight">Dashboard</h2>
+                    <p class="text-gray-500 font-medium">Selamat datang kembali di pusat kendali KKG.</p>
                 </header>
-                <div id="dashboardContent" class="grid gap-6">
-                    <div class="animate-pulse bg-white h-48 rounded-2xl"></div>
+                
+                <div id="dashboardContent">
+                     <div class="animate-pulse flex flex-col gap-6">
+                         <div class="bg-gray-200 h-48 rounded-[2rem]"></div>
+                         <div class="grid grid-cols-3 gap-6">
+                             <div class="bg-gray-200 h-32 rounded-[2rem]"></div>
+                             <div class="bg-gray-200 h-32 rounded-[2rem]"></div>
+                             <div class="bg-gray-200 h-32 rounded-[2rem]"></div>
+                         </div>
+                     </div>
                 </div>
             </main>
         </div>
     `,
     scanner: `
-        <div class="flex">
+        <div class="flex font-['Inter']">
             \${getSidebar('scanner')}
-            <main class="flex-1 ml-64 p-8 bg-gray-50 min-h-screen">
-                <header class="mb-8">
-                    <h2 class="text-3xl font-bold text-gray-800">QR Scanner</h2>
-                    <p class="text-green-600 font-bold flex items-center gap-2">
-                        <span class="material-symbols-outlined">check_circle</span> Kamera 100% Aktif (Vercel)
-                    </p>
+            <main class="flex-1 ml-64 p-10 bg-gray-50 min-h-screen">
+                <header class="mb-10 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-4xl font-black text-gray-900 tracking-tight">QR Scanner</h2>
+                        <p class="text-green-600 font-bold flex items-center gap-2 mt-1 text-sm">
+                            <span class="material-symbols-outlined text-sm">verified</span> KAMERA AKTIF (VERCEL NATIVE)
+                        </p>
+                    </div>
                 </header>
-                <div class="max-w-2xl mx-auto w-full">
-                    <div id="reader" class="bg-black rounded-3xl overflow-hidden aspect-video shadow-2xl border-8 border-white"></div>
-                    <button id="btnStart" onclick="startScanner()" class="w-full mt-6 bg-blue-600 text-white py-4 rounded-2xl font-bold text-xl shadow-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3">
-                        <span class="material-symbols-outlined">videocam</span> Mulai Kamera
+                
+                <div class="max-w-3xl mx-auto">
+                    <div class="relative group">
+                        <div id="reader" class="bg-black rounded-[2.5rem] overflow-hidden aspect-[4/3] shadow-2xl border-[12px] border-white ring-1 ring-gray-100"></div>
+                        <div class="absolute inset-0 pointer-events-none border-[2px] border-blue-500/30 rounded-[2.5rem] animate-pulse"></div>
+                    </div>
+                    
+                    <button id="btnStart" onclick="startScanner()" class="w-full mt-10 bg-blue-600 text-white py-5 rounded-[2rem] font-black text-xl shadow-2xl shadow-blue-200 hover:bg-blue-700 transition-all flex items-center justify-center gap-4 active:scale-95">
+                        <span class="material-symbols-outlined text-3xl">videocam</span> MULAI SCANNER SEKARANG
                     </button>
-                    <div class="mt-8 p-6 bg-white rounded-2xl border-2 border-blue-100 shadow-sm">
-                         <div class="flex items-center gap-2 mb-4 text-blue-600">
-                             <span class="material-symbols-outlined font-bold">keyboard</span>
-                             <h3 class="font-bold uppercase tracking-tight">Input Manual</h3>
+
+                    <div class="mt-12 bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100">
+                         <div class="flex items-center gap-3 mb-6">
+                             <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                                 <span class="material-symbols-outlined text-blue-600 font-bold">keyboard</span>
+                             </div>
+                             <h3 class="font-black text-gray-800 tracking-tight">INPUT MANUAL (DARURAT)</h3>
                          </div>
-                         <div class="flex gap-2">
-                             <input type="text" id="manualInput" class="flex-1 p-3 rounded-xl border-2 border-gray-100 focus:border-blue-500 outline-none text-lg" placeholder="ID Guru / NIP...">
-                             <button onclick="processManual()" class="bg-gray-800 text-white px-8 rounded-xl font-bold">PROSES</button>
+                         <div class="flex gap-4">
+                             <input type="text" id="manualInput" class="flex-1 p-5 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-blue-500 focus:bg-white transition-all text-xl font-bold placeholder:text-gray-300" placeholder="Ketik ID Guru / Barcode...">
+                             <button onclick="processManual()" class="bg-gray-900 text-white px-10 rounded-2xl font-black hover:bg-black transition-all active:scale-95 shadow-lg">PROSES</button>
                          </div>
                     </div>
                 </div>
@@ -96,28 +124,32 @@ const PAGES = {
         </div>
     `,
     hadir: `
-        <div class="flex">
+        <div class="flex font-['Inter']">
             \${getSidebar('hadir')}
-            <main class="flex-1 ml-64 p-8 bg-gray-50 min-h-screen">
-                <header class="mb-8 flex justify-between items-end">
+            <main class="flex-1 ml-64 p-10 bg-gray-50 min-h-screen">
+                <header class="mb-10 flex justify-between items-end">
                     <div>
-                        <h2 class="text-3xl font-bold text-gray-800">Daftar Hadir</h2>
-                        <p class="text-gray-500">Log kehadiran guru hari ini.</p>
+                        <h2 class="text-4xl font-black text-gray-900 tracking-tight">Daftar Hadir</h2>
+                        <p class="text-gray-500 font-medium">Log kehadiran peserta KKG secara real-time.</p>
                     </div>
-                    <input type="date" id="dateFilter" onchange="initDaftarHadir()" class="p-2 border rounded-lg outline-none focus:border-blue-500">
+                    <div class="bg-white p-2 rounded-2xl shadow-sm border flex items-center gap-2">
+                        <span class="material-symbols-outlined text-gray-400 ml-2">calendar_month</span>
+                        <input type="date" id="dateFilter" onchange="initDaftarHadir()" class="p-3 bg-transparent outline-none font-bold text-gray-700">
+                    </div>
                 </header>
-                <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr class="text-left">
-                                <th class="p-4 font-bold text-gray-600">No</th>
-                                <th class="p-4 font-bold text-gray-600">Nama</th>
-                                <th class="p-4 font-bold text-gray-600">Sekolah</th>
-                                <th class="p-4 font-bold text-gray-600 text-right">Jam</th>
+                
+                <div class="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-gray-50/50">
+                                <th class="p-6 text-xs font-black text-gray-400 uppercase tracking-widest">No</th>
+                                <th class="p-6 text-xs font-black text-gray-400 uppercase tracking-widest">Informasi Peserta</th>
+                                <th class="p-6 text-xs font-black text-gray-400 uppercase tracking-widest">Instansi Sekolah</th>
+                                <th class="p-6 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Waktu Absen</th>
                             </tr>
                         </thead>
-                        <tbody id="hadirList" class="divide-y">
-                            <tr><td colspan="4" class="p-8 text-center text-gray-400">Memuat data...</td></tr>
+                        <tbody id="hadirList" class="divide-y divide-gray-50">
+                            <tr><td colspan="4" class="p-20 text-center text-gray-300 italic font-medium">Mengambil data dari server...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -125,39 +157,41 @@ const PAGES = {
         </div>
     `,
     guru: `
-        <div class="flex">
+        <div class="flex font-['Inter']">
             \${getSidebar('guru')}
-            <main class="flex-1 ml-64 p-8 bg-gray-50 min-h-screen">
-                <header class="mb-8">
-                    <h2 class="text-3xl font-bold text-gray-800">Data Guru</h2>
-                    <p class="text-gray-500">Manajemen semua guru yang terdaftar.</p>
+            <main class="flex-1 ml-64 p-10 bg-gray-50 min-h-screen">
+                <header class="mb-10">
+                    <h2 class="text-4xl font-black text-gray-900 tracking-tight">Data Guru</h2>
+                    <p class="text-gray-500 font-medium">Database lengkap anggota Teacher Working Group.</p>
                 </header>
-                <div class="bg-white rounded-2xl p-6 shadow-sm border mb-6">
-                    <div class="flex gap-4">
-                        <div class="flex-1 relative">
-                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-                            <input type="text" id="guruSearch" onkeyup="renderGuruList()" class="w-full pl-10 pr-4 py-3 border-2 border-gray-50 rounded-xl outline-none focus:border-blue-500" placeholder="Cari nama, NIP, atau sekolah...">
-                        </div>
+                
+                <div class="bg-white p-4 rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 mb-10">
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 text-3xl">search</span>
+                        <input type="text" id="guruSearch" onkeyup="renderGuruList()" class="w-full pl-16 pr-6 py-5 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-blue-500 focus:bg-white transition-all text-xl font-bold" placeholder="Cari nama guru, NIP, atau asal sekolah...">
                     </div>
                 </div>
-                <div id="guruContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <div id="guruContainer" class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-8">
                     <!-- Cards injected here -->
                 </div>
             </main>
         </div>
     `,
     laporan: `
-        <div class="flex">
+        <div class="flex font-['Inter']">
             \${getSidebar('laporan')}
-            <main class="flex-1 ml-64 p-8 bg-gray-50 min-h-screen">
-                <header class="mb-8">
-                    <h2 class="text-3xl font-bold text-gray-800">Laporan</h2>
-                    <p class="text-gray-500">Statistik dan data kehadiran lengkap.</p>
+            <main class="flex-1 ml-64 p-10 bg-gray-50 min-h-screen">
+                <header class="mb-10">
+                    <h2 class="text-4xl font-black text-gray-900 tracking-tight">Laporan</h2>
+                    <p class="text-gray-500 font-medium">Analisis dan ekspor data kehadiran.</p>
                 </header>
-                <div class="bg-white rounded-2xl p-12 text-center border shadow-sm">
-                    <span class="material-symbols-outlined text-6xl text-gray-200 mb-4">analytics</span>
-                    <h3 class="text-xl font-bold text-gray-800">Fitur Laporan Sedang Disiapkan</h3>
-                    <p class="text-gray-500">Menu ini akan tersedia di update berikutnya.</p>
+                <div class="bg-white rounded-[3rem] p-24 text-center border border-dashed border-gray-200 shadow-sm">
+                    <div class="w-32 h-32 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                        <span class="material-symbols-outlined text-6xl text-blue-200">analytics</span>
+                    </div>
+                    <h3 class="text-3xl font-black text-gray-800 mb-4 tracking-tight">Fitur Laporan Premium</h3>
+                    <p class="text-gray-400 font-medium max-w-md mx-auto">Menu ini sedang dalam tahap sinkronisasi data final dan akan segera tersedia untuk Anda.</p>
                 </div>
             </main>
         </div>
