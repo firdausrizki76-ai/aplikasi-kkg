@@ -17,9 +17,9 @@
 <body class="bg-gray-50 text-gray-800">
     <div id="app">
         <div class="h-screen flex items-center justify-center">
-            <div class="text-center">
+            <div class="text-center animate-pulse">
                 <div class="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading...</p>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Inisialisasi...</p>
             </div>
         </div>
     </div>
@@ -55,8 +55,9 @@
         };
 
         function navigate(page) {
-            const template = PAGES[page] || `<h1>404</h1>`;
-            document.getElementById('app').innerHTML = eval('`'+template+'`');
+            // PAGES[page] is now a function, not a string
+            const renderFn = PAGES[page] || (() => `<h1>404</h1>`);
+            document.getElementById('app').innerHTML = renderFn();
             
             if (page === 'login') initLogin();
             if (page === 'dashboard') initDashboard();
@@ -73,13 +74,13 @@
             form.onsubmit = (e) => {
                 e.preventDefault();
                 const btn = e.target.querySelector('button');
-                btn.disabled = true; btn.innerHTML = 'OTENTIKASI...';
+                btn.disabled = true; btn.innerHTML = 'Memproses...';
                 google.script.run.withSuccessHandler((res) => {
                     if (res && res.success) {
                         localStorage.setItem('userKKG', JSON.stringify(res));
                         navigate('dashboard');
                     } else {
-                        alert('Login Gagal: ' + (res?.error || 'Email/Password Salah'));
+                        alert('Gagal: ' + (res?.error || 'Email/Password Salah'));
                         btn.disabled = false; btn.innerHTML = 'MASUK';
                     }
                 }).login({ email: document.getElementById('email').value, password: document.getElementById('password').value });
@@ -96,7 +97,7 @@
                     html = `
                         <div class="bg-blue-600 rounded-2xl p-6 lg:p-8 text-white shadow-lg relative overflow-hidden">
                             <span class="material-symbols-outlined absolute right-[-10px] top-[-10px] text-[120px] opacity-10">event_available</span>
-                            <p class="text-[10px] uppercase tracking-widest font-bold opacity-70 mb-2">Agenda Aktif Hari Ini</p>
+                            <p class="text-[10px] uppercase tracking-widest font-bold opacity-70 mb-2">Agenda Hari Ini</p>
                             <h3 class="text-xl lg:text-2xl font-bold mb-4 leading-tight">${event.nama}</h3>
                             <div class="flex flex-col lg:flex-row gap-2 lg:gap-4 text-[10px] lg:text-xs font-semibold">
                                 <span class="bg-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-sm">location_on</span> ${event.lokasi}</span>
@@ -105,27 +106,27 @@
                         </div>
                     `;
                 } else {
-                    html = `<div class="bg-white p-8 rounded-2xl border-2 border-dashed text-center text-gray-400 text-sm">Tidak ada agenda aktif.</div>`;
+                    html = `<div class="bg-white p-10 rounded-2xl border-2 border-dashed text-center text-gray-400 text-sm font-medium">Belum ada agenda aktif hari ini.</div>`;
                 }
 
                 google.script.run.withSuccessHandler((stats) => {
                     container.innerHTML = html + `
                         <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                             <div class="bg-white p-4 lg:p-5 rounded-2xl border shadow-sm">
-                                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined text-lg lg:text-xl">person_check</span></div>
+                                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined text-lg">person_check</span></div>
                                 <p class="text-xl lg:text-2xl font-bold text-gray-800">${stats.hadir || 0}</p>
-                                <p class="text-[9px] lg:text-[10px] font-bold text-gray-400 uppercase tracking-tight">Hadir</p>
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Hadir</p>
                             </div>
                             <div class="bg-white p-4 lg:p-5 rounded-2xl border shadow-sm">
-                                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined text-lg lg:text-xl">groups</span></div>
+                                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined text-lg">groups</span></div>
                                 <p class="text-xl lg:text-2xl font-bold text-gray-800">${stats.totalGuru || 0}</p>
-                                <p class="text-[9px] lg:text-[10px] font-bold text-gray-400 uppercase tracking-tight">Total Anggota</p>
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Total Guru</p>
                             </div>
                             <div class="col-span-2 lg:col-span-1 bg-white p-4 lg:p-5 rounded-2xl border shadow-sm flex lg:block items-center justify-between">
-                                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center lg:mb-3"><span class="material-symbols-outlined text-lg lg:text-xl">verified_user</span></div>
+                                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center lg:mb-3"><span class="material-symbols-outlined text-lg">verified_user</span></div>
                                 <div class="text-right lg:text-left">
                                     <p class="text-xl lg:text-2xl font-bold text-gray-800">${stats.persentase || 0}%</p>
-                                    <p class="text-[9px] lg:text-[10px] font-bold text-gray-400 uppercase tracking-tight">Presensi</p>
+                                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Kehadiran</p>
                                 </div>
                             </div>
                         </div>
@@ -142,7 +143,7 @@
                 if (!list) return;
                 if (data && data.length > 0) {
                     list.innerHTML = data.map((item, i) => `
-                        <tr class="hover:bg-gray-50/50">
+                        <tr class="hover:bg-gray-50/50 transition-all">
                             <td class="p-4 text-gray-400 font-bold">${i+1}</td>
                             <td class="p-4">
                                 <p class="font-bold text-gray-800">${item.nama}</p>
@@ -168,7 +169,7 @@
             const filtered = allGuru.filter(g => g.nama.toLowerCase().includes(kw) || g.sekolah.toLowerCase().includes(kw) || g.nip.includes(kw));
             if (filtered.length > 0) {
                 container.innerHTML = filtered.map(g => `
-                    <div class="bg-white p-4 lg:p-5 rounded-2xl border shadow-sm">
+                    <div class="bg-white p-4 lg:p-5 rounded-2xl border shadow-sm hover:border-blue-200 transition-all">
                         <div class="flex items-center gap-3 mb-4">
                             <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold">${g.nama.charAt(0)}</div>
                             <div>
@@ -192,7 +193,7 @@
                 if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
                 await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 250, height: 250 } }, (text) => {
                     html5QrCode.stop();
-                    alert('Berhasil: ' + text);
+                    alert('Presensi Berhasil: ' + text);
                     google.script.run.withSuccessHandler(() => { navigate('hadir'); }).simpanAbsensi({ barcode: text });
                 });
                 btn.innerHTML = 'Stop Scanner'; btn.classList.replace('bg-blue-600', 'bg-red-600'); btn.onclick = stopScanner; btn.disabled = false;
@@ -208,7 +209,7 @@
         function processManual() {
             const input = document.getElementById('manualInput');
             if (!input.value) return;
-            google.script.run.withSuccessHandler(() => { alert('Berhasil!'); navigate('hadir'); }).simpanAbsensi({ barcode: input.value });
+            google.script.run.withSuccessHandler(() => { alert('Presensi Berhasil!'); navigate('hadir'); }).simpanAbsensi({ barcode: input.value });
         }
 
         window.onload = () => {
