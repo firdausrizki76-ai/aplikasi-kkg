@@ -22,9 +22,9 @@
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbytBf7EJUkxO7I-fC4Odx0PQ4HnEd6qiaXNr_0TV6wczseqJM-d7Ctc1mzXBBVKzN4/exec';
+        const API_URL = '/api/proxy';
 
-        // Bridge to Google Apps Script
+        // Bridge to Google Apps Script (via Vercel Proxy)
         const google = {
             script: {
                 run: {
@@ -38,18 +38,11 @@
                     },
                     _call: async function(action, args) {
                         try {
-                            const url = new URL(API_URL);
+                            const url = new URL(window.location.origin + API_URL);
                             url.searchParams.append('action', action);
                             
-                            // For simplicity in this early version, we use GET with params for everything
-                            // or POST for more complex data. GAS doGet handles params well.
-                            if (args.length > 0) {
-                                // Add parameters from first argument if it's an object
-                                if (typeof args[0] === 'object') {
-                                    Object.keys(args[0]).forEach(key => url.searchParams.append(key, args[0][key]));
-                                } else {
-                                    url.searchParams.append('param1', args[0]);
-                                }
+                            if (args.length > 0 && typeof args[0] === 'object') {
+                                Object.keys(args[0]).forEach(key => url.searchParams.append(key, args[0][key]));
                             }
 
                             const response = await fetch(url);
@@ -60,6 +53,7 @@
                             if (this._failure) this._failure(err);
                         }
                     },
+
                     login: function(...args) { this._call('login', args); },
                     getEventAktif: function(...args) { this._call('getEventAktif', args); },
                     getDashboardStats: function(...args) { this._call('getDashboardStats', args); },
