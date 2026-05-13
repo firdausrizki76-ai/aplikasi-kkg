@@ -352,13 +352,20 @@ function cariGuru(nip) {
 }
 
 function tambahGuru(parsedData) {
+  const lock = LockService.getScriptLock();
   try {
+    lock.waitLock(15000); // Tunggu maksimal 15 detik jika sedang ada proses lain
+    
+    // PROTEKSI GANDA: Cek lagi sebelum tambah
+    const eksis = cariGuru(parsedData.nip);
+    if (eksis) return eksis.id;
+
     const ss = getSS();
     const sheet = ss.getSheetByName(SHEET_GURU);
     const lastRow = sheet.getLastRow();
     
-    // Generate ID baru
-    const newId = 'GURU-' + String(lastRow).padStart(4, '0');
+    // Generate ID unik berdasarkan timestamp + baris untuk hindari duplikat
+    const newId = 'GURU-' + Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'ssSSS');
     const now = new Date();
     
     sheet.appendRow([
@@ -373,11 +380,12 @@ function tambahGuru(parsedData) {
     ]);
     
     tuliLog('TAMBAH_GURU', parsedData.nip, 'Guru baru ditambahkan: ' + parsedData.nama);
-    
     return newId;
   } catch (e) {
     Logger.log('Error tambahGuru: ' + e.toString());
     return null;
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -559,15 +567,24 @@ function cekSudahAbsen(nip, tanggal) {
     const ss = getSS();
     const sheet = ss.getSheetByName(SHEET_ABSENSI);
     const data = sheet.getDataRange().getValues();
+    const tz = ss.getSpreadsheetTimeZone();
     
-    const checkDate = new Date(tanggal);
-    checkDate.setHours(0, 0, 0, 0);
+    // Bandingkan tanggal sebagai string agar aman dari timezone/jam
+    const checkDateStr = Utilities.formatDate(new Date(tanggal), tz, 'yyyy-MM-dd');
     
     for (let i = 1; i < data.length; i++) {
-      const absenDate = new Date(data[i][6]);
-      absenDate.setHours(0, 0, 0, 0);
+      if (!data[i][6]) continue;
       
-      if (data[i][3] === nip && absenDate.getTime() === checkDate.getTime()) {
+      let absenDate;
+      try {
+        absenDate = new Date(data[i][6]);
+        // Jika pembacaan date ngaco (1899), coba paksa format
+        if (absenDate.getFullYear() < 2000) continue;
+      } catch(e) { continue; }
+
+      const absenDateStr = Utilities.formatDate(absenDate, tz, 'yyyy-MM-dd');
+      
+      if (String(data[i][3]) === String(nip) && absenDateStr === checkDateStr) {
         return {
           sudahAbsen: true,
           jam: data[i][7],
@@ -584,14 +601,24 @@ function cekSudahAbsen(nip, tanggal) {
 }
 
 function catatAbsensi(guruId, eventId, parsedData) {
+  const lock = LockService.getScriptLock();
   try {
+    lock.waitLock(15000); // Tunggu antrean maksimal 15 detik
+    
     const ss = getSS();
+    const tz = ss.getSpreadsheetTimeZone();
+    
+    // PROTEKSI GANDA: Cek lagi sebelum append
+    const cek = cekSudahAbsen(parsedData.nip, new Date());
+    if (cek.sudahAbsen) return cek.jam;
+
     const sheet = ss.getSheetByName(SHEET_ABSENSI);
     const lastRow = sheet.getLastRow();
     
-    const newId = 'ABS-' + String(lastRow).padStart(4, '0');
+    // ID Unik pakai timestamp detik + millis agar tidak kembar meski masuk barengan
     const now = new Date();
-    const jamHadir = Utilities.formatDate(now, Session.getScriptTimeZone(), 'HH:mm:ss');
+    const newId = 'ABS-' + Utilities.formatDate(now, tz, 'ssSSS');
+    const jamHadir = Utilities.formatDate(now, tz, 'HH:mm:ss');
     
     sheet.appendRow([
       newId,
@@ -609,6 +636,8 @@ function catatAbsensi(guruId, eventId, parsedData) {
   } catch (e) {
     Logger.log('Error catatAbsensi: ' + e.toString());
     return null;
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -647,12 +676,11 @@ function prosesScan(rawBarcode, eventId) {
     
     if (cekAbsen.sudahAbsen) {
       return {
-        success: true,
+        success: false,
         sudahAbsen: true,
-        isNewGuru: false,
         guru: guru,
         jam: cekAbsen.jam,
-        message: 'Guru sudah melakukan absensi pada pukul ' + cekAbsen.jam
+        message: 'GAGAL: ' + parsed.nama + ' sudah absen pada pukul ' + cekAbsen.jam
       };
     }
     
