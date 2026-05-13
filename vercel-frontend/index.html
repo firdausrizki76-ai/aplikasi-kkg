@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KKG Portal - Vercel Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
@@ -11,14 +11,15 @@
     <script src="pages.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
     <div id="app">
         <div class="h-screen flex items-center justify-center">
             <div class="text-center">
-                <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Inisialisasi...</p>
+                <div class="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading...</p>
             </div>
         </div>
     </div>
@@ -55,8 +56,7 @@
 
         function navigate(page) {
             const template = PAGES[page] || `<h1>404</h1>`;
-            // Simple injection to avoid eval issues
-            document.getElementById('app').innerHTML = template;
+            document.getElementById('app').innerHTML = eval('`'+template+'`');
             
             if (page === 'login') initLogin();
             if (page === 'dashboard') initDashboard();
@@ -73,14 +73,14 @@
             form.onsubmit = (e) => {
                 e.preventDefault();
                 const btn = e.target.querySelector('button');
-                btn.disabled = true; btn.innerHTML = 'Otentikasi...';
+                btn.disabled = true; btn.innerHTML = 'OTENTIKASI...';
                 google.script.run.withSuccessHandler((res) => {
                     if (res && res.success) {
                         localStorage.setItem('userKKG', JSON.stringify(res));
                         navigate('dashboard');
                     } else {
-                        alert('Gagal: ' + (res?.error || 'Email/Password Salah'));
-                        btn.disabled = false; btn.innerHTML = 'Masuk';
+                        alert('Login Gagal: ' + (res?.error || 'Email/Password Salah'));
+                        btn.disabled = false; btn.innerHTML = 'MASUK';
                     }
                 }).login({ email: document.getElementById('email').value, password: document.getElementById('password').value });
             };
@@ -94,37 +94,39 @@
                 let html = '';
                 if (event && !event.error) {
                     html = `
-                        <div class="bg-blue-600 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
-                            <span class="material-symbols-outlined absolute right-[-20px] top-[-20px] text-[150px] opacity-10">event_available</span>
-                            <p class="text-[10px] uppercase tracking-widest font-bold opacity-70 mb-2">Agenda Aktif</p>
-                            <h3 class="text-2xl font-bold mb-4">${event.nama}</h3>
-                            <div class="flex gap-4 text-xs font-semibold">
+                        <div class="bg-blue-600 rounded-2xl p-6 lg:p-8 text-white shadow-lg relative overflow-hidden">
+                            <span class="material-symbols-outlined absolute right-[-10px] top-[-10px] text-[120px] opacity-10">event_available</span>
+                            <p class="text-[10px] uppercase tracking-widest font-bold opacity-70 mb-2">Agenda Aktif Hari Ini</p>
+                            <h3 class="text-xl lg:text-2xl font-bold mb-4 leading-tight">${event.nama}</h3>
+                            <div class="flex flex-col lg:flex-row gap-2 lg:gap-4 text-[10px] lg:text-xs font-semibold">
                                 <span class="bg-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-sm">location_on</span> ${event.lokasi}</span>
                                 <span class="bg-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-sm">calendar_today</span> ${event.tanggal}</span>
                             </div>
                         </div>
                     `;
                 } else {
-                    html = `<div class="bg-white p-8 rounded-2xl border-2 border-dashed text-center text-gray-400 text-sm">Belum ada agenda aktif.</div>`;
+                    html = `<div class="bg-white p-8 rounded-2xl border-2 border-dashed text-center text-gray-400 text-sm">Tidak ada agenda aktif.</div>`;
                 }
 
                 google.script.run.withSuccessHandler((stats) => {
                     container.innerHTML = html + `
-                        <div class="grid grid-cols-3 gap-4">
-                            <div class="bg-white p-5 rounded-2xl border shadow-sm">
-                                <div class="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined">person_check</span></div>
-                                <p class="text-2xl font-bold text-gray-800">${stats.hadir || 0}</p>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Hadir Hari Ini</p>
+                        <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+                            <div class="bg-white p-4 lg:p-5 rounded-2xl border shadow-sm">
+                                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined text-lg lg:text-xl">person_check</span></div>
+                                <p class="text-xl lg:text-2xl font-bold text-gray-800">${stats.hadir || 0}</p>
+                                <p class="text-[9px] lg:text-[10px] font-bold text-gray-400 uppercase tracking-tight">Hadir</p>
                             </div>
-                            <div class="bg-white p-5 rounded-2xl border shadow-sm">
-                                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined">groups</span></div>
-                                <p class="text-2xl font-bold text-gray-800">${stats.totalGuru || 0}</p>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Total Anggota</p>
+                            <div class="bg-white p-4 lg:p-5 rounded-2xl border shadow-sm">
+                                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined text-lg lg:text-xl">groups</span></div>
+                                <p class="text-xl lg:text-2xl font-bold text-gray-800">${stats.totalGuru || 0}</p>
+                                <p class="text-[9px] lg:text-[10px] font-bold text-gray-400 uppercase tracking-tight">Total Anggota</p>
                             </div>
-                            <div class="bg-white p-5 rounded-2xl border shadow-sm">
-                                <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined">verified_user</span></div>
-                                <p class="text-2xl font-bold text-gray-800">${stats.persentase || 0}%</p>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Kehadiran</p>
+                            <div class="col-span-2 lg:col-span-1 bg-white p-4 lg:p-5 rounded-2xl border shadow-sm flex lg:block items-center justify-between">
+                                <div class="w-8 h-8 lg:w-10 lg:h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center lg:mb-3"><span class="material-symbols-outlined text-lg lg:text-xl">verified_user</span></div>
+                                <div class="text-right lg:text-left">
+                                    <p class="text-xl lg:text-2xl font-bold text-gray-800">${stats.persentase || 0}%</p>
+                                    <p class="text-[9px] lg:text-[10px] font-bold text-gray-400 uppercase tracking-tight">Presensi</p>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -134,6 +136,7 @@
 
         function initDaftarHadir() {
             const date = document.getElementById('dateFilter');
+            if (!date.value) date.value = new Date().toISOString().split('T')[0];
             google.script.run.withSuccessHandler((data) => {
                 const list = document.getElementById('hadirList');
                 if (!list) return;
@@ -149,7 +152,7 @@
                             <td class="p-4 text-right font-bold text-blue-600 font-mono">${item.jam}</td>
                         </tr>
                     `).join('');
-                } else { list.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-gray-300 italic text-sm">Tidak ada data presensi.</td></tr>`; }
+                } else { list.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-gray-300 italic text-sm">Belum ada data presensi.</td></tr>`; }
             }).getDaftarHadirByTanggal({ tanggal: date.value });
         }
 
@@ -165,31 +168,31 @@
             const filtered = allGuru.filter(g => g.nama.toLowerCase().includes(kw) || g.sekolah.toLowerCase().includes(kw) || g.nip.includes(kw));
             if (filtered.length > 0) {
                 container.innerHTML = filtered.map(g => `
-                    <div class="bg-white p-5 rounded-2xl border shadow-sm">
+                    <div class="bg-white p-4 lg:p-5 rounded-2xl border shadow-sm">
                         <div class="flex items-center gap-3 mb-4">
                             <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold">${g.nama.charAt(0)}</div>
                             <div>
-                                <h4 class="font-bold text-gray-800 text-sm leading-tight">${g.nama}</h4>
-                                <p class="text-[10px] text-gray-400">${g.nip}</p>
+                                <h4 class="font-bold text-gray-800 text-xs lg:text-sm leading-tight">${g.nama}</h4>
+                                <p class="text-[10px] text-gray-400 font-medium">${g.nip}</p>
                             </div>
                         </div>
-                        <div class="text-[11px] text-gray-500 space-y-1 border-t pt-3">
+                        <div class="text-[10px] lg:text-[11px] text-gray-500 space-y-1 border-t pt-3">
                             <p class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">school</span> ${g.sekolah}</p>
                         </div>
                     </div>
                 `).join('');
-            } else { container.innerHTML = `<div class="col-span-full p-10 text-center text-gray-300">Data tidak ditemukan.</div>`; }
+            } else { container.innerHTML = `<div class="col-span-full p-10 text-center text-gray-300 text-sm">Data tidak ditemukan.</div>`; }
         }
 
         let html5QrCode;
         async function startScanner() {
             const btn = document.getElementById('btnStart');
-            btn.disabled = true; btn.innerHTML = 'Menghubungkan...';
+            btn.disabled = true; btn.innerHTML = 'Membuka...';
             try {
                 if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
                 await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 250, height: 250 } }, (text) => {
                     html5QrCode.stop();
-                    alert('Presensi Berhasil: ' + text);
+                    alert('Berhasil: ' + text);
                     google.script.run.withSuccessHandler(() => { navigate('hadir'); }).simpanAbsensi({ barcode: text });
                 });
                 btn.innerHTML = 'Stop Scanner'; btn.classList.replace('bg-blue-600', 'bg-red-600'); btn.onclick = stopScanner; btn.disabled = false;
