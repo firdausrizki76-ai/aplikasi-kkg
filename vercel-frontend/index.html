@@ -15,7 +15,7 @@
         <!-- Content will be injected here -->
         <div class="h-screen flex items-center justify-center">
             <div class="text-center">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <p class="text-gray-600">Menyiapkan Aplikasi...</p>
             </div>
         </div>
@@ -53,13 +53,12 @@
                             if (this._failure) this._failure(err);
                         }
                     },
-
                     login: function(...args) { this._call('login', args); },
                     getEventAktif: function(...args) { this._call('getEventAktif', args); },
                     getDashboardStats: function(...args) { this._call('getDashboardStats', args); },
                     getListGuru: function(...args) { this._call('getListGuru', args); },
+                    getDaftarHadirByTanggal: function(...args) { this._call('getDaftarHadirByTanggal', args); },
                     simpanAbsensi: function(...args) { this._call('simpanAbsensi', args); },
-                    // Add other functions as needed...
                 }
             }
         };
@@ -67,10 +66,14 @@
         // Navigation logic
         function navigate(page) {
             console.log('Navigating to:', page);
-            document.getElementById('app').innerHTML = PAGES[page] || `<h1>404</h1>`;
+            const template = PAGES[page] || `<h1>404</h1>`;
+            // Evaluate template literal
+            document.getElementById('app').innerHTML = eval('`'+template+'`');
             
             if (page === 'login') initLogin();
             if (page === 'dashboard') initDashboard();
+            if (page === 'hadir') initDaftarHadir();
+            if (page === 'guru') initDataGuru();
         }
 
         function logout() {
@@ -79,17 +82,19 @@
         }
 
         function initLogin() {
-            document.getElementById('loginForm').onsubmit = (e) => {
+            const form = document.getElementById('loginForm');
+            if (!form) return;
+            form.onsubmit = (e) => {
                 e.preventDefault();
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 
                 google.script.run.withSuccessHandler((res) => {
-                    if (res.success) {
+                    if (res && res.success) {
                         localStorage.setItem('userKKG', JSON.stringify(res));
                         navigate('dashboard');
                     } else {
-                        alert('Login Gagal: ' + (res.error || 'Cek email/password'));
+                        alert('Login Gagal: ' + (res ? (res.error || 'Cek email/password') : 'Internal Error'));
                     }
                 }).login({ email, password });
             };
@@ -98,26 +103,99 @@
         function initDashboard() {
             google.script.run.withSuccessHandler((event) => {
                 const container = document.getElementById('dashboardContent');
+                if (!container) return;
                 if (event && !event.error) {
                     container.innerHTML = `
-                        <div class="bg-blue-600 rounded-2xl p-8 text-white shadow-lg">
-                            <p class="text-sm uppercase tracking-widest opacity-80 mb-2">Event Aktif</p>
-                            <h3 class="text-4xl font-bold mb-4">${event.nama}</h3>
-                            <div class="flex gap-6 text-sm">
-                                <span class="flex items-center gap-2"><span class="material-symbols-outlined">location_on</span> ${event.lokasi}</span>
-                                <span class="flex items-center gap-2"><span class="material-symbols-outlined">schedule</span> ${event.tanggal}</span>
+                        <div class="bg-blue-600 rounded-3xl p-10 text-white shadow-2xl relative overflow-hidden">
+                            <div class="absolute right-0 top-0 opacity-10 translate-x-1/4 -translate-y-1/4">
+                                <span class="material-symbols-outlined text-[200px]">event_available</span>
+                            </div>
+                            <p class="text-sm uppercase tracking-widest opacity-80 mb-4 font-bold">Event Aktif Hari Ini</p>
+                            <h3 class="text-5xl font-black mb-6 leading-tight">\${event.nama}</h3>
+                            <div class="flex gap-8 text-lg font-medium">
+                                <span class="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl"><span class="material-symbols-outlined">location_on</span> \${event.lokasi}</span>
+                                <span class="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl"><span class="material-symbols-outlined">calendar_today</span> \${event.tanggal}</span>
                             </div>
                         </div>
                     `;
                 } else {
-                    container.innerHTML = `<p class="text-gray-500 italic">Belum ada event hari ini.</p>`;
+                    container.innerHTML = `<div class="bg-white p-12 rounded-3xl border-2 border-dashed border-gray-200 text-center text-gray-400 italic">Belum ada event aktif hari ini.</div>`;
                 }
             }).getEventAktif();
+        }
+
+        function initDaftarHadir() {
+            const dateInput = document.getElementById('dateFilter');
+            if (!dateInput) return;
+            if (!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
+
+            google.script.run.withSuccessHandler((data) => {
+                const list = document.getElementById('hadirList');
+                if (!list) return;
+                if (data && data.length > 0) {
+                    list.innerHTML = data.map((item, i) => `
+                        <tr class="hover:bg-gray-50 transition-all">
+                            <td class="p-4 font-bold text-gray-400">\${i+1}</td>
+                            <td class="p-4">
+                                <p class="font-bold text-gray-800">\${item.nama}</p>
+                                <p class="text-xs text-gray-500">\${item.nip}</p>
+                            </td>
+                            <td class="p-4 text-gray-600 font-medium">\${item.sekolah}</td>
+                            <td class="p-4 text-right font-mono font-bold text-blue-600">\${item.jam}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    list.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-gray-400 italic">Belum ada yang hadir pada tanggal ini.</td></tr>`;
+                }
+            }).getDaftarHadirByTanggal({ tanggal: dateInput.value });
+        }
+
+        let allGuru = [];
+        function initDataGuru() {
+            google.script.run.withSuccessHandler((data) => {
+                allGuru = data || [];
+                renderGuruList();
+            }).getListGuru();
+        }
+
+        function renderGuruList() {
+            const keyword = (document.getElementById('guruSearch')?.value || '').toLowerCase();
+            const container = document.getElementById('guruContainer');
+            if (!container) return;
+            
+            const filtered = allGuru.filter(g => 
+                g.nama.toLowerCase().includes(keyword) || 
+                g.sekolah.toLowerCase().includes(keyword) ||
+                (g.nip && g.nip.includes(keyword))
+            );
+
+            if (filtered.length > 0) {
+                container.innerHTML = filtered.map(g => `
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border hover:shadow-md transition-all">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 font-bold text-xl">
+                                \${g.nama.charAt(0)}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">\${g.nama}</h4>
+                                <p class="text-xs text-gray-500 font-mono">\${g.nip}</p>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600 space-y-1 border-t pt-4">
+                            <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">school</span> \${g.sekolah}</p>
+                            <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">location_city</span> \${g.kota || '-'}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `<div class="col-span-full p-12 text-center text-gray-400">Data guru tidak ditemukan.</div>`;
+            }
         }
 
         let html5QrCode;
         async function startScanner() {
             const btn = document.getElementById('btnStart');
+            if (!btn) return;
             btn.disabled = true;
             btn.innerHTML = 'Menghubungkan Kamera...';
 
@@ -127,13 +205,16 @@
                     { facingMode: "environment" },
                     { fps: 10, qrbox: { width: 250, height: 250 } },
                     (text) => {
+                        html5QrCode.stop(); // Stop scanner after success
                         alert('Scan Berhasil: ' + text);
                         google.script.run.withSuccessHandler(() => {
-                            alert('Absensi Berhasil!');
+                            alert('Absensi Berhasil Dicatat!');
+                            navigate('hadir');
                         }).simpanAbsensi({ barcode: text });
                     }
                 );
                 btn.innerHTML = 'Stop Scanner';
+                btn.classList.replace('bg-blue-600', 'bg-red-600');
                 btn.onclick = stopScanner;
                 btn.disabled = false;
             } catch (err) {
@@ -146,8 +227,20 @@
         async function stopScanner() {
             if (html5QrCode) await html5QrCode.stop();
             const btn = document.getElementById('btnStart');
-            btn.innerHTML = 'Mulai Scanner';
-            btn.onclick = startScanner;
+            if (btn) {
+                btn.innerHTML = 'Mulai Kamera';
+                btn.classList.replace('bg-red-600', 'bg-blue-600');
+                btn.onclick = startScanner;
+            }
+        }
+
+        function processManual() {
+            const input = document.getElementById('manualInput');
+            if (!input || !input.value) return;
+            google.script.run.withSuccessHandler(() => {
+                alert('Absensi Berhasil Dicatat!');
+                navigate('hadir');
+            }).simpanAbsensi({ barcode: input.value });
         }
 
         // Initialize
