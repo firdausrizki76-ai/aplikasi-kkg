@@ -137,7 +137,10 @@ function handleAction(action, params) {
     case 'getDaftarHadirByEvent': return getDaftarHadirByEvent(params.eventId);
     case 'simpanGuru': return simpanGuru(params);
     case 'buatEvent': return buatEvent(params);
-    case 'simpanAbsensi': return simpanAbsensi(params.barcode, params.eventId);
+    case 'simpanAbsensi': 
+      const activeEvent = getEventAktif();
+      const eventId = params.eventId || (activeEvent ? activeEvent.id : 'EVT-001');
+      return prosesScan(params.barcode, eventId);
     default: return { error: 'Action not found: ' + action };
   }
 }
