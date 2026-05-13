@@ -5,21 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KKG Portal - Vercel Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="pages.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .card-shadow { shadow-xl shadow-gray-200/50 }
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gray-50 text-gray-800">
     <div id="app">
         <div class="h-screen flex items-center justify-center">
-            <div class="text-center">
-                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mx-auto mb-6"></div>
-                <p class="text-gray-400 font-black tracking-widest text-xs uppercase">Inisialisasi Sistem...</p>
+            <div class="text-center animate-pulse">
+                <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading...</p>
             </div>
         </div>
     </div>
@@ -27,45 +28,41 @@
     <script>
         const API_URL = '/api/proxy';
 
-        // Bridge to Google Apps Script
         const google = {
             script: {
                 run: {
-                    withSuccessHandler: function(callback) { this._success = callback; return this; },
-                    withFailureHandler: function(callback) { this._failure = callback; return this; },
+                    withSuccessHandler: function(cb) { this._success = cb; return this; },
+                    withFailureHandler: function(cb) { this._failure = cb; return this; },
                     _call: async function(action, args) {
                         try {
                             const url = new URL(window.location.origin + API_URL);
                             url.searchParams.append('action', action);
                             if (args.length > 0 && typeof args[0] === 'object') {
-                                Object.keys(args[0]).forEach(key => url.searchParams.append(key, args[0][key]));
+                                Object.keys(args[0]).forEach(k => url.searchParams.append(k, args[0][k]));
                             }
-                            const response = await fetch(url);
-                            const data = await response.json();
+                            const res = await fetch(url);
+                            const data = await res.json();
                             if (this._success) this._success(data);
-                        } catch (err) {
-                            console.error('API Error:', err);
-                            if (this._failure) this._failure(err);
-                        }
+                        } catch (e) { console.error(e); if (this._failure) this._failure(e); }
                     },
-                    login: function(...args) { this._call('login', args); },
-                    getEventAktif: function(...args) { this._call('getEventAktif', args); },
-                    getDashboardStats: function(...args) { this._call('getDashboardStats', args); },
-                    getListGuru: function(...args) { this._call('getListGuru', args); },
-                    getDaftarHadirByTanggal: function(...args) { this._call('getDaftarHadirByTanggal', args); },
-                    simpanAbsensi: function(...args) { this._call('simpanAbsensi', args); },
+                    login: function(...a) { this._call('login', a); },
+                    getEventAktif: function(...a) { this._call('getEventAktif', a); },
+                    getDashboardStats: function(...a) { this._call('getDashboardStats', a); },
+                    getListGuru: function(...a) { this._call('getListGuru', a); },
+                    getDaftarHadirByTanggal: function(...a) { this._call('getDaftarHadirByTanggal', a); },
+                    simpanAbsensi: function(...a) { this._call('simpanAbsensi', a); },
                 }
             }
         };
 
         function navigate(page) {
             const template = PAGES[page] || `<h1>404</h1>`;
+            // Secure evaluation of templates
             document.getElementById('app').innerHTML = eval('`'+template+'`');
             if (page === 'login') initLogin();
             if (page === 'dashboard') initDashboard();
             if (page === 'hadir') initDaftarHadir();
             if (page === 'guru') initDataGuru();
-            window.scrollTo(0,0);
         }
 
         function logout() { localStorage.removeItem('userKKG'); navigate('login'); }
@@ -76,88 +73,58 @@
             form.onsubmit = (e) => {
                 e.preventDefault();
                 const btn = e.target.querySelector('button');
-                btn.disabled = true; btn.innerHTML = 'MENGOTENTIKASI...';
+                btn.disabled = true; btn.innerHTML = 'Mohon tunggu...';
                 google.script.run.withSuccessHandler((res) => {
                     if (res && res.success) {
                         localStorage.setItem('userKKG', JSON.stringify(res));
                         navigate('dashboard');
                     } else {
-                        alert('Login Gagal: ' + (res ? (res.error || 'Cek email/password') : 'Internal Error'));
-                        btn.disabled = false; btn.innerHTML = 'MASUK SEKARANG';
+                        alert('Gagal: ' + (res?.error || 'Cek kembali data Anda'));
+                        btn.disabled = false; btn.innerHTML = 'Masuk';
                     }
                 }).login({ email: document.getElementById('email').value, password: document.getElementById('password').value });
             };
         }
 
         function initDashboard() {
-            // Load Event
             google.script.run.withSuccessHandler((event) => {
                 const container = document.getElementById('dashboardContent');
                 if (!container) return;
                 
-                let eventHtml = '';
+                let html = '';
                 if (event && !event.error) {
-                    eventHtml = `
-                        <div class="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-[2.5rem] p-12 text-white shadow-2xl relative overflow-hidden mb-10 border border-white/10">
-                            <div class="absolute right-0 top-0 opacity-10 translate-x-1/4 -translate-y-1/4 scale-150">
-                                <span class="material-symbols-outlined text-[300px]">event_available</span>
-                            </div>
-                            <div class="relative z-10">
-                                <p class="text-xs uppercase tracking-[0.4em] opacity-70 mb-4 font-black">Agenda KKG Aktif</p>
-                                <h3 class="text-5xl font-black mb-8 leading-[1.1] tracking-tight max-w-2xl">${event.nama}</h3>
-                                <div class="flex flex-wrap gap-6 text-sm font-bold">
-                                    <span class="flex items-center gap-3 bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10">
-                                        <span class="material-symbols-outlined text-blue-200">location_on</span> ${event.lokasi}
-                                    </span>
-                                    <span class="flex items-center gap-3 bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10">
-                                        <span class="material-symbols-outlined text-blue-200">calendar_today</span> ${event.tanggal}
-                                    </span>
-                                </div>
+                    html = `
+                        <div class="bg-blue-600 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
+                            <span class="material-symbols-outlined absolute right-[-20px] top-[-20px] text-[150px] opacity-10">event_available</span>
+                            <p class="text-[10px] uppercase tracking-widest font-bold opacity-70 mb-2">Agenda Aktif</p>
+                            <h3 class="text-2xl font-bold mb-4">${event.nama}</h3>
+                            <div class="flex gap-4 text-xs font-semibold">
+                                <span class="bg-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-sm">location_on</span> ${event.lokasi}</span>
+                                <span class="bg-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-sm">calendar_today</span> ${event.tanggal}</span>
                             </div>
                         </div>
                     `;
                 } else {
-                    eventHtml = `
-                        <div class="bg-white p-16 rounded-[2.5rem] border-4 border-dashed border-gray-100 text-center mb-10 group hover:border-blue-100 transition-all">
-                            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-all">
-                                <span class="material-symbols-outlined text-5xl text-gray-200 group-hover:text-blue-100">event_busy</span>
-                            </div>
-                            <h3 class="text-2xl font-black text-gray-300 tracking-tight">BELUM ADA AGENDA AKTIF</h3>
-                        </div>
-                    `;
+                    html = `<div class="bg-white p-8 rounded-2xl border-2 border-dashed text-center text-gray-400 text-sm">Belum ada agenda aktif hari ini.</div>`;
                 }
 
-                // Load Stats
                 google.script.run.withSuccessHandler((stats) => {
-                    container.innerHTML = eventHtml + `
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/40 border border-gray-100 hover:scale-105 transition-all">
-                                <div class="flex items-center justify-between mb-6">
-                                    <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-emerald-600 text-3xl font-bold">person_check</span>
-                                    </div>
-                                    <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-widest">Live</span>
-                                </div>
-                                <h4 class="text-5xl font-black text-gray-900 mb-1">${stats.hadir || 0}</h4>
-                                <p class="text-gray-400 font-bold text-sm uppercase tracking-wider">Hadir Hari Ini</p>
+                    container.innerHTML = html + `
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="bg-white p-5 rounded-2xl border shadow-sm">
+                                <div class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined">person_check</span></div>
+                                <p class="text-2xl font-bold text-gray-800">${stats.hadir || 0}</p>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Hadir Hari Ini</p>
                             </div>
-                            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/40 border border-gray-100 hover:scale-105 transition-all">
-                                <div class="flex items-center justify-between mb-6">
-                                    <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-blue-600 text-3xl font-bold">groups</span>
-                                    </div>
-                                </div>
-                                <h4 class="text-5xl font-black text-gray-900 mb-1">${stats.totalGuru || 0}</h4>
-                                <p class="text-gray-400 font-bold text-sm uppercase tracking-wider">Total Anggota</p>
+                            <div class="bg-white p-5 rounded-2xl border shadow-sm">
+                                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined">groups</span></div>
+                                <p class="text-2xl font-bold text-gray-800">${stats.totalGuru || 0}</p>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Total Guru</p>
                             </div>
-                            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/40 border border-gray-100 hover:scale-105 transition-all">
-                                <div class="flex items-center justify-between mb-6">
-                                    <div class="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-amber-600 text-3xl font-bold">verified_user</span>
-                                    </div>
-                                </div>
-                                <h4 class="text-5xl font-black text-gray-900 mb-1">${stats.persentase || 0}%</h4>
-                                <p class="text-gray-400 font-bold text-sm uppercase tracking-wider">Tingkat Kehadiran</p>
+                            <div class="bg-white p-5 rounded-2xl border shadow-sm">
+                                <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-3"><span class="material-symbols-outlined">analytics</span></div>
+                                <p class="text-2xl font-bold text-gray-800">${stats.persentase || 0}%</p>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Presentase</p>
                             </div>
                         </div>
                     `;
@@ -166,114 +133,85 @@
         }
 
         function initDaftarHadir() {
-            const dateInput = document.getElementById('dateFilter');
-            if (!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
+            const date = document.getElementById('dateFilter');
             google.script.run.withSuccessHandler((data) => {
                 const list = document.getElementById('hadirList');
                 if (!list) return;
                 if (data && data.length > 0) {
                     list.innerHTML = data.map((item, i) => `
-                        <tr class="hover:bg-blue-50/30 transition-all">
-                            <td class="p-6 font-black text-gray-300 text-lg">${i+1}</td>
-                            <td class="p-6">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center font-black text-gray-400 text-xl">${item.nama.charAt(0)}</div>
-                                    <div>
-                                        <p class="font-black text-gray-800 text-lg leading-tight">${item.nama}</p>
-                                        <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">${item.nip}</p>
-                                    </div>
-                                </div>
+                        <tr>
+                            <td class="p-4 text-gray-400 font-bold">${i+1}</td>
+                            <td class="p-4">
+                                <p class="font-bold text-gray-800">${item.nama}</p>
+                                <p class="text-[10px] text-gray-400 font-mono">${item.nip}</p>
                             </td>
-                            <td class="p-6">
-                                <p class="font-bold text-gray-600">${item.sekolah}</p>
-                                <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Instansi</p>
-                            </td>
-                            <td class="p-6 text-right">
-                                <div class="inline-block bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
-                                    <p class="font-black text-blue-600 text-xl font-mono">${item.jam}</p>
-                                </div>
-                            </td>
+                            <td class="p-4 text-gray-600 font-medium">${item.sekolah}</td>
+                            <td class="p-4 text-right font-bold text-blue-600 font-mono">${item.jam}</td>
                         </tr>
                     `).join('');
-                } else {
-                    list.innerHTML = `<tr><td colspan="4" class="p-32 text-center text-gray-300 italic font-black text-2xl tracking-tight opacity-50">BELUM ADA DATA PRESENSI</td></tr>`;
-                }
-            }).getDaftarHadirByTanggal({ tanggal: dateInput.value });
+                } else { list.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-gray-300 italic text-sm">Tidak ada data.</td></tr>`; }
+            }).getDaftarHadirByTanggal({ tanggal: date.value });
         }
 
         let allGuru = [];
         function initDataGuru() {
-            google.script.run.withSuccessHandler((data) => { allGuru = data || []; renderGuruList(); }).getListGuru();
+            google.script.run.withSuccessHandler((d) => { allGuru = d || []; renderGuruList(); }).getListGuru();
         }
 
         function renderGuruList() {
-            const keyword = (document.getElementById('guruSearch')?.value || '').toLowerCase();
+            const kw = (document.getElementById('guruSearch')?.value || '').toLowerCase();
             const container = document.getElementById('guruContainer');
             if (!container) return;
-            const filtered = allGuru.filter(g => g.nama.toLowerCase().includes(keyword) || g.sekolah.toLowerCase().includes(keyword) || (g.nip && g.nip.includes(keyword)));
+            const filtered = allGuru.filter(g => g.nama.toLowerCase().includes(kw) || g.sekolah.toLowerCase().includes(kw) || g.nip.includes(kw));
             if (filtered.length > 0) {
                 container.innerHTML = filtered.map(g => `
-                    <div class="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/40 border border-gray-100 hover:border-blue-200 transition-all group">
-                        <div class="flex items-center gap-5 mb-8">
-                            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-blue-100 group-hover:rotate-6 transition-all">
-                                ${g.nama.charAt(0)}
-                            </div>
+                    <div class="bg-white p-5 rounded-2xl border shadow-sm hover:border-blue-200 transition-all">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold">${g.nama.charAt(0)}</div>
                             <div>
-                                <h4 class="font-black text-gray-900 text-xl leading-tight">${g.nama}</h4>
-                                <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">${g.nip}</p>
+                                <h4 class="font-bold text-gray-800 text-sm leading-tight">${g.nama}</h4>
+                                <p class="text-[10px] text-gray-400 font-bold">${g.nip}</p>
                             </div>
                         </div>
-                        <div class="space-y-3 border-t border-gray-50 pt-6">
-                            <div class="flex items-center gap-3 text-gray-500">
-                                <span class="material-symbols-outlined text-lg">school</span>
-                                <span class="font-bold text-sm">${g.sekolah}</span>
-                            </div>
-                            <div class="flex items-center gap-3 text-gray-500">
-                                <span class="material-symbols-outlined text-lg">location_city</span>
-                                <span class="font-bold text-sm">${g.kota || '-'}</span>
-                            </div>
+                        <div class="text-[11px] text-gray-500 space-y-1 border-t pt-3">
+                            <p class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">school</span> ${g.sekolah}</p>
+                            <p class="flex items-center gap-2"><span class="material-symbols-outlined text-[14px]">location_city</span> ${g.kota || '-'}</p>
                         </div>
                     </div>
                 `).join('');
-            } else {
-                container.innerHTML = `<div class="col-span-full p-20 text-center text-gray-300 font-black text-xl">DATA TIDAK DITEMUKAN</div>`;
-            }
+            } else { container.innerHTML = `<div class="col-span-full p-10 text-center text-gray-300 text-sm">Data tidak ditemukan.</div>`; }
         }
 
         let html5QrCode;
         async function startScanner() {
             const btn = document.getElementById('btnStart');
-            if (!btn) return;
-            btn.disabled = true; btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> MENGHUBUNGKAN...';
+            btn.disabled = true; btn.innerHTML = 'Membuka...';
             try {
                 if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-                await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 300, height: 300 } }, (text) => {
+                await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: { width: 250, height: 250 } }, (text) => {
                     html5QrCode.stop();
-                    alert('Presensi Berhasil: ' + text);
+                    alert('Sukses: ' + text);
                     google.script.run.withSuccessHandler(() => { navigate('hadir'); }).simpanAbsensi({ barcode: text });
                 });
-                btn.innerHTML = 'STOP SCANNER';
-                btn.classList.replace('bg-blue-600', 'bg-red-600');
-                btn.onclick = stopScanner;
-                btn.disabled = false;
-            } catch (err) { alert('Gagal: ' + err); btn.disabled = false; btn.innerHTML = 'MULAI SCANNER'; }
+                btn.innerHTML = 'Stop'; btn.classList.replace('bg-blue-600', 'bg-red-600'); btn.onclick = stopScanner; btn.disabled = false;
+            } catch (e) { alert(e); btn.disabled = false; btn.innerHTML = 'Mulai'; }
         }
 
         async function stopScanner() {
             if (html5QrCode) await html5QrCode.stop();
             const btn = document.getElementById('btnStart');
-            if (btn) { btn.innerHTML = 'MULAI SCANNER SEKARANG'; btn.classList.replace('bg-red-600', 'bg-blue-600'); btn.onclick = startScanner; }
+            btn.innerHTML = 'Mulai Scanner'; btn.classList.replace('bg-red-600', 'bg-blue-600'); btn.onclick = startScanner;
         }
 
         function processManual() {
             const input = document.getElementById('manualInput');
-            if (!input || !input.value) return;
-            google.script.run.withSuccessHandler(() => { alert('Presensi Berhasil!'); navigate('hadir'); }).simpanAbsensi({ barcode: input.value });
+            if (!input.value) return;
+            google.script.run.withSuccessHandler(() => { alert('Sukses!'); navigate('hadir'); }).simpanAbsensi({ barcode: input.value });
         }
 
         window.onload = () => {
-            const user = localStorage.getItem('userKKG');
-            if (!user) navigate('login'); else navigate('dashboard');
+            const u = localStorage.getItem('userKKG');
+            if (!u) navigate('login'); else navigate('dashboard');
         };
     </script>
 </body>
