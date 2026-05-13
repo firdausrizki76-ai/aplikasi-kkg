@@ -1,4 +1,4 @@
-// Sidebar Function
+// Sidebar Function - Clean version
 const getSidebarHTML = (active) => {
     const menus = [
         { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
@@ -24,7 +24,7 @@ const getSidebarHTML = (active) => {
 
     return `
         <!-- Desktop Sidebar -->
-        <aside class="hidden lg:flex h-screen w-64 fixed left-0 top-0 bg-white border-r border-gray-100 flex-col py-6 z-50">
+        <aside class="hidden lg:flex h-screen w-64 fixed left-0 top-0 bg-white border-r border-gray-100 flex flex-col py-6 z-50">
             <div class="px-6 mb-8">
                 <h1 class="text-xl font-bold text-blue-600">KKG Portal</h1>
                 <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Vercel Edition</p>
