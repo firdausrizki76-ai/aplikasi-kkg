@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     }
 
     const { action, ...params } = req.query;
-    const API_URL = 'https://script.google.com/macros/s/AKfycbytBf7EJUkxO7I-fC4Odx0PQ4HnEd6qiaXNr_0TV6wczseqJM-d7Ctc1mzXBBVKzN4/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycby838yDg60Ji37kpP9DkGDYFN0uBCMh6dfPebKQkQncvmTR0Fn8pn5Dmmo6FXitWZc/exec';
     
     try {
         const url = new URL(API_URL);

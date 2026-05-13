@@ -3,7 +3,7 @@
 // ============================================
 
 // CONSTANTS
-const SPREADSHEET_ID = ''; // Isi jika script standalone (bukan dari Extensions > Apps Script)
+const SPREADSHEET_ID = '1SoYy2Bp41S51GyCqnwj1pzD51ueNNorX6hcanBf9v-Y'; // Isi jika script standalone (bukan dari Extensions > Apps Script)
 const SHEET_GURU = 'GURU';
 const SHEET_ABSENSI = 'ABSENSI';
 const SHEET_EVENT = 'EVENT_KKG';
