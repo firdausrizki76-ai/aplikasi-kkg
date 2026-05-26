@@ -129,6 +129,15 @@ const PAGES = {
                     </p>
                 </header>
                 <div class="max-w-xl mx-auto">
+                    <!-- Scanner Mode Toggle -->
+                    <div class="flex bg-gray-100 p-1.5 rounded-xl mb-6">
+                        <button id="modeMasuk" onclick="setScannerMode('masuk')" class="flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all bg-white text-blue-600 shadow-sm border border-gray-100">
+                            <span class="material-symbols-outlined text-lg">login</span> Absen Masuk
+                        </button>
+                        <button id="modePulang" onclick="setScannerMode('pulang')" class="flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all text-gray-500 hover:text-gray-700">
+                            <span class="material-symbols-outlined text-lg">logout</span> Absen Pulang
+                        </button>
+                    </div>
                     <div id="reader" class="bg-black rounded-2xl overflow-hidden aspect-video shadow-lg mb-6 border-4 border-white"></div>
                     <button id="btnStart" onclick="startScanner()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95">Mulai Scanner</button>
                     <div class="mt-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -156,7 +165,7 @@ const PAGES = {
                 <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
                     <table class="w-full text-left text-sm min-w-[500px]">
                         <thead class="bg-gray-50 text-gray-400 font-bold uppercase text-[10px] tracking-wider">
-                            <tr><th class="p-4">No</th><th class="p-4">Peserta</th><th class="p-4">Sekolah</th><th class="p-4 text-right">Jam</th></tr>
+                            <tr><th class="p-4">No</th><th class="p-4">Peserta</th><th class="p-4">Sekolah</th><th class="p-4 text-center">Masuk</th><th class="p-4 text-right">Pulang</th></tr>
                         </thead>
                         <tbody id="hadirList" class="divide-y divide-gray-50"></tbody>
                     </table>
@@ -211,10 +220,10 @@ const PAGES = {
                 <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
                     <table id="laporanTable" class="w-full text-left text-sm min-w-[500px]">
                         <thead class="bg-gray-50 text-gray-400 font-bold uppercase text-[10px] tracking-wider">
-                            <tr><th class="p-4">No</th><th class="p-4">Nama Peserta</th><th class="p-4">NIP</th><th class="p-4">Sekolah</th><th class="p-4 text-right">Jam Hadir</th></tr>
+                            <tr><th class="p-4">No</th><th class="p-4">Nama Peserta</th><th class="p-4">NIP</th><th class="p-4">Sekolah</th><th class="p-4 text-center">Masuk</th><th class="p-4 text-right">Pulang</th></tr>
                         </thead>
                         <tbody id="laporanList" class="divide-y divide-gray-50">
-                            <tr><td colspan="5" class="p-12 text-center text-gray-300 italic text-sm">Pilih event untuk melihat data.</td></tr>
+                            <tr><td colspan="6" class="p-12 text-center text-gray-300 italic text-sm">Pilih event untuk melihat data.</td></tr>
                         </tbody>
                     </table>
                 </div>

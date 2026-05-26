@@ -130,13 +130,14 @@
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Nama Guru</th>
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">NIP</th>
                             <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Sekolah</th>
-                            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">Jam Hadir</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">Jam Masuk</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">Jam Pulang</th>
                             <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                                 <span class="material-symbols-outlined text-4xl mb-2">hourglass_empty</span>
                                 <p>Memuat data...</p>
                             </td>
@@ -235,7 +236,7 @@
             if (data.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                             <span class="material-symbols-outlined text-4xl mb-2">inbox</span>
                             <p>Tidak ada data kehadiran</p>
                         </td>
@@ -252,7 +253,8 @@
                     </td>
                     <td class="px-6 py-4 text-gray-600">${item.nip}</td>
                     <td class="px-6 py-4 text-gray-600">${item.sekolah}</td>
-                    <td class="px-6 py-4 text-center font-semibold text-gray-800">${item.jam}</td>
+                    <td class="px-6 py-4 text-center font-semibold text-gray-800 font-mono">${item.jam}</td>
+                    <td class="px-6 py-4 text-center font-semibold text-amber-600 font-mono">${item.jamPulang || '-'}</td>
                     <td class="px-6 py-4 text-center">
                         <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full ${getStatusClass(item.status)}">
                             ${item.status}

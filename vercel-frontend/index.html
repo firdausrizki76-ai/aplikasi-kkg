@@ -88,11 +88,37 @@
             setTimeout(() => { toast.classList.remove('active'); }, 3000);
         }
 
+        let scannerMode = 'masuk';
+        function setScannerMode(mode) {
+            scannerMode = mode;
+            const btnMasuk = document.getElementById('modeMasuk');
+            const btnPulang = document.getElementById('modePulang');
+            const btnStart = document.getElementById('btnStart');
+            if (!btnMasuk || !btnPulang) return;
+            
+            if (mode === 'masuk') {
+                btnMasuk.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all bg-white text-blue-600 shadow-sm border border-gray-100";
+                btnPulang.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all text-gray-500 hover:text-gray-700";
+                if (btnStart) {
+                    btnStart.className = "w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95";
+                    if (!isScanning) btnStart.innerHTML = 'Mulai Scanner';
+                }
+            } else {
+                btnMasuk.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all text-gray-500 hover:text-gray-700";
+                btnPulang.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all bg-white text-amber-600 shadow-sm border border-gray-100";
+                if (btnStart) {
+                    btnStart.className = "w-full bg-amber-600 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95";
+                    if (!isScanning) btnStart.innerHTML = 'Mulai Scanner';
+                }
+            }
+        }
+
         function navigate(page) {
             const renderFn = PAGES[page] || (() => `<h1>404</h1>`);
             document.getElementById('app').innerHTML = renderFn();
             if (page === 'login') initLogin();
             if (page === 'dashboard') initDashboard();
+            if (page === 'scanner') setScannerMode(scannerMode);
             if (page === 'hadir') initDaftarHadir();
             if (page === 'guru') initDataGuru();
             if (page === 'laporan') initLaporan();
@@ -188,14 +214,23 @@
             }
 
             const list = document.getElementById('hadirList');
-            list.innerHTML = `<tr><td colspan="4" class="p-12 text-center"><div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div><p class="text-xs text-gray-400">Menyinkronkan data...</p></td></tr>`;
+            list.innerHTML = `<tr><td colspan="5" class="p-12 text-center"><div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div><p class="text-xs text-gray-400">Menyinkronkan data...</p></td></tr>`;
             
             google.script.run.withSuccessHandler((data) => {
                 if (data && data.length > 0) {
                     list.innerHTML = data.map((item, i) => `
-                        <tr class="hover:bg-gray-50/50 transition-all"><td class="p-4 text-gray-400 font-bold">${i+1}</td><td class="p-4"><p class="font-bold text-gray-800">${item.nama}</p><p class="text-[10px] text-gray-400">${item.nip}</p></td><td class="p-4 text-gray-600">${item.sekolah}</td><td class="p-4 text-right font-bold text-blue-600 font-mono">${item.jam}</td></tr>
+                        <tr class="hover:bg-gray-50/50 transition-all">
+                            <td class="p-4 text-gray-400 font-bold">${i+1}</td>
+                            <td class="p-4">
+                                <p class="font-bold text-gray-800">${item.nama}</p>
+                                <p class="text-[10px] text-gray-400">${item.nip}</p>
+                            </td>
+                            <td class="p-4 text-gray-600">${item.sekolah}</td>
+                            <td class="p-4 text-center font-bold text-blue-600 font-mono">${item.jam}</td>
+                            <td class="p-4 text-right font-bold text-amber-600 font-mono">${item.jamPulang || '-'}</td>
+                        </tr>
                     `).join('');
-                } else { list.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-gray-300 italic text-sm">Tidak ada data untuk tanggal ${date.value}.</td></tr>`; }
+                } else { list.innerHTML = `<tr><td colspan="5" class="p-12 text-center text-gray-300 italic text-sm">Tidak ada data untuk tanggal ${date.value}.</td></tr>`; }
             }).getDaftarHadirByTanggal({ tanggal: date.value });
         }
 
@@ -218,16 +253,23 @@
             const eventId = document.getElementById('eventSelect').value;
             if (!eventId) return;
             const list = document.getElementById('laporanList');
-            list.innerHTML = `<tr><td colspan="5" class="p-12 text-center"><div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div><p class="text-xs text-gray-400">Memuat data...</p></td></tr>`;
+            list.innerHTML = `<tr><td colspan="6" class="p-12 text-center"><div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div><p class="text-xs text-gray-400">Memuat data...</p></td></tr>`;
             
             google.script.run.withSuccessHandler((data) => {
                 currentLaporan = data || [];
                 if (data && data.length > 0) {
                     list.innerHTML = data.map((item, i) => `
-                        <tr class="hover:bg-gray-50/50 transition-all"><td class="p-4 text-gray-400 font-bold">${i+1}</td><td class="p-4 font-bold text-gray-800">${item.nama}</td><td class="p-4 text-gray-500 font-mono text-xs">${item.nip}</td><td class="p-4 text-gray-600">${item.sekolah}</td><td class="p-4 text-right font-bold text-blue-600 font-mono">${item.jam}</td></tr>
+                        <tr class="hover:bg-gray-50/50 transition-all">
+                            <td class="p-4 text-gray-400 font-bold">${i+1}</td>
+                            <td class="p-4 font-bold text-gray-800">${item.nama}</td>
+                            <td class="p-4 text-gray-500 font-mono text-xs">${item.nip}</td>
+                            <td class="p-4 text-gray-600">${item.sekolah}</td>
+                            <td class="p-4 text-center font-bold text-blue-600 font-mono">${item.jam}</td>
+                            <td class="p-4 text-right font-bold text-amber-600 font-mono">${item.jamPulang || '-'}</td>
+                        </tr>
                     `).join('');
                 } else {
-                    list.innerHTML = `<tr><td colspan="5" class="p-12 text-center text-gray-300 italic text-sm">Tidak ada peserta yang hadir di event ini.</td></tr>`;
+                    list.innerHTML = `<tr><td colspan="6" class="p-12 text-center text-gray-300 italic text-sm">Tidak ada peserta yang hadir di event ini.</td></tr>`;
                 }
             }).getLaporanByEvent({ eventId: eventId });
         }
@@ -241,11 +283,11 @@
                 ["LAPORAN KEHADIRAN KKG"],
                 ["Agenda:", eventName],
                 [""],
-                ["NO", "NAMA PESERTA", "NIP", "ASAL SEKOLAH", "JAM HADIR"]
+                ["NO", "NAMA PESERTA", "NIP", "ASAL SEKOLAH", "JAM MASUK", "JAM PULANG"]
             ];
             
             currentLaporan.forEach((item, i) => {
-                wsData.push([i+1, item.nama, item.nip, item.sekolah, item.jam]);
+                wsData.push([i+1, item.nama, item.nip, item.sekolah, item.jam, item.jamPulang || '-']);
             });
             
             const wb = XLSX.utils.book_new();
@@ -267,8 +309,8 @@
             doc.setTextColor(100);
             doc.text(`Agenda: ${eventName}`, 14, 28);
             
-            const head = [['NO', 'NAMA PESERTA', 'NIP', 'SEKOLAH', 'JAM']];
-            const body = currentLaporan.map((item, i) => [i+1, item.nama, item.nip, item.sekolah, item.jam]);
+            const head = [['NO', 'NAMA PESERTA', 'NIP', 'SEKOLAH', 'MASUK', 'PULANG']];
+            const body = currentLaporan.map((item, i) => [i+1, item.nama, item.nip, item.sekolah, item.jam, item.jamPulang || '-']);
             
             doc.autoTable({
                 startY: 35,
@@ -313,8 +355,15 @@
                 
                 await html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
                 isScanning = true;
-                btn.innerHTML = 'STOP SCANNER'; btn.classList.replace('bg-blue-600', 'bg-red-600'); btn.onclick = stopScanner; btn.disabled = false;
-            } catch (e) { showStatus(false, 'Kamera Gagal', 'Pastikan izin kamera sudah diberikan.'); btn.disabled = false; btn.innerHTML = 'MULAI SCANNER'; }
+                btn.innerHTML = 'STOP SCANNER'; 
+                btn.classList.remove('bg-blue-600', 'bg-amber-600');
+                btn.classList.add('bg-red-600');
+                btn.onclick = stopScanner; btn.disabled = false;
+            } catch (e) { 
+                showStatus(false, 'Kamera Gagal', 'Pastikan izin kamera sudah diberikan.'); 
+                btn.disabled = false; 
+                setScannerMode(scannerMode);
+            }
         }
 
         async function onScanSuccess(text) {
@@ -329,14 +378,17 @@
                     showStatus(false, 'DITOLAK!', res?.message || 'Data tidak dapat dicatat.');
                     setTimeout(() => { isScanning = true; }, 2000);
                 }
-            }).simpanAbsensi({ barcode: text });
+            }).simpanAbsensi({ barcode: text, tipe: scannerMode });
         }
 
         async function stopScanner() {
             if (html5QrCode) await html5QrCode.stop();
             isScanning = false;
             const btn = document.getElementById('btnStart');
-            if (btn) { btn.innerHTML = 'MULAI SCANNER'; btn.classList.replace('bg-red-600', 'bg-blue-600'); btn.onclick = startScanner; }
+            if (btn) { 
+                btn.onclick = startScanner;
+                setScannerMode(scannerMode);
+            }
         }
 
         function processManual() {
@@ -345,7 +397,7 @@
             google.script.run.withSuccessHandler((res) => {
                 if (res && res.success) { showStatus(true, 'BERHASIL!', 'Presensi manual dicatat.'); input.value = ''; }
                 else { showStatus(false, 'DITOLAK!', res?.message || 'Gagal mencatat.'); }
-            }).simpanAbsensi({ barcode: input.value });
+            }).simpanAbsensi({ barcode: input.value, tipe: scannerMode });
         }
 
         window.onload = () => {

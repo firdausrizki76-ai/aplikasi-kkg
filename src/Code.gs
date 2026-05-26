@@ -144,7 +144,7 @@ function handleAction(action, params) {
       if (!activeEvent || activeEvent.error) {
         return { success: false, message: 'GAGAL: Tidak ada Agenda aktif hari ini. Silakan buat event dulu.' };
       }
-      return prosesScan(params.barcode, activeEvent.id);
+      return prosesScan(params.barcode, activeEvent.id, params.tipe);
     default: return { error: 'Action not found: ' + action };
   }
 }
@@ -554,14 +554,30 @@ function getLaporanByEvent(eventId) {
     const ss = getSS();
     const sheet = ss.getSheetByName(SHEET_ABSENSI);
     const data = sheet.getDataRange().getValues();
+    const tz = ss.getSpreadsheetTimeZone();
     const result = [];
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][1]) === String(eventId)) {
+        let jamStr = '-';
+        if (data[i][7]) {
+          try {
+            jamStr = (data[i][7] instanceof Date) ? Utilities.formatDate(data[i][7], tz, 'HH:mm') : String(data[i][7]);
+            if (jamStr.includes('T')) jamStr = jamStr.split('T')[1].substring(0, 5);
+          } catch(e) { jamStr = String(data[i][7]); }
+        }
+        let jamPulangStr = '-';
+        if (data[i][9]) {
+          try {
+            jamPulangStr = (data[i][9] instanceof Date) ? Utilities.formatDate(data[i][9], tz, 'HH:mm') : String(data[i][9]);
+            if (jamPulangStr.includes('T')) jamPulangStr = jamPulangStr.split('T')[1].substring(0, 5);
+          } catch(e) { jamPulangStr = String(data[i][9]); }
+        }
         result.push({
           nip: data[i][3],
           nama: data[i][4],
           sekolah: data[i][5],
-          jam: data[i][7]
+          jam: jamStr,
+          jamPulang: jamPulangStr
         });
       }
     }
@@ -620,10 +636,19 @@ function cekSudahAbsen(nip, tanggal) {
       const absenDateStr = Utilities.formatDate(absenDate, tz, 'yyyy-MM-dd');
       
       if (String(data[i][3]) === String(nip) && absenDateStr === checkDateStr) {
+        let jamPulangStr = '';
+        if (data[i][9]) {
+          try {
+            jamPulangStr = (data[i][9] instanceof Date) ? Utilities.formatDate(data[i][9], tz, 'HH:mm:ss') : String(data[i][9]);
+            if (jamPulangStr.includes('T')) jamPulangStr = jamPulangStr.split('T')[1].substring(0, 8);
+          } catch(e) { jamPulangStr = String(data[i][9]); }
+        }
         return {
           sudahAbsen: true,
+          rowNumber: i + 1,
           jam: data[i][7],
-          status: data[i][8]
+          status: data[i][8],
+          jamPulang: jamPulangStr || null
         };
       }
     }
@@ -676,8 +701,33 @@ function catatAbsensi(guruId, eventId, parsedData) {
   }
 }
 
-function prosesScan(rawBarcode, eventId) {
+function catatAbsensiPulang(rowNumber) {
+  const lock = LockService.getScriptLock();
   try {
+    lock.waitLock(15000);
+    const ss = getSS();
+    const tz = ss.getSpreadsheetTimeZone();
+    const sheet = ss.getSheetByName(SHEET_ABSENSI);
+    
+    const now = new Date();
+    const jamPulang = Utilities.formatDate(now, tz, 'HH:mm:ss');
+    
+    // Tulis ke kolom J (kolom ke-10)
+    sheet.getRange(rowNumber, 10).setValue(jamPulang);
+    
+    return jamPulang;
+  } catch (e) {
+    Logger.log('Error catatAbsensiPulang: ' + e.toString());
+    return null;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function prosesScan(rawBarcode, eventId, tipe) {
+  try {
+    tipe = tipe || 'masuk';
+    
     // 1. Parse barcode
     const parsed = parseBarcode(rawBarcode);
     if (parsed.error) {
@@ -690,6 +740,10 @@ function prosesScan(rawBarcode, eventId) {
     
     // 3. Jika tidak ada, tambahkan guru baru
     if (!guru) {
+      if (tipe === 'pulang') {
+        return { success: false, message: 'GAGAL: Guru belum terdaftar. Silakan lakukan Absen Masuk terlebih dahulu.' };
+      }
+      
       const guruId = tambahGuru(parsed);
       if (!guruId) {
         return { success: false, message: 'Gagal menambahkan guru baru' };
@@ -705,37 +759,76 @@ function prosesScan(rawBarcode, eventId) {
       isNewGuru = true;
     }
     
-    // 4. Cek sudah absen atau belum
+    // 4. Cek status absensi hari ini
     const today = new Date();
     const cekAbsen = cekSudahAbsen(parsed.nip, today);
     
-    if (cekAbsen.sudahAbsen) {
+    if (tipe === 'masuk') {
+      if (cekAbsen.sudahAbsen) {
+        return {
+          success: false,
+          sudahAbsen: true,
+          guru: guru,
+          jam: cekAbsen.jam,
+          message: 'GAGAL: ' + parsed.nama + ' sudah absen masuk pada pukul ' + cekAbsen.jam
+        };
+      }
+      
+      // Catat absensi masuk
+      const jamHadir = catatAbsensi(guru.id, eventId, parsed);
+      if (!jamHadir) {
+        return { success: false, message: 'Gagal mencatat absensi' };
+      }
+      
+      tuliLog('SCAN_MASUK', parsed.nip, 'Absen masuk berhasil - ' + parsed.nama);
+      
       return {
-        success: false,
-        sudahAbsen: true,
+        success: true,
+        sudahAbsen: false,
+        isNewGuru: isNewGuru,
+        guru: guru,
+        jam: jamHadir,
+        tipe: 'masuk',
+        message: 'Absen masuk berhasil dicatat'
+      };
+    } else if (tipe === 'pulang') {
+      if (!cekAbsen.sudahAbsen) {
+        return {
+          success: false,
+          guru: guru,
+          message: 'GAGAL: ' + parsed.nama + ' belum absen masuk hari ini. Silakan absen masuk dulu.'
+        };
+      }
+      
+      if (cekAbsen.jamPulang) {
+        return {
+          success: false,
+          sudahAbsen: true,
+          guru: guru,
+          jam: cekAbsen.jam,
+          jamPulang: cekAbsen.jamPulang,
+          message: 'GAGAL: ' + parsed.nama + ' sudah absen pulang pada pukul ' + cekAbsen.jamPulang
+        };
+      }
+      
+      // Catat absensi pulang
+      const jamPulang = catatAbsensiPulang(cekAbsen.rowNumber);
+      if (!jamPulang) {
+        return { success: false, message: 'Gagal mencatat absen pulang' };
+      }
+      
+      tuliLog('SCAN_PULANG', parsed.nip, 'Absen pulang berhasil - ' + parsed.nama);
+      
+      return {
+        success: true,
+        sudahAbsen: false,
         guru: guru,
         jam: cekAbsen.jam,
-        message: 'GAGAL: ' + parsed.nama + ' sudah absen pada pukul ' + cekAbsen.jam
+        jamPulang: jamPulang,
+        tipe: 'pulang',
+        message: 'Absen pulang berhasil dicatat'
       };
     }
-    
-    // 5. Catat absensi
-    const jamHadir = catatAbsensi(guru.id, eventId, parsed);
-    if (!jamHadir) {
-      return { success: false, message: 'Gagal mencatat absensi' };
-    }
-    
-    tuliLog('SCAN', parsed.nip, 'Absensi berhasil - ' + parsed.nama);
-    
-    return {
-      success: true,
-      sudahAbsen: false,
-      isNewGuru: isNewGuru,
-      guru: guru,
-      jam: jamHadir,
-      message: 'Absensi berhasil dicatat'
-    };
-    
   } catch (e) {
     Logger.log('Error prosesScan: ' + e.toString());
     tuliLog('ERROR', '', 'Error prosesScan: ' + e.toString());
@@ -748,10 +841,27 @@ function getDaftarHadir(eventId) {
     const ss = getSS();
     const sheet = ss.getSheetByName(SHEET_ABSENSI);
     const data = sheet.getDataRange().getValues();
+    const tz = ss.getSpreadsheetTimeZone();
     
     const result = [];
     for (let i = 1; i < data.length; i++) {
-      if (data[i][1] === eventId) {
+      if (String(data[i][1]) === String(eventId)) {
+        let jamStr = '-';
+        if (data[i][7]) {
+          try {
+            jamStr = (data[i][7] instanceof Date) ? Utilities.formatDate(data[i][7], tz, 'HH:mm') : String(data[i][7]);
+            if (jamStr.includes('T')) jamStr = jamStr.split('T')[1].substring(0, 5);
+          } catch(e) { jamStr = String(data[i][7]); }
+        }
+        
+        let jamPulangStr = '-';
+        if (data[i][9]) {
+          try {
+            jamPulangStr = (data[i][9] instanceof Date) ? Utilities.formatDate(data[i][9], tz, 'HH:mm') : String(data[i][9]);
+            if (jamPulangStr.includes('T')) jamPulangStr = jamPulangStr.split('T')[1].substring(0, 5);
+          } catch(e) { jamPulangStr = String(data[i][9]); }
+        }
+
         result.push({
           no: result.length + 1,
           id: data[i][0],
@@ -761,7 +871,8 @@ function getDaftarHadir(eventId) {
           nama: data[i][4],
           sekolah: data[i][5],
           tanggal: data[i][6],
-          jam: data[i][7],
+          jam: jamStr,
+          jamPulang: jamPulangStr,
           status: data[i][8]
         });
       }
@@ -798,6 +909,24 @@ function getDaftarHadirByTanggal(tanggal) {
       const rowDateStr = Utilities.formatDate(rowDate, tz, 'yyyy-MM-dd');
       
       if (rowDateStr === targetDateStr) {
+        let jamStr = '-';
+        if (data[i][7]) {
+          try {
+            // Jika Date object (bisa jadi tahun 1899), ambil jam-nya saja
+            jamStr = (data[i][7] instanceof Date) ? Utilities.formatDate(data[i][7], tz, 'HH:mm') : String(data[i][7]);
+            // Jika formatnya masih panjang atau aneh, bersihkan
+            if (jamStr.includes('T')) jamStr = jamStr.split('T')[1].substring(0, 5);
+          } catch(e) { jamStr = String(data[i][7]); }
+        }
+
+        let jamPulangStr = '-';
+        if (data[i][9]) {
+          try {
+            jamPulangStr = (data[i][9] instanceof Date) ? Utilities.formatDate(data[i][9], tz, 'HH:mm') : String(data[i][9]);
+            if (jamPulangStr.includes('T')) jamPulangStr = jamPulangStr.split('T')[1].substring(0, 5);
+          } catch(e) { jamPulangStr = String(data[i][9]); }
+        }
+
         result.push({
           no: result.length + 1,
           id: data[i][0],
@@ -807,7 +936,8 @@ function getDaftarHadirByTanggal(tanggal) {
           nama: data[i][4],
           sekolah: data[i][5],
           tanggal: data[i][6],
-          jam: data[i][7],
+          jam: jamStr,
+          jamPulang: jamPulangStr,
           status: data[i][8]
         });
       }
@@ -932,10 +1062,21 @@ function getDashboardStats() {
       
       if (absenDate.getTime() === today.getTime()) {
         hadirHariIni++;
+        
+        let jamPulangStr = '-';
+        if (dataAbsensi[i][9]) {
+          try {
+            const tz = ss.getSpreadsheetTimeZone();
+            jamPulangStr = (dataAbsensi[i][9] instanceof Date) ? Utilities.formatDate(dataAbsensi[i][9], tz, 'HH:mm') : String(dataAbsensi[i][9]);
+            if (jamPulangStr.includes('T')) jamPulangStr = jamPulangStr.split('T')[1].substring(0, 5);
+          } catch(e) { jamPulangStr = String(dataAbsensi[i][9]); }
+        }
+
         recentAbsensi.push({
           nama: dataAbsensi[i][4],
           sekolah: dataAbsensi[i][5],
           jam: dataAbsensi[i][7],
+          jamPulang: jamPulangStr,
           status: dataAbsensi[i][8]
         });
       }
@@ -994,7 +1135,7 @@ function setupDatabase() {
     const sheets = [
       { name: SHEET_GURU, headers: ['ID', 'NIP', 'NAMA', 'GELAR', 'SEKOLAH', 'KOTA', 'RAW_BARCODE', 'TGL_DAFTAR'] },
       { name: SHEET_EVENT, headers: ['ID', 'NAMA_EVENT', 'TANGGAL', 'LOKASI', 'KETERANGAN', 'STATUS'] },
-      { name: SHEET_ABSENSI, headers: ['ID', 'EVENT_ID', 'GURU_ID', 'NIP', 'NAMA', 'SEKOLAH', 'TANGGAL', 'JAM_HADIR', 'STATUS'] },
+      { name: SHEET_ABSENSI, headers: ['ID', 'EVENT_ID', 'GURU_ID', 'NIP', 'NAMA', 'SEKOLAH', 'TANGGAL', 'JAM_HADIR', 'STATUS', 'JAM_PULANG'] },
       { name: SHEET_USERS, headers: ['NAMA', 'EMAIL', 'PASSWORD', 'STATUS', 'ROLE'] },
       { name: SHEET_LOG, headers: ['WAKTU', 'AKSI', 'NIP', 'KETERANGAN'] }
     ];
@@ -1013,6 +1154,14 @@ function setupDatabase() {
         Logger.log('Set header untuk sheet: ' + sheetInfo.name);
       }
     });
+
+    // Cek migrasi kolom JAM_PULANG untuk database lama
+    const absensiSheet = ss.getSheetByName(SHEET_ABSENSI);
+    if (absensiSheet && absensiSheet.getLastColumn() < 10) {
+      absensiSheet.getRange(1, 10).setValue('JAM_PULANG');
+      absensiSheet.getRange(1, 10).setFontWeight('bold').setBackground('#f3f3f3');
+      Logger.log('Migrasi: Kolom JAM_PULANG ditambahkan ke sheet ABSENSI');
+    }
 
     // Tambah admin default jika sheet USERS kosong
     const userSheet = ss.getSheetByName(SHEET_USERS);
