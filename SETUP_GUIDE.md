@@ -246,7 +246,7 @@ Akan muncul popup "Authorization required":
 
 **Format URL**:
 ```
-https://script.google.com/macros/s/XXXXX/exec
+https://script.google.com/macros/s/AKfycbx8-79fGZQ7vypupVYaQj9DFJGnIrQxbmy_3s0pSiI13AFdHvyHWaRkw3Vv08GQ-hiL/exec
 ```
 
 ✅ **Checklist**:
