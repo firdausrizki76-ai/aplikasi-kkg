@@ -144,6 +144,7 @@ function handleAction(action, params) {
     case 'simpanKegiatan': return simpanKegiatan(params);
     case 'hapusKegiatan': return hapusKegiatan(params.id);
     case 'setKegiatanStatus': return setKegiatanStatus(params.id, params.status);
+    case 'aktifkanKegiatan': return setKegiatanStatus(params.id, 'AKTIF');
 
     // PESERTA MTQ
     case 'getListGuru':
@@ -156,12 +157,14 @@ function handleAction(action, params) {
 
     // STATS & LAPORAN
     case 'getDashboardStats': return getDashboardStats();
+    case 'getDaftarHadir':
     case 'getDaftarHadirByTanggal': return getDaftarHadirByTanggal(params.tanggal, params.kegiatanId);
     case 'getDaftarHadirByEvent': return getDaftarHadirByKegiatan(params.eventId || params.kegiatanId);
     case 'getLaporanByEvent': return getLaporanByKegiatan(params.eventId || params.kegiatanId);
     case 'getLaporan': return getLaporan(params.bulan, params.kegiatanId);
     
     // SCAN ABSENSI PER KEGIATAN (TANPA INITIAL SCAN)
+    case 'prosesScan':
     case 'simpanAbsensi': 
       const kegiatanId = params.kegiatanId || params.eventId;
       let activeKegiatan = null;
@@ -173,7 +176,7 @@ function handleAction(action, params) {
       if (!activeKegiatan || activeKegiatan.error) {
         return { success: false, message: 'GAGAL: Kegiatan tidak ditemukan atau belum dipilih. Silakan pilih kegiatan terlebih dahulu.' };
       }
-      return prosesScan(params.barcode, activeKegiatan.id, params.tipe || 'masuk', params.statusKehadiran || 'HADIR', params.keterangan || '');
+      return prosesScan(params.barcode, activeKegiatan.id, params.tipe || params.jenisAbsen || 'masuk', params.statusKehadiran || 'HADIR', params.keterangan || '');
     
     case 'updateStatusAbsensi':
       return updateStatusAbsensi(params.id, params.tipe, params.status, params.keterangan);
