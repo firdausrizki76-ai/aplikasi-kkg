@@ -3,532 +3,479 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner - KKG Portal</title>
+    <title>Scanner MTQ - Portal</title>
     <?!= include('Stylesheet'); ?>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-surface">
 
-    <!-- Sidebar -->
+    <!-- Sidebar (Standalone fallback) -->
     <aside class="h-screen w-64 fixed left-0 top-0 bg-white shadow-lg flex flex-col py-6 z-50">
         <div class="px-6 mb-8">
-            <h1 class="text-2xl font-bold text-primary">KKG Portal</h1>
-            <p class="text-sm text-gray-600">Teacher Working Group</p>
+            <h1 class="text-xl font-extrabold text-emerald-700 tracking-tight">Portal MTQ</h1>
+            <p class="text-xs text-gray-400 font-semibold uppercase">Absensi & Pertemuan</p>
         </div>
         
         <nav class="flex-1 space-y-1 px-3">
             <a href="<?= scriptUrl ?>?page=dashboard" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
                 <span class="material-symbols-outlined">dashboard</span>
-                <span>Dashboard</span>
+                <span class="text-sm">Dashboard</span>
             </a>
-            <a href="<?= scriptUrl ?>?page=scanner" target="_top" class="flex items-center gap-3 px-4 py-3 text-primary font-semibold border-r-4 border-primary bg-blue-50 rounded-l-lg">
+            <a href="<?= scriptUrl ?>?page=kegiatan" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">event_note</span>
+                <span class="text-sm">Kegiatan</span>
+            </a>
+            <a href="<?= scriptUrl ?>?page=scanner" target="_top" class="flex items-center gap-3 px-4 py-3 text-emerald-700 font-semibold border-r-4 border-emerald-600 bg-emerald-50 rounded-l-lg">
                 <span class="material-symbols-outlined">qr_code_scanner</span>
-                <span>QR Scanner</span>
+                <span class="text-sm">QR Scanner</span>
             </a>
             <a href="<?= scriptUrl ?>?page=hadir" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
                 <span class="material-symbols-outlined">assignment</span>
-                <span>Daftar Hadir</span>
+                <span class="text-sm">Daftar Hadir</span>
             </a>
-            <a href="<?= scriptUrl ?>?page=guru" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+            <a href="<?= scriptUrl ?>?page=peserta" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
                 <span class="material-symbols-outlined">groups</span>
-                <span>Data Guru</span>
+                <span class="text-sm">Data Peserta</span>
             </a>
             <a href="<?= scriptUrl ?>?page=laporan" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
                 <span class="material-symbols-outlined">description</span>
-                <span>Laporan</span>
+                <span class="text-sm">Laporan</span>
             </a>
         </nav>
         
         <div class="mt-auto border-t pt-4 px-3">
-            <a href="#" onclick="logout(); return false;" class="flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+            <a href="#" onclick="logout(); return false;" class="flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-all">
                 <span class="material-symbols-outlined">logout</span>
-                <span>Keluar</span>
+                <span class="text-sm font-semibold">Keluar</span>
             </a>
         </div>
     </aside>
 
     <!-- Main Content -->
     <main class="ml-64 p-8">
-        
         <!-- Header -->
-        <div class="mb-8">
-            <h2 class="text-3xl font-bold text-gray-800 mb-2">QR Scanner</h2>
-            <p class="text-gray-600">Scan barcode kartu guru untuk absensi</p>
-        </div>
-
-        <!-- Event Info -->
-        <div id="eventInfo" class="bg-blue-600 text-white rounded-xl shadow-lg p-6 mb-8">
-            <div class="flex items-center gap-3 mb-2">
-                <span class="material-symbols-outlined">event</span>
-                <span class="font-semibold">Event Hari Ini</span>
+        <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">QR Scanner MTQ</h2>
+                <p class="text-sm text-gray-500">Pilih kegiatan dan lakukan scan kehadiran peserta (Hadir / Izin).</p>
             </div>
-            <h3 id="eventNama" class="text-2xl font-bold mb-2">Memuat...</h3>
-            <div class="flex items-center gap-4 text-sm">
-                <div class="flex items-center gap-1">
-                    <span class="material-symbols-outlined text-lg">location_on</span>
-                    <span id="eventLokasi">-</span>
-                </div>
-                <div class="flex items-center gap-1">
-                    <span class="material-symbols-outlined text-lg">schedule</span>
-                    <span id="eventTanggal">-</span>
-                </div>
+            <div class="flex items-center gap-2">
+                <span id="scannerIndicatorDot" class="w-3 h-3 bg-gray-400 rounded-full"></span>
+                <span id="scannerIndicatorText" class="text-xs font-semibold text-gray-500">Siap</span>
             </div>
         </div>
 
-        <!-- Scanner Container -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            <!-- Camera Section -->
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold text-gray-800">Kamera Scanner</h3>
-                    <div id="scanStatus" class="flex items-center gap-2">
-                        <span id="statusDot" class="w-3 h-3 bg-gray-400 rounded-full"></span>
-                        <span class="text-sm text-gray-600">Tidak Aktif</span>
-                    </div>
+        <!-- KEGIATAN & SCAN SETTINGS CARD -->
+        <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-6 mb-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                <!-- 1. Pilih Kegiatan -->
+                <div class="lg:col-span-1">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">1. Pilih Kegiatan MTQ</label>
+                    <select id="scannerKegiatanSelect" onchange="changeScannerKegiatan()" 
+                        class="w-full px-4 py-3 bg-emerald-50/50 border border-emerald-200 rounded-xl text-sm font-bold text-emerald-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <option value="">Memuat daftar kegiatan...</option>
+                    </select>
+                    <p id="scannerKegiatanInfo" class="text-xs text-gray-400 mt-1.5 font-medium">Tempat: -, Tanggal: -</p>
                 </div>
-                <!-- Scanner Mode Toggle -->
-                <div class="flex bg-gray-100 p-1.5 rounded-xl mb-6">
-                    <button id="modeMasuk" onclick="setScannerMode('masuk')" class="flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all bg-white text-blue-600 shadow-sm border border-gray-100">
-                        <span class="material-symbols-outlined text-lg">login</span>
-                        Absen Masuk
-                    </button>
-                    <button id="modePulang" onclick="setScannerMode('pulang')" class="flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all text-gray-500 hover:text-gray-700">
-                        <span class="material-symbols-outlined text-lg">logout</span>
-                        Absen Pulang
-                    </button>
-                </div>
-                <div class="bg-gray-50 rounded-xl p-4 mb-6 border border-dashed border-gray-300">
-                    <div id="reader" class="overflow-hidden rounded-lg bg-black aspect-video flex items-center justify-center text-white text-sm">
-                        Kamera akan muncul di sini
-                    </div>
-                    <div id="cameraControls" class="mt-4 flex flex-col gap-3">
-                        <select id="cameraSelect" class="w-full p-2 border rounded-lg text-sm bg-white hidden">
-                            <option value="">-- Pilih Kamera --</option>
-                        </select>
-                        <button id="btnMulaiScan" onclick="startScanner()" class="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined">videocam</span>
-                            Mulai Kamera
+
+                <!-- 2. Pilih Sesi -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">2. Pilih Sesi Scan</label>
+                    <div class="flex bg-gray-100 p-1 rounded-xl">
+                        <button type="button" id="btnSesiMasuk" onclick="setScannerSesi('masuk')" 
+                            class="flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-white text-emerald-700 shadow-sm transition-all">
+                            <span class="material-symbols-outlined text-[16px]">login</span>
+                            Awal Masuk
+                        </button>
+                        <button type="button" id="btnSesiSelesai" onclick="setScannerSesi('selesai')" 
+                            class="flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 text-gray-500 hover:text-gray-700 transition-all">
+                            <span class="material-symbols-outlined text-[16px]">logout</span>
+                            Selesai Kegiatan
                         </button>
                     </div>
-                </div>    <button id="btnStop" onclick="stopScanner()" class="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-all flex items-center justify-center gap-2 hidden">
-                        <span class="material-symbols-outlined">stop</span>
-                        Stop Scan
-                    </button>
                 </div>
-                
-                <!-- Manual Input -->
-                <!-- Manual Input Section -->
-                <div id="manualInputSection" class="mt-6 p-6 bg-blue-50 rounded-xl border-2 border-blue-200 shadow-inner">
-                    <div class="flex items-center gap-2 mb-4">
-                        <span class="material-symbols-outlined text-blue-600 font-bold">keyboard</span>
-                        <h3 class="font-bold text-blue-800">INPUT MANUAL / BARCODE GUN</h3>
-                    </div>
-                    <div class="flex gap-2">
-                        <input type="text" id="manualInput" 
-                               class="flex-1 px-4 py-4 text-xl border-2 border-blue-300 rounded-lg focus:ring-4 focus:ring-blue-200 focus:outline-none placeholder:text-gray-400" 
-                               placeholder="Ketik NIP / ID Guru di sini...">
-                        <button onclick="processManualInput()" 
-                                class="bg-blue-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition-all shadow-lg active:scale-95">
-                            PROSES
+
+                <!-- 3. Pilih Status Kehadiran (Hadir / Izin) -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">3. Status Yang Dicatat</label>
+                    <div class="flex bg-gray-100 p-1 rounded-xl">
+                        <button type="button" id="btnStatusHadir" onclick="setScannerStatus('HADIR')" 
+                            class="flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow-sm transition-all">
+                            <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                            HADIR
+                        </button>
+                        <button type="button" id="btnStatusIzin" onclick="setScannerStatus('IZIN')" 
+                            class="flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 text-amber-700 hover:bg-amber-100/60 transition-all">
+                            <span class="material-symbols-outlined text-[16px]">pause_circle</span>
+                            IZIN (Sakit/Udhur)
                         </button>
                     </div>
-                    <p class="text-sm text-blue-600 mt-3 italic font-medium">
-                        *Jika kamera bermasalah, silakan ketik ID Guru atau gunakan Barcode Scanner Gun di sini.
-                    </p>
                 </div>
             </div>
-
-            <!-- Log Section -->
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h3 class="text-xl font-bold text-gray-800 mb-6">Log Scan Hari Ini</h3>
-                
-                <div id="scanLog" class="space-y-3 max-h-[500px] overflow-y-auto">
-                    <div class="text-center py-8 text-gray-500">
-                        <span class="material-symbols-outlined text-4xl mb-2">qr_code_scanner</span>
-                        <p>Belum ada scan hari ini</p>
-                    </div>
-                </div>
-            </div>
-
         </div>
 
+        <!-- CAMERA & RESULT SECTION -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Camera View -->
+            <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-6 flex flex-col items-center">
+                <div class="w-full flex items-center justify-between mb-4">
+                    <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-emerald-600">videocam</span>
+                        Kamera Pemindai QR
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="switchCamera()" id="btnSwitchCam" class="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[16px]">flip_camera_ios</span>
+                            <span>Ganti Kamera</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reader Box -->
+                <div id="reader" class="w-full max-w-sm aspect-square bg-gray-950 rounded-2xl overflow-hidden border-2 border-gray-200 shadow-inner flex items-center justify-center relative">
+                    <p class="text-xs text-gray-400">Memulai kamera pemindai...</p>
+                </div>
+
+                <div class="w-full mt-4 flex items-center justify-between">
+                    <button id="btnToggleScan" onclick="toggleScanner()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition-all shadow-md">
+                        Mulai Scanner
+                    </button>
+                    <span class="text-xs text-gray-400">Arahkan QR ke tengah kotak kamera</span>
+                </div>
+            </div>
+
+            <!-- Scan Result Display -->
+            <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-6 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-emerald-600">history_toggle_off</span>
+                        Hasil Pemindaian Terakhir
+                    </h3>
+
+                    <!-- Status Banner Card -->
+                    <div id="scanResultCard" class="p-6 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 text-center transition-all">
+                        <div id="resultIconBox" class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gray-200 text-gray-400 mb-3">
+                            <span class="material-symbols-outlined text-3xl">qr_code_scanner</span>
+                        </div>
+                        <h4 id="resultTitle" class="text-base font-bold text-gray-700">Menunggu Scan...</h4>
+                        <p id="resultMessage" class="text-xs text-gray-400 mt-1">Belum ada pemindaian yang dicatat.</p>
+
+                        <!-- Participant Info Box -->
+                        <div id="resultParticipantBox" class="hidden mt-4 pt-4 border-t border-gray-200/80 text-left space-y-1.5 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Nama Peserta:</span>
+                                <strong id="resNama" class="text-gray-900"></strong>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Cabang Lomba:</span>
+                                <span id="resCabang" class="font-bold text-emerald-700"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Kafilah:</span>
+                                <span id="resKafilah" class="text-gray-700 font-semibold"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Waktu / Jam:</span>
+                                <span id="resJam" class="font-mono text-gray-900 font-bold"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Scan Logs -->
+                <div class="mt-6 pt-4 border-t border-gray-100">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Riwayat Scan Sesi Ini</h4>
+                    <ul id="sessionScanList" class="space-y-2 text-xs max-h-48 overflow-y-auto pr-1">
+                        <li class="text-gray-400 italic text-center py-4">Belum ada riwayat sesi ini</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </main>
 
-    <!-- Scan Result Card (Slide-in from bottom) -->
-    <div id="scanResult" class="hidden scan-result">
-        <div class="bg-white rounded-xl shadow-2xl p-6 border-l-4">
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex items-center gap-3">
-                    <div id="resultIcon" class="w-12 h-12 rounded-full flex items-center justify-center">
-                        <span class="material-symbols-outlined text-2xl">check_circle</span>
-                    </div>
-                    <div>
-                        <h4 id="resultTitle" class="text-lg font-bold"></h4>
-                        <p id="resultMessage" class="text-sm text-gray-600"></p>
-                    </div>
-                </div>
-                <button onclick="closeScanResult()" class="text-gray-400 hover:text-gray-600">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            
-            <div id="resultDetails" class="space-y-2 text-sm">
-                <!-- Details will be inserted here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="hidden loading-overlay">
-        <div class="bg-white rounded-xl p-8 text-center">
-            <div class="loading-spinner mx-auto mb-4"></div>
-            <p class="text-gray-600 font-semibold">Memproses scan...</p>
-        </div>
-    </div>
-
     <script>
-        let html5QrCode;
-        let currentEventId = null;
-        let lastScanTime = 0;
-        let scannerMode = 'masuk'; // default mode
-        const SCAN_COOLDOWN = 3000; // 3 detik cooldown
+        let html5QrCode = null;
+        let isScanning = false;
+        let selectedKegiatanId = '';
+        let currentSesi = 'masuk'; // 'masuk' | 'selesai'
+        let currentStatus = 'HADIR'; // 'HADIR' | 'IZIN'
+        let camerasList = [];
+        let activeCamIdx = 0;
+        let isProcessingScan = false;
 
-        function setScannerMode(mode) {
-            scannerMode = mode;
-            const btnMasuk = document.getElementById('modeMasuk');
-            const btnPulang = document.getElementById('modePulang');
-            const btnMulai = document.getElementById('btnMulaiScan');
-            
-            if (mode === 'masuk') {
-                btnMasuk.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all bg-white text-blue-600 shadow-sm border border-gray-100";
-                btnPulang.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all text-gray-500 hover:text-gray-700";
-                btnMulai.className = "w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2";
-            } else {
-                btnMasuk.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all text-gray-500 hover:text-gray-700";
-                btnPulang.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all bg-white text-amber-600 shadow-sm border border-gray-100";
-                btnMulai.className = "w-full bg-amber-600 text-white py-3 rounded-lg font-semibold hover:bg-amber-700 transition-all flex items-center justify-center gap-2";
+        // Sound Feedback via Web Audio API
+        function playBeep(isSuccess) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (isSuccess) {
+                    osc.frequency.value = 880; // A5
+                    gain.gain.value = 0.1;
+                    osc.start();
+                    setTimeout(() => { osc.stop(); }, 120);
+                } else {
+                    osc.frequency.value = 220; // A3 (buzz)
+                    gain.gain.value = 0.2;
+                    osc.start();
+                    setTimeout(() => { osc.stop(); }, 350);
+                }
+            } catch (e) {}
+        }
+
+        function initScannerPage() {
+            loadKegiatanDropdown();
+        }
+
+        function loadKegiatanDropdown() {
+            const select = document.getElementById('scannerKegiatanSelect');
+            if (!select) return;
+
+            google.script.run
+                .withSuccessHandler(list => {
+                    if (!list || list.length === 0) {
+                        select.innerHTML = `<option value="">-- Tidak ada kegiatan MTQ --</option>`;
+                        return;
+                    }
+                    select.innerHTML = list.map(k => `
+                        <option value="${k.id}" data-tgl="${k.tanggal}" data-lok="${k.lokasi || '-'}" ${k.status === 'AKTIF' ? 'selected' : ''}>
+                            ${escapeHtml(k.nama)} (${k.status})
+                        </option>
+                    `).join('');
+                    changeScannerKegiatan();
+                })
+                .withFailureHandler(err => {
+                    select.innerHTML = `<option value="">Gagal memuat kegiatan</option>`;
+                })
+                .getListKegiatan();
+        }
+
+        function changeScannerKegiatan() {
+            const select = document.getElementById('scannerKegiatanSelect');
+            if (!select) return;
+            selectedKegiatanId = select.value;
+            const opt = select.options[select.selectedIndex];
+            const infoEl = document.getElementById('scannerKegiatanInfo');
+            if (opt && infoEl) {
+                const tgl = opt.getAttribute('data-tgl') || '-';
+                const lok = opt.getAttribute('data-lok') || '-';
+                infoEl.textContent = `Tempat: ${lok}, Tanggal: ${tgl}`;
             }
         }
 
-        // Load event aktif saat halaman dibuka
-        window.onload = function() {
-            loadEventAktif();
-            loadScanLog();
-        };
-
-        function loadEventAktif() {
-            google.script.run
-                .withSuccessHandler(function(event) {
-                    if (event && !event.error) {
-                        currentEventId = event.id;
-                        document.getElementById('eventNama').textContent = event.nama;
-                        document.getElementById('eventLokasi').textContent = event.lokasi;
-                        document.getElementById('eventTanggal').textContent = formatTanggal(event.tanggal);
-                    } else {
-                        document.getElementById('eventNama').textContent = 'Error / Belum ada event';
-                        document.getElementById('eventLokasi').textContent = '-';
-                        document.getElementById('eventTanggal').textContent = '-';
-                        document.getElementById('btnMulaiScan').disabled = true;
-                        document.getElementById('barcodeInput').disabled = true;
-                        
-                        let msg = event && event.error ? event.error : 'Belum ada event KKG hari ini. Silakan buat event terlebih dahulu di Dashboard.';
-                        alert('INFO EVENT: ' + msg);
-                    }
-                })
-                .withFailureHandler(function(error) {
-                    console.error('Error:', error);
-                    alert('Gagal memuat event: ' + error.message);
-                })
-                .getEventAktif();
+        function setScannerSesi(sesi) {
+            currentSesi = sesi;
+            const btnMasuk = document.getElementById('btnSesiMasuk');
+            const btnSelesai = document.getElementById('btnSesiSelesai');
+            if (sesi === 'masuk') {
+                btnMasuk.className = "flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-white text-emerald-700 shadow-sm transition-all";
+                btnSelesai.className = "flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 text-gray-500 hover:text-gray-700 transition-all";
+            } else {
+                btnSelesai.className = "flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-white text-emerald-700 shadow-sm transition-all";
+                btnMasuk.className = "flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 text-gray-500 hover:text-gray-700 transition-all";
+            }
         }
 
-        function startScanner() {
-            if (!currentEventId) {
-                alert('Belum ada event aktif hari ini!');
+        function setScannerStatus(status) {
+            currentStatus = status;
+            const btnHadir = document.getElementById('btnStatusHadir');
+            const btnIzin = document.getElementById('btnStatusIzin');
+            if (status === 'HADIR') {
+                btnHadir.className = "flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow-sm transition-all";
+                btnIzin.className = "flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 text-amber-700 hover:bg-amber-100/60 transition-all";
+            } else {
+                btnIzin.className = "flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-amber-500 text-white shadow-sm transition-all";
+                btnHadir.className = "flex-1 py-2.5 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 text-gray-600 hover:bg-gray-200/60 transition-all";
+            }
+        }
+
+        async function toggleScanner() {
+            if (isScanning) {
+                stopScanner();
+            } else {
+                startScanner();
+            }
+        }
+
+        async function startScanner() {
+            if (!selectedKegiatanId) {
+                alert('Pilih kegiatan MTQ terlebih dahulu sebelum memulai pemindai!');
                 return;
             }
 
-        async function startScanner() {
-            const btn = document.getElementById('btnMulaiScan');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Menghubungkan...';
-
             try {
-                // Tahap 1: Cek Izin secara Native (Ini paling ampuh nembus blokir browser)
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                // Jika berhasil, matikan stream sementara agar tidak bentrok dengan library
-                stream.getTracks().forEach(track => track.stop());
-
-                // Tahap 2: Inisialisasi Library
                 if (!html5QrCode) {
                     html5QrCode = new Html5Qrcode("reader");
                 }
-
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                
-                // Gunakan kamera belakang (atau kamera pertama jika desktop)
-                await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
-                
-                // Update UI jika berhasil
-                btn.classList.add('hidden');
-                document.getElementById('btnStop').classList.remove('hidden');
-                document.getElementById('statusDot').classList.replace('bg-gray-400', 'bg-green-500');
-                document.querySelector('#statusDot + span').textContent = 'Kamera Aktif';
-                
-            } catch (err) {
-                console.error("Camera access failed:", err);
-                handleCameraError(err);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-outlined">videocam</span> Mulai Kamera';
+                const devices = await Html5Qrcode.getCameras();
+                if (devices && devices.length > 0) {
+                    camerasList = devices;
+                    const camId = devices[activeCamIdx].id;
+                    await html5QrCode.start(
+                        camId,
+                        { fps: 10, qrbox: { width: 220, height: 220 } },
+                        onScanSuccess,
+                        onScanFailure
+                    );
+                    isScanning = true;
+                    updateScanButtonUI(true);
+                } else {
+                    alert('Kamera tidak ditemukan pada perangkat ini.');
+                }
+            } catch (e) {
+                alert('Gagal mengaktifkan kamera: ' + e);
             }
-        }
-
-        function handleCameraError(err) {
-            console.error("Camera Error:", err);
-            
-            let isPermissionError = String(err).includes('NotAllowedError') || String(err).includes('Permission denied');
-            let msg = isPermissionError ? "IZIN KAMERA DIBLOKIR!" : "KAMERA GAGAL!";
-            let detail = isPermissionError 
-                ? "Silakan klik ikon GEMBOK di sebelah kiri link, lalu ubah CAMERA menjadi ALLOW.\n\nSETELAH ITU, ANDA HARUS REFRESH HALAMAN INI!"
-                : "Kamera tidak ditemukan atau sedang dipakai aplikasi lain.";
-
-            alert(msg + "\n\n" + detail);
-            
-            // Fokus ke input manual
-            document.getElementById('manualInput').focus();
-            
-            // Tawarkan refresh
-            if (confirm("Ingin Refresh halaman sekarang untuk menerapkan izin kamera?")) {
-                location.reload();
-            }
-            
-            resetBtn();
-        }
-
-        function resetBtn() {
-            const btn = document.getElementById('btnMulaiScan');
-            btn.disabled = false;
-            btn.innerHTML = '<span class="material-symbols-outlined">videocam</span> Mulai Kamera';
         }
 
         function stopScanner() {
-            if (html5QrCode) {
+            if (html5QrCode && isScanning) {
                 html5QrCode.stop().then(() => {
-                    document.getElementById('btnStart').classList.remove('hidden');
-                    document.getElementById('btnStop').classList.add('hidden');
-                    updateScanStatus(false);
-                }).catch(err => {
-                    console.error('Error stopping scanner:', err);
-                });
+                    isScanning = false;
+                    updateScanButtonUI(false);
+                }).catch(e => console.log(e));
             }
         }
 
-        function updateScanStatus(isActive) {
-            const status = document.getElementById('scanStatus');
-            if (isActive) {
-                status.innerHTML = `
-                    <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
-                    <span class="text-sm text-green-600 font-semibold">Aktif</span>
-                `;
+        function switchCamera() {
+            if (camerasList.length <= 1) {
+                alert('Hanya ada 1 kamera terdeteksi pada perangkat ini.');
+                return;
+            }
+            activeCamIdx = (activeCamIdx + 1) % camerasList.length;
+            if (isScanning) {
+                stopScanner();
+                setTimeout(() => startScanner(), 350);
+            }
+        }
+
+        function updateScanButtonUI(active) {
+            const btn = document.getElementById('btnToggleScan');
+            const dot = document.getElementById('scannerIndicatorDot');
+            const txt = document.getElementById('scannerIndicatorText');
+            if (active) {
+                btn.textContent = 'Hentikan Scanner';
+                btn.className = "px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl transition-all shadow-md";
+                if (dot) dot.className = "w-3 h-3 bg-emerald-500 rounded-full animate-pulse";
+                if (txt) txt.textContent = "Kamera Aktif";
             } else {
-                status.innerHTML = `
-                    <span class="w-3 h-3 bg-gray-400 rounded-full"></span>
-                    <span class="text-sm text-gray-600">Tidak Aktif</span>
-                `;
+                btn.textContent = 'Mulai Scanner';
+                btn.className = "px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition-all shadow-md";
+                if (dot) dot.className = "w-3 h-3 bg-gray-400 rounded-full";
+                if (txt) txt.textContent = "Siap";
             }
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            // Debounce - cegah scan ganda
-            const now = Date.now();
-            if (now - lastScanTime < SCAN_COOLDOWN) {
-                return;
-            }
-            lastScanTime = now;
+            if (isProcessingScan) return;
+            isProcessingScan = true;
 
-            // Proses scan
-            processScan(decodedText);
-        }
+            const card = document.getElementById('scanResultCard');
+            const iconBox = document.getElementById('resultIconBox');
+            const title = document.getElementById('resultTitle');
+            const msg = document.getElementById('resultMessage');
+            const partBox = document.getElementById('resultParticipantBox');
 
-        function onScanError(errorMessage) {
-            // Ignore scan errors (terlalu banyak noise)
-        }
-
-        function processManualInput() {
-            const input = document.getElementById('manualInput').value.trim();
-            if (!input) {
-                alert('Masukkan barcode terlebih dahulu!');
-                return;
-            }
-            processScan(input);
-            document.getElementById('manualInput').value = '';
-        }
-
-        function processScan(rawBarcode) {
-            if (!currentEventId) {
-                alert('Belum ada event aktif!');
-                return;
-            }
-
-            // Tampilkan loading
-            document.getElementById('loadingOverlay').classList.remove('hidden');
+            // Set loading UI
+            card.className = "p-6 rounded-2xl border-2 border-emerald-300 bg-emerald-50/50 text-center transition-all";
+            title.textContent = "Memverifikasi Kode QR...";
+            msg.textContent = `QR: ${decodedText}`;
 
             google.script.run
-                .withSuccessHandler(function(response) {
-                    document.getElementById('loadingOverlay').classList.add('hidden');
-                    
-                    if (response.success) {
-                        showScanResult(response);
-                        loadScanLog(); // Refresh log
+                .withSuccessHandler(res => {
+                    isProcessingScan = false;
+                    if (res && res.success) {
+                        playBeep(true);
+                        const p = res.peserta || {};
+                        card.className = "p-6 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-center transition-all";
+                        iconBox.className = "inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-600 text-white mb-3";
+                        iconBox.innerHTML = `<span class="material-symbols-outlined text-3xl">verified</span>`;
+                        
+                        const statusBadge = res.status === 'IZIN' ? '🟡 IZIN' : '🟢 HADIR';
+                        title.textContent = `Berhasil (${currentSesi === 'masuk' ? 'Absen Masuk' : 'Absen Selesai'})`;
+                        msg.textContent = `${statusBadge} - Data tercatat pada ${res.jam || res.jamSelesai || '-'}`;
+
+                        partBox.classList.remove('hidden');
+                        document.getElementById('resNama').textContent = p.nama || '-';
+                        document.getElementById('resCabang').textContent = p.cabangLomba || '-';
+                        document.getElementById('resKafilah').textContent = p.kafilah || '-';
+                        document.getElementById('resJam').textContent = `${res.jam || res.jamSelesai || '-'} (${res.status || currentStatus})`;
+
+                        addSessionLogItem(p.nama, p.cabangLomba, res.status || currentStatus, res.jam || res.jamSelesai || '-');
                     } else {
-                        alert('Gagal: ' + response.message);
+                        playBeep(false);
+                        card.className = "p-6 rounded-2xl border-2 border-red-500 bg-red-50 text-center transition-all";
+                        iconBox.className = "inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-red-600 text-white mb-3";
+                        iconBox.innerHTML = `<span class="material-symbols-outlined text-3xl">error</span>`;
+                        
+                        title.textContent = "Scan Ditolak!";
+                        msg.textContent = res ? res.message : "Terjadi kesalahan";
+                        partBox.classList.add('hidden');
                     }
                 })
-                .withFailureHandler(function(error) {
-                    document.getElementById('loadingOverlay').classList.add('hidden');
-                    alert('Terjadi kesalahan: ' + error.message);
+                .withFailureHandler(err => {
+                    isProcessingScan = false;
+                    playBeep(false);
+                    card.className = "p-6 rounded-2xl border-2 border-red-500 bg-red-50 text-center transition-all";
+                    title.textContent = "Error Sistem";
+                    msg.textContent = err.message || err;
+                    partBox.classList.add('hidden');
                 })
-                .prosesScan(rawBarcode, currentEventId, scannerMode);
+                .simpanAbsensi({
+                    barcode: decodedText,
+                    kegiatanId: selectedKegiatanId,
+                    tipe: currentSesi,
+                    statusKehadiran: currentStatus
+                });
+
+            // Debounce scan again after 2.5 seconds
+            setTimeout(() => {
+                isProcessingScan = false;
+            }, 2500);
         }
 
-        function showScanResult(response) {
-            const resultCard = document.getElementById('scanResult');
-            const resultIcon = document.getElementById('resultIcon');
-            const resultTitle = document.getElementById('resultTitle');
-            const resultMessage = document.getElementById('resultMessage');
-            const resultDetails = document.getElementById('resultDetails');
+        function onScanFailure(error) {
+            // Abaikan kegagalan deteksi frame kamera normal
+        }
 
-            // Set warna dan icon berdasarkan status
-            if (response.tipe === 'pulang') {
-                resultCard.querySelector('.bg-white').classList.add('border-amber-500');
-                resultIcon.classList.add('bg-amber-100', 'text-amber-600');
-                resultIcon.innerHTML = '<span class="material-symbols-outlined text-2xl">logout</span>';
-                resultTitle.textContent = 'Absen Pulang';
-                resultMessage.textContent = 'Pencatatan kepulangan berhasil';
-            } else if (response.sudahAbsen) {
-                resultCard.querySelector('.bg-white').classList.add('border-yellow-500');
-                resultIcon.classList.add('bg-yellow-100', 'text-yellow-600');
-                resultIcon.innerHTML = '<span class="material-symbols-outlined text-2xl">info</span>';
-                resultTitle.textContent = 'Sudah Absen';
-                resultMessage.textContent = response.message;
-            } else if (response.isNewGuru) {
-                resultCard.querySelector('.bg-white').classList.add('border-green-500');
-                resultIcon.classList.add('bg-green-100', 'text-green-600');
-                resultIcon.innerHTML = '<span class="material-symbols-outlined text-2xl">person_add</span>';
-                resultTitle.textContent = 'Guru Baru - Otomatis Terdaftar';
-                resultMessage.textContent = 'Absensi berhasil dicatat';
-            } else {
-                resultCard.querySelector('.bg-white').classList.add('border-blue-500');
-                resultIcon.classList.add('bg-blue-100', 'text-blue-600');
-                resultIcon.innerHTML = '<span class="material-symbols-outlined text-2xl">check_circle</span>';
-                resultTitle.textContent = 'Hadir - Selamat Datang';
-                resultMessage.textContent = 'Absensi berhasil dicatat';
-            }
+        function addSessionLogItem(nama, cabang, status, jam) {
+            const list = document.getElementById('sessionScanList');
+            if (!list) return;
 
-            let jamLabel = response.tipe === 'pulang' ? 'Jam Pulang' : 'Jam Masuk';
-            let jamValue = response.tipe === 'pulang' ? response.jamPulang : response.jam;
+            // Remove placeholder if exists
+            if (list.querySelector('.italic')) list.innerHTML = '';
 
-            // Set details
-            resultDetails.innerHTML = `
-                <div class="flex justify-between py-2 border-b">
-                    <span class="text-gray-600">Nama:</span>
-                    <span class="font-semibold">${response.guru.nama} ${response.guru.gelar || ''}</span>
+            const li = document.createElement('li');
+            li.className = "p-3 bg-gray-50 hover:bg-gray-100 rounded-xl flex items-center justify-between transition-colors border border-gray-100";
+            li.innerHTML = `
+                <div>
+                    <strong class="text-gray-900 block font-bold">${escapeHtml(nama)}</strong>
+                    <span class="text-[10px] text-gray-500">${escapeHtml(cabang || '')}</span>
                 </div>
-                <div class="flex justify-between py-2 border-b">
-                    <span class="text-gray-600">NIP:</span>
-                    <span class="font-semibold">${response.guru.nip}</span>
-                </div>
-                <div class="flex justify-between py-2 border-b">
-                    <span class="text-gray-600">Sekolah:</span>
-                    <span class="font-semibold">${response.guru.sekolah}</span>
-                </div>
-                ${response.tipe === 'pulang' ? `
-                <div class="flex justify-between py-2 border-b">
-                    <span class="text-gray-600">Jam Masuk:</span>
-                    <span class="font-semibold text-gray-800">${response.jam}</span>
-                </div>
-                ` : ''}
-                <div class="flex justify-between py-2">
-                    <span class="text-gray-600">${jamLabel}:</span>
-                    <span class="font-semibold ${response.tipe === 'pulang' ? 'text-amber-600' : 'text-blue-600'}">${jamValue}</span>
+                <div class="text-right">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${status === 'IZIN' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">${status}</span>
+                    <span class="block text-[11px] font-mono text-gray-600 mt-0.5">${jam}</span>
                 </div>
             `;
-
-            // Tampilkan card dengan animasi
-            resultCard.classList.remove('hidden');
-            resultCard.classList.add('slide-in');
-
-            // Auto hide setelah 4 detik
-            setTimeout(() => {
-                closeScanResult();
-            }, 4000);
+            list.insertBefore(li, list.firstChild);
         }
 
-        function closeScanResult() {
-            const resultCard = document.getElementById('scanResult');
-            resultCard.classList.add('hidden');
-            
-            // Reset classes
-            const bgWhite = resultCard.querySelector('.bg-white');
-            bgWhite.className = 'bg-white rounded-xl shadow-2xl p-6 border-l-4';
-            
-            const icon = document.getElementById('resultIcon');
-            icon.className = 'w-12 h-12 rounded-full flex items-center justify-center';
-            
-            // Remove colored backgrounds/texts
-            icon.classList.remove('bg-yellow-100', 'text-yellow-600', 'bg-green-100', 'text-green-600', 'bg-blue-100', 'text-blue-600', 'bg-amber-100', 'text-amber-600');
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
-        function loadScanLog() {
-            const today = new Date().toISOString().split('T')[0];
-            
-            google.script.run
-                .withSuccessHandler(function(data) {
-                    const logContainer = document.getElementById('scanLog');
-                    
-                    if (data.length > 0) {
-                        logContainer.innerHTML = data.map((item, index) => `
-                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                                        ${index + 1}
-                                    </div>
-                                    <div>
-                                        <p class="font-semibold text-gray-800">${item.nama}</p>
-                                        <p class="text-sm text-gray-600">${item.sekolah}</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-semibold text-gray-800">${item.jam}</p>
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full badge-hadir">
-                                        ${item.status}
-                                    </span>
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        logContainer.innerHTML = `
-                            <div class="text-center py-8 text-gray-500">
-                                <span class="material-symbols-outlined text-4xl mb-2">qr_code_scanner</span>
-                                <p>Belum ada scan hari ini</p>
-                            </div>
-                        `;
-                    }
-                })
-                .withFailureHandler(function(error) {
-                    console.error('Error loading log:', error);
-                })
-                .getDaftarHadirByTanggal(today);
-        }
-
-        function formatTanggal(date) {
-            const d = new Date(date);
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            return d.toLocaleDateString('id-ID', options);
-        }
+        // Auto init jika berdiri sendiri
+        window.addEventListener('DOMContentLoaded', () => {
+            initScannerPage();
+        });
     </script>
-
 </body>
 </html>

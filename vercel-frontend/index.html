@@ -100,20 +100,38 @@
                 btnMasuk.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all bg-white text-blue-600 shadow-sm border border-gray-100";
                 btnPulang.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all text-gray-500 hover:text-gray-700";
                 if (btnStart) {
-                    btnStart.className = "w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95";
-                    if (!isScanning) btnStart.innerHTML = 'Mulai Scanner';
+                    if (isScanning) {
+                        btnStart.className = "w-full bg-red-600 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95";
+                        btnStart.innerHTML = 'STOP SCANNER';
+                    } else {
+                        btnStart.className = "w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95";
+                        btnStart.innerHTML = 'Mulai Scanner';
+                    }
                 }
             } else {
                 btnMasuk.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all text-gray-500 hover:text-gray-700";
                 btnPulang.className = "flex-1 py-3 px-4 rounded-lg font-bold text-sm text-center flex items-center justify-center gap-2 transition-all bg-white text-amber-600 shadow-sm border border-gray-100";
                 if (btnStart) {
-                    btnStart.className = "w-full bg-amber-600 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95";
-                    if (!isScanning) btnStart.innerHTML = 'Mulai Scanner';
+                    if (isScanning) {
+                        btnStart.className = "w-full bg-red-600 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95";
+                        btnStart.innerHTML = 'STOP SCANNER';
+                    } else {
+                        btnStart.className = "w-full bg-amber-600 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95";
+                        btnStart.innerHTML = 'Mulai Scanner';
+                    }
                 }
             }
         }
 
-        function navigate(page) {
+        async function navigate(page) {
+            if (page !== 'scanner' && isScanning) {
+                try {
+                    await stopScanner();
+                } catch (e) {
+                    console.error("Failed to stop scanner on navigate:", e);
+                    isScanning = false;
+                }
+            }
             const renderFn = PAGES[page] || (() => `<h1>404</h1>`);
             document.getElementById('app').innerHTML = renderFn();
             if (page === 'login') initLogin();

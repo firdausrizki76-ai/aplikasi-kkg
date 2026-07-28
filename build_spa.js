@@ -1,11 +1,12 @@
 const fs = require('fs');
-const files = ['Dashboard.html', 'Scanner.html', 'DaftarHadir.html', 'ListGuru.html', 'Laporan.html'];
+const files = ['Dashboard.html', 'Kegiatan.html', 'Scanner.html', 'DaftarHadir.html', 'ListPeserta.html', 'Laporan.html'];
+
 let indexHtml = fs.readFileSync('src/Dashboard.html', 'utf8');
 
-let topPart = indexHtml.split('<!-- Main Content -->')[0];
+let topPart = indexHtml.split('<main class="ml-64 p-8">')[0];
 let bottomPart = '</body>\n</html>';
 
-let combinedHtml = topPart + '<!-- Main Content -->\n<main class="ml-64 p-8">\n';
+let combinedHtml = topPart + '<main class="ml-64 p-8">\n';
 let allScripts = '';
 
 files.forEach(file => {
@@ -16,11 +17,12 @@ files.forEach(file => {
   
   let pageName = file.replace('.html', '').toLowerCase();
   if (pageName === 'daftarhadir') pageName = 'hadir';
+  if (pageName === 'listpeserta') pageName = 'peserta';
   if (pageName === 'listguru') pageName = 'guru';
   
   combinedHtml += '<div id="view-' + pageName + '" class="page-view' + (pageName === 'dashboard' ? '' : ' hidden') + '">\n' + mainContent + '\n</div>\n';
   
-  // Extract external script tags and internal scripts, excluding tailwind/fonts which are in head
+  // Extract script tags
   let scriptParts = content.split('<script');
   for(let i=1; i<scriptParts.length; i++) {
      let scriptTag = '<script' + scriptParts[i].split('</script>')[0] + '</script>\n';
@@ -44,37 +46,44 @@ combinedHtml = combinedHtml.replace(/href="<\?= scriptUrl \?>\?page=([a-z]+)" ta
 combinedHtml = combinedHtml.replace('</body>', `
 <script>
 function navigate(page) {
+  if (page !== 'scanner' && typeof stopScanner === 'function') {
+     stopScanner();
+  }
   document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
-  document.getElementById('view-' + page).classList.remove('hidden');
+  const targetView = document.getElementById('view-' + page);
+  if (targetView) targetView.classList.remove('hidden');
   
   // Update sidebar active state
   document.querySelectorAll('aside nav a').forEach(el => {
-    el.classList.remove('text-primary', 'font-semibold', 'border-r-4', 'border-primary', 'bg-blue-50', 'rounded-l-lg');
+    el.classList.remove('text-emerald-700', 'font-semibold', 'border-r-4', 'border-emerald-600', 'bg-emerald-50', 'rounded-l-lg');
     el.classList.add('text-gray-600', 'hover:bg-gray-50', 'rounded-lg');
   });
   
   let activeLink = document.querySelector('aside nav a[onclick*="navigate(\\'' + page + '\\')"]');
   if (activeLink) {
     activeLink.classList.remove('text-gray-600', 'hover:bg-gray-50', 'rounded-lg');
-    activeLink.classList.add('text-primary', 'font-semibold', 'border-r-4', 'border-primary', 'bg-blue-50', 'rounded-l-lg');
+    activeLink.classList.add('text-emerald-700', 'font-semibold', 'border-r-4', 'border-emerald-600', 'bg-emerald-50', 'rounded-l-lg');
   }
   
   // Call initialization functions if they exist
-  if (page === 'dashboard' && typeof loadDashboardStats === 'function') {
-     loadDashboardStats();
+  if (page === 'dashboard' && typeof loadDashboard === 'function') {
+     loadDashboard();
   }
-  if (page === 'hadir' && typeof loadHadir === 'function') {
-     loadHadir();
+  if (page === 'kegiatan' && typeof loadKegiatan === 'function') {
+     loadKegiatan();
   }
-  if (page === 'guru' && typeof loadGuru === 'function') {
-     loadGuru();
+  if (page === 'hadir' && typeof loadDaftarHadir === 'function') {
+     loadDaftarHadir();
+  }
+  if (page === 'peserta' && typeof loadPeserta === 'function') {
+     loadPeserta();
   }
   if (page === 'laporan' && typeof loadLaporan === 'function') {
-     // loadLaporan doesn't exist yet but just in case
+     loadLaporan();
   }
 }
 </script>
 </body>`);
 
 fs.writeFileSync('src/App.html', combinedHtml);
-console.log('App.html created!');
+console.log('App.html created successfully for MTQ Portal!');

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Peserta MTQ</title>
+    <?!= include('Stylesheet'); ?>
+</head>
+<body class="bg-surface">
+
+    <!-- Sidebar -->
+    <aside class="h-screen w-64 fixed left-0 top-0 bg-white shadow-lg flex flex-col py-6 z-50">
+        <div class="px-6 mb-8">
+            <h1 class="text-xl font-extrabold text-emerald-700 tracking-tight">Portal MTQ</h1>
+            <p class="text-xs text-gray-400 font-semibold uppercase">Absensi & Pertemuan</p>
+        </div>
+        
+        <nav class="flex-1 space-y-1 px-3">
+            <a href="<?= scriptUrl ?>?page=dashboard" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-sm">Dashboard</span>
+            </a>
+            <a href="<?= scriptUrl ?>?page=kegiatan" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">event_note</span>
+                <span class="text-sm">Kegiatan</span>
+            </a>
+            <a href="<?= scriptUrl ?>?page=scanner" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">qr_code_scanner</span>
+                <span class="text-sm">QR Scanner</span>
+            </a>
+            <a href="<?= scriptUrl ?>?page=hadir" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">assignment</span>
+                <span class="text-sm">Daftar Hadir</span>
+            </a>
+            <a href="<?= scriptUrl ?>?page=peserta" target="_top" class="flex items-center gap-3 px-4 py-3 text-emerald-700 font-semibold border-r-4 border-emerald-600 bg-emerald-50 rounded-l-lg">
+                <span class="material-symbols-outlined">groups</span>
+                <span class="text-sm">Data Peserta</span>
+            </a>
+            <a href="<?= scriptUrl ?>?page=laporan" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">description</span>
+                <span class="text-sm">Laporan</span>
+            </a>
+        </nav>
+        
+        <div class="mt-auto border-t pt-4 px-3">
+            <a href="#" onclick="logout(); return false;" class="flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="text-sm font-semibold">Keluar</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8">
+        <div class="space-y-6 slide-in">
+          <!-- Header Title -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-card border border-gray-100">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 font-bold">
+                  <span class="material-symbols-outlined">groups</span>
+                </span>
+                <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Data Peserta MTQ</h2>
+              </div>
+              <p class="text-sm text-gray-500 mt-1">Kelola data Kafilah, Cabang Lomba, serta cetak Kartu ID QR Code massal.</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="showModalImportPeserta()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm transition-all shadow-sm">
+                <span class="material-symbols-outlined text-[18px]">upload_file</span>
+                <span>Import Excel</span>
+              </button>
+              <button onclick="showModalQrMassal()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-amber-500/20">
+                <span class="material-symbols-outlined text-[20px]">qr_code_2</span>
+                <span>Generate QR Massal</span>
+              </button>
+              <button onclick="showModalPeserta()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20">
+                <span class="material-symbols-outlined text-[20px]">person_add</span>
+                <span>Tambah Peserta</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter & Search Section -->
+          <div class="bg-white p-4 rounded-2xl shadow-card border border-gray-100 flex flex-col md:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+              <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+              <input type="text" id="filterPesertaKeyword" oninput="debounceLoadPeserta()" placeholder="Cari nama peserta, NIK / nomor peserta, atau kafilah..." 
+                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all">
+            </div>
+            <div class="w-full md:w-56">
+              <select id="filterPesertaCabang" onchange="loadPeserta()" 
+                class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                <option value="">Semua Cabang Lomba</option>
+                <option value="Tilawah Anak-anak">Tilawah Anak-anak</option>
+                <option value="Tilawah Remaja">Tilawah Remaja</option>
+                <option value="Tilawah Dewasa">Tilawah Dewasa</option>
+                <option value="Tahfizh 1 Juz & Tilawah">Tahfizh 1 Juz & Tilawah</option>
+                <option value="Tahfizh 5 Juz & Tilawah">Tahfizh 5 Juz & Tilawah</option>
+                <option value="Tahfizh 10 Juz">Tahfizh 10 Juz</option>
+                <option value="Tahfizh 20 Juz">Tahfizh 20 Juz</option>
+                <option value="Tahfizh 30 Juz">Tahfizh 30 Juz</option>
+                <option value="Tafsir Bahasa Arab">Tafsir Bahasa Arab</option>
+                <option value="Tafsir Bahasa Indonesia">Tafsir Bahasa Indonesia</option>
+                <option value="Tafsir Bahasa Inggris">Tafsir Bahasa Inggris</option>
+                <option value="Fahm Al-Quran">Fahm Al-Quran</option>
+                <option value="Syarh Al-Quran">Syarh Al-Quran</option>
+                <option value="Khat Al-Quran">Khat Al-Quran (Kaligrafi)</option>
+                <option value="KTIQ">KTIQ</option>
+                <option value="Qiraat Sab'ah">Qiraat Sab'ah</option>
+              </select>
+            </div>
+            <div class="w-full md:w-52">
+              <input type="text" id="filterPesertaKafilah" oninput="debounceLoadPeserta()" placeholder="Filter Kafilah..." 
+                class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+          </div>
+
+          <!-- Table Section -->
+          <div class="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-200/80 text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                    <th class="py-3.5 px-4 w-12 text-center">No</th>
+                    <th class="py-3.5 px-4">No. Peserta / NIK</th>
+                    <th class="py-3.5 px-4">Nama Peserta</th>
+                    <th class="py-3.5 px-4">Cabang Lomba</th>
+                    <th class="py-3.5 px-4">Kafilah / Utusan</th>
+                    <th class="py-3.5 px-4">No. HP / WA</th>
+                    <th class="py-3.5 px-4 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelPesertaBody" class="divide-y divide-gray-100 text-sm">
+                  <tr>
+                    <td colspan="7" class="py-12 text-center text-gray-400">
+                      <span class="material-symbols-outlined text-4xl block mb-2 animate-spin">progress_activity</span>
+                      Memuat data peserta...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="pesertaCountInfo" class="px-6 py-3.5 bg-gray-50/50 border-t border-gray-100 text-xs text-gray-500 flex justify-between items-center">
+              <span>Total Peserta: <strong id="totalPesertaLabel">0</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL FORM PESERTA (TAMBAH / EDIT) -->
+        <div id="modalPeserta" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 slide-in">
+            <div class="px-6 py-5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-2xl">person_add</span>
+                <h3 id="modalPesertaTitle" class="text-lg font-bold">Tambah Peserta MTQ</h3>
+              </div>
+              <button onclick="closeModalPeserta()" class="p-1 hover:bg-white/10 rounded-lg text-white/80 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <form id="formPeserta" onsubmit="submitFormPeserta(event)" class="p-6 space-y-4">
+              <input type="hidden" id="pesertaId">
+              
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">No. Peserta / NIK (Sebagai ID QR) <span class="text-red-500">*</span></label>
+                <input type="text" id="pesertaNo" required placeholder="Contoh: 101 atau 157102xxxxxxxx" 
+                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+                <p class="text-[11px] text-gray-400 mt-1">Kode inilah yang akan tersimpan dalam QR Code dan menjadi acuan saat scan absensi.</p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Nama Lengkap <span class="text-red-500">*</span></label>
+                <input type="text" id="pesertaNama" required placeholder="Contoh: Ahmad Zaki Al-Hafizh" 
+                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Cabang Lomba <span class="text-red-500">*</span></label>
+                  <select id="pesertaCabang" required class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <option value="Tilawah Anak-anak">Tilawah Anak-anak</option>
+                    <option value="Tilawah Remaja">Tilawah Remaja</option>
+                    <option value="Tilawah Dewasa">Tilawah Dewasa</option>
+                    <option value="Tahfizh 1 Juz & Tilawah">Tahfizh 1 Juz & Tilawah</option>
+                    <option value="Tahfizh 5 Juz & Tilawah">Tahfizh 5 Juz & Tilawah</option>
+                    <option value="Tahfizh 10 Juz">Tahfizh 10 Juz</option>
+                    <option value="Tahfizh 20 Juz">Tahfizh 20 Juz</option>
+                    <option value="Tahfizh 30 Juz">Tahfizh 30 Juz</option>
+                    <option value="Tafsir Bahasa Arab">Tafsir Bahasa Arab</option>
+                    <option value="Tafsir Bahasa Indonesia">Tafsir Bahasa Indonesia</option>
+                    <option value="Tafsir Bahasa Inggris">Tafsir Bahasa Inggris</option>
+                    <option value="Fahm Al-Quran">Fahm Al-Quran</option>
+                    <option value="Syarh Al-Quran">Syarh Al-Quran</option>
+                    <option value="Khat Al-Quran">Khat Al-Quran (Kaligrafi)</option>
+                    <option value="KTIQ">KTIQ</option>
+                    <option value="Qiraat Sab'ah">Qiraat Sab'ah</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Kafilah / Utusan <span class="text-red-500">*</span></label>
+                  <input type="text" id="pesertaKafilah" required placeholder="Contoh: Kafilah Kec. Pasar" 
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">No. HP / WA (Opsional)</label>
+                <input type="tel" id="pesertaHp" placeholder="Contoh: 081234567890" 
+                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+              </div>
+
+              <div class="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
+                <button type="button" onclick="closeModalPeserta()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm">
+                  Batal
+                </button>
+                <button type="submit" id="btnSimpanPeserta" class="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md">
+                  <span class="material-symbols-outlined text-[18px]">save</span>
+                  <span>Simpan Peserta</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL GENERATE MASSAL QR (CETAK KARTU ID) -->
+        <div id="modalQrMassal" class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-md flex flex-col justify-between overflow-y-auto">
+          <!-- Top Navbar Controls -->
+          <div class="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-sm no-print">
+            <div class="flex items-center gap-3">
+              <span class="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 font-bold">
+                <span class="material-symbols-outlined">qr_code_2</span>
+              </span>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Kartu ID & QR Code Peserta MTQ</h3>
+                <p class="text-xs text-gray-500">Siap dicetak pada kertas A4 / ID Card. Setiap kartu memiliki QR Code unik untuk absensi.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <select id="qrMassalFilterCabang" onchange="renderQrCardsGrid()" class="py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700">
+                <option value="">Semua Cabang Lomba</option>
+              </select>
+              <button onclick="window.print()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md">
+                <span class="material-symbols-outlined text-[18px]">print</span>
+                <span>Cetak Sekarang (Print)</span>
+              </button>
+              <button onclick="closeModalQrMassal()" class="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Print Area (Cards Grid) -->
+          <div id="print-area" class="p-6 md:p-10 max-w-7xl mx-auto w-full">
+            <div id="qrCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <!-- ID Cards akan dirakit di sini oleh JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL SINGLE QR (LIHAT KARTU PESERTA) -->
+        <div id="modalQrSingle" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden border border-gray-100 slide-in">
+            <div class="p-6 text-center">
+              <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 mb-3">
+                <span class="material-symbols-outlined text-2xl">verified</span>
+              </div>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-600">MUSABAQAH TILAWATIL QURAN</h3>
+              <h4 id="singleQrNama" class="text-lg font-extrabold text-gray-900 mt-1"></h4>
+              <p id="singleQrCabang" class="text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full inline-block mt-2"></p>
+              
+              <div class="my-6 p-4 bg-white border-2 border-emerald-500/20 rounded-2xl flex items-center justify-center shadow-inner">
+                <div id="singleQrBox" class="flex justify-center"></div>
+              </div>
+              
+              <div class="text-left bg-gray-50 p-3 rounded-xl border border-gray-100 text-xs text-gray-600 space-y-1">
+                <div class="flex justify-between"><span>No. Peserta:</span> <strong id="singleQrNo"></strong></div>
+                <div class="flex justify-between"><span>Kafilah:</span> <strong id="singleQrKafilah"></strong></div>
+              </div>
+
+              <div class="mt-6 flex gap-2">
+                <button onclick="closeModalQrSingle()" class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm">
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL IMPORT EXCEL PESERTA -->
+        <div id="modalImportPeserta" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 slide-in">
+            <div class="px-6 py-5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white flex items-center justify-between">
+              <h3 class="text-lg font-bold">Import Peserta dari Excel</h3>
+              <button onclick="closeModalImportPeserta()" class="p-1 hover:bg-white/10 rounded-lg"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="p-6 space-y-4">
+              <p class="text-xs text-gray-500 leading-relaxed">
+                Unggah file Excel (<strong>.xlsx</strong>) yang memiliki kolom header: 
+                <code class="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-emerald-700">noPeserta</code>, 
+                <code class="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-emerald-700">nama</code>, 
+                <code class="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-emerald-700">cabangLomba</code>, 
+                <code class="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-emerald-700">kafilah</code>, 
+                <code class="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-emerald-700">noHp</code>.
+              </p>
+              <input type="file" id="fileExcelPeserta" accept=".xlsx, .xls" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+              <div class="pt-4 flex justify-end gap-2">
+                <button onclick="closeModalImportPeserta()" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold">Batal</button>
+                <button onclick="prosesImportExcelPeserta()" class="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold shadow-md">Mulai Import</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <script>
+          let ALL_PESERTA_DATA = [];
+          let pesertaDebounceTimer = null;
+
+          function loadPeserta() {
+            const keyword = document.getElementById('filterPesertaKeyword') ? document.getElementById('filterPesertaKeyword').value : '';
+            const cabang = document.getElementById('filterPesertaCabang') ? document.getElementById('filterPesertaCabang').value : '';
+            const kafilah = document.getElementById('filterPesertaKafilah') ? document.getElementById('filterPesertaKafilah').value : '';
+
+            document.getElementById('tabelPesertaBody').innerHTML = `
+              <tr>
+                <td colspan="7" class="py-12 text-center text-gray-400">
+                  <span class="material-symbols-outlined text-4xl block mb-2 animate-spin">progress_activity</span>
+                  Memuat data peserta MTQ...
+                </td>
+              </tr>
+            `;
+
+            google.script.run
+              .withSuccessHandler(data => {
+                ALL_PESERTA_DATA = data || [];
+                renderTabelPeserta(ALL_PESERTA_DATA);
+                updateFilterCabangQrMassal();
+              })
+              .withFailureHandler(err => {
+                document.getElementById('tabelPesertaBody').innerHTML = `
+                  <tr>
+                    <td colspan="7" class="py-12 text-center text-red-500 font-semibold">
+                      Gagal memuat data: ${err.message || err}
+                    </td>
+                  </tr>
+                `;
+              })
+              .getListPeserta(keyword, cabang, kafilah);
+          }
+
+          function debounceLoadPeserta() {
+            if (pesertaDebounceTimer) clearTimeout(pesertaDebounceTimer);
+            pesertaDebounceTimer = setTimeout(() => {
+              loadPeserta();
+            }, 400);
+          }
+
+          function renderTabelPeserta(list) {
+            const tbody = document.getElementById('tabelPesertaBody');
+            const labelTotal = document.getElementById('totalPesertaLabel');
+            if (labelTotal) labelTotal.textContent = list.length;
+
+            if (!list || list.length === 0) {
+              tbody.innerHTML = `
+                <tr>
+                  <td colspan="7" class="py-12 text-center text-gray-400">
+                    <span class="material-symbols-outlined text-4xl block mb-2 text-gray-300">group_off</span>
+                    Belum ada data peserta MTQ yang sesuai filter.
+                  </td>
+                </tr>
+              `;
+              return;
+            }
+
+            tbody.innerHTML = list.map((item, idx) => `
+              <tr class="hover:bg-emerald-50/40 transition-colors">
+                <td class="py-3.5 px-4 text-center font-semibold text-gray-500">${idx + 1}</td>
+                <td class="py-3.5 px-4 font-bold text-emerald-800">${escapeHtml(item.noPeserta || item.nip || '-')}</td>
+                <td class="py-3.5 px-4 font-bold text-gray-900">${escapeHtml(item.nama || '-')}</td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">
+                    ${escapeHtml(item.cabangLomba || item.gelar || '-')}
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 font-medium text-gray-700">${escapeHtml(item.kafilah || item.sekolah || '-')}</td>
+                <td class="py-3.5 px-4 text-gray-500 font-mono text-xs">${escapeHtml(item.noHp || item.kota || '-')}</td>
+                <td class="py-3.5 px-4 text-center">
+                  <div class="flex items-center justify-center gap-1.5">
+                    <button onclick="showQrSingleModal('${item.noPeserta || item.id}', '${escapeHtml(item.nama)}', '${escapeHtml(item.cabangLomba || '')}', '${escapeHtml(item.kafilah || '')}')" 
+                      class="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg transition-all" title="Lihat Kartu QR">
+                      <span class="material-symbols-outlined text-[18px]">qr_code_2</span>
+                    </button>
+                    <button onclick="editPeserta('${item.id}', '${item.noPeserta || item.nip || ''}', '${escapeHtml(item.nama)}', '${escapeHtml(item.cabangLomba || item.gelar || '')}', '${escapeHtml(item.kafilah || item.sekolah || '')}', '${escapeHtml(item.noHp || item.kota || '')}')" 
+                      class="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all" title="Edit Peserta">
+                      <span class="material-symbols-outlined text-[18px]">edit</span>
+                    </button>
+                    <button onclick="hapusPesertaConfirm('${item.id}', '${escapeHtml(item.nama)}') " 
+                      class="p-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all" title="Hapus Peserta">
+                      <span class="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `).join('');
+          }
+
+          function showModalPeserta() {
+            document.getElementById('pesertaId').value = '';
+            document.getElementById('pesertaNo').value = '';
+            document.getElementById('pesertaNama').value = '';
+            document.getElementById('pesertaCabang').value = 'Tilawah Dewasa';
+            document.getElementById('pesertaKafilah').value = '';
+            document.getElementById('pesertaHp').value = '';
+            document.getElementById('modalPesertaTitle').textContent = 'Tambah Peserta MTQ';
+            document.getElementById('modalPeserta').classList.remove('hidden');
+          }
+
+          function editPeserta(id, noPeserta, nama, cabang, kafilah, noHp) {
+            document.getElementById('pesertaId').value = id;
+            document.getElementById('pesertaNo').value = noPeserta;
+            document.getElementById('pesertaNama').value = nama;
+            document.getElementById('pesertaCabang').value = cabang || 'Tilawah Dewasa';
+            document.getElementById('pesertaKafilah').value = kafilah;
+            document.getElementById('pesertaHp').value = (noHp === '-' ? '' : noHp);
+            document.getElementById('modalPesertaTitle').textContent = 'Edit Peserta MTQ';
+            document.getElementById('modalPeserta').classList.remove('hidden');
+          }
+
+          function closeModalPeserta() {
+            document.getElementById('modalPeserta').classList.add('hidden');
+          }
+
+          function submitFormPeserta(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSimpanPeserta');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> <span>Menyimpan...</span>`;
+
+            const params = {
+              id: document.getElementById('pesertaId').value,
+              noPeserta: document.getElementById('pesertaNo').value.trim(),
+              nama: document.getElementById('pesertaNama').value.trim(),
+              cabangLomba: document.getElementById('pesertaCabang').value,
+              kafilah: document.getElementById('pesertaKafilah').value.trim(),
+              noHp: document.getElementById('pesertaHp').value.trim(),
+              rawQr: document.getElementById('pesertaNo').value.trim()
+            };
+
+            google.script.run
+              .withSuccessHandler(res => {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">save</span> <span>Simpan Peserta</span>`;
+                if (res && res.success) {
+                  closeModalPeserta();
+                  loadPeserta();
+                } else {
+                  alert(res ? res.message : 'Gagal menyimpan data peserta');
+                }
+              })
+              .withFailureHandler(err => {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">save</span> <span>Simpan Peserta</span>`;
+                alert('Error: ' + (err.message || err));
+              })
+              .simpanPeserta(params);
+          }
+
+          function hapusPesertaConfirm(id, nama) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus data peserta "${nama}"?`)) return;
+
+            google.script.run
+              .withSuccessHandler(res => {
+                if (res && res.success) {
+                  loadPeserta();
+                } else {
+                  alert(res ? res.message : 'Gagal menghapus peserta');
+                }
+              })
+              .withFailureHandler(err => alert('Error: ' + err))
+              .hapusPeserta(id);
+          }
+
+          function showQrSingleModal(noPeserta, nama, cabang, kafilah) {
+            document.getElementById('singleQrNama').textContent = nama;
+            document.getElementById('singleQrCabang').textContent = cabang || 'Cabang MTQ';
+            document.getElementById('singleQrNo').textContent = noPeserta;
+            document.getElementById('singleQrKafilah').textContent = kafilah || '-';
+            
+            const container = document.getElementById('singleQrBox');
+            container.innerHTML = '';
+            
+            if (typeof QRCode !== 'undefined') {
+              new QRCode(container, {
+                text: noPeserta,
+                width: 170,
+                height: 170,
+                colorDark: "#064E3B",
+                colorLight: "#FFFFFF",
+                correctLevel: QRCode.CorrectLevel.H
+              });
+            } else {
+              container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=${encodeURIComponent(noPeserta)}&color=064E3B" alt="QR Code" class="w-40 h-40">`;
+            }
+
+            document.getElementById('modalQrSingle').classList.remove('hidden');
+          }
+
+          function closeModalQrSingle() {
+            document.getElementById('modalQrSingle').classList.add('hidden');
+          }
+
+          function showModalQrMassal() {
+            renderQrCardsGrid();
+            document.getElementById('modalQrMassal').classList.remove('hidden');
+          }
+
+          function closeModalQrMassal() {
+            document.getElementById('modalQrMassal').classList.add('hidden');
+          }
+
+          function updateFilterCabangQrMassal() {
+            const sel = document.getElementById('qrMassalFilterCabang');
+            if (!sel) return;
+            const cabangSet = new Set(ALL_PESERTA_DATA.map(p => p.cabangLomba || p.gelar).filter(Boolean));
+            sel.innerHTML = `<option value="">Semua Cabang Lomba</option>` +
+              Array.from(cabangSet).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+          }
+
+          function renderQrCardsGrid() {
+            const filterCabang = document.getElementById('qrMassalFilterCabang') ? document.getElementById('qrMassalFilterCabang').value : '';
+            const container = document.getElementById('qrCardsContainer');
+            if (!container) return;
+            
+            const list = ALL_PESERTA_DATA.filter(p => !filterCabang || (p.cabangLomba || p.gelar) === filterCabang);
+            
+            if (list.length === 0) {
+              container.innerHTML = `<div class="col-span-full py-12 text-center text-gray-400 bg-white rounded-2xl">Tidak ada peserta untuk dibuatkan kartu QR.</div>`;
+              return;
+            }
+
+            container.innerHTML = list.map((item, idx) => {
+              const qrText = item.noPeserta || item.nip || item.id;
+              const cardId = 'qrcode-card-' + idx;
+              return `
+                <div class="bg-white rounded-3xl border-2 border-emerald-600/30 overflow-hidden shadow-card hover:shadow-glow transition-all flex flex-col justify-between page-break">
+                  <div class="bg-gradient-to-r from-emerald-700 to-emerald-800 text-white px-5 py-3 text-center border-b-4 border-amber-500">
+                    <p class="text-[9px] font-extrabold uppercase tracking-widest text-amber-200">KARTU PESERTA</p>
+                    <h4 class="text-xs font-black tracking-wide uppercase">MUSABAQAH TILAWATIL QURAN</h4>
+                  </div>
+
+                  <div class="p-5 flex flex-col items-center text-center">
+                    <div class="w-full">
+                      <h5 class="text-base font-extrabold text-gray-900 line-clamp-1">${escapeHtml(item.nama || '-')}</h5>
+                      <span class="inline-block mt-1 px-3 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[11px]">
+                        ${escapeHtml(item.cabangLomba || item.gelar || '-')}
+                      </span>
+                    </div>
+
+                    <div class="my-4 p-3 bg-white border-2 border-emerald-600/20 rounded-2xl flex items-center justify-center shadow-inner">
+                      <div id="${cardId}" class="w-32 h-32 flex items-center justify-center"></div>
+                    </div>
+
+                    <div class="w-full pt-3 border-t border-gray-100 text-xs font-semibold text-gray-700 flex justify-between items-center">
+                      <div>
+                        <span class="text-[10px] text-gray-400 block uppercase">No. Peserta</span>
+                        <span class="font-mono text-emerald-800 font-extrabold">${escapeHtml(qrText)}</span>
+                      </div>
+                      <div class="text-right">
+                        <span class="text-[10px] text-gray-400 block uppercase">Kafilah</span>
+                        <span class="text-gray-800 font-bold line-clamp-1 max-w-[120px]">${escapeHtml(item.kafilah || item.sekolah || '-')}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="h-2 bg-gradient-to-r from-amber-500 via-emerald-600 to-amber-500"></div>
+                </div>
+              `;
+            }).join('');
+
+            setTimeout(() => {
+              list.forEach((item, idx) => {
+                const qrText = item.noPeserta || item.nip || item.id;
+                const el = document.getElementById('qrcode-card-' + idx);
+                if (el) {
+                  el.innerHTML = '';
+                  if (typeof QRCode !== 'undefined') {
+                    new QRCode(el, {
+                      text: String(qrText),
+                      width: 128,
+                      height: 128,
+                      colorDark: "#047857",
+                      colorLight: "#FFFFFF",
+                      correctLevel: QRCode.CorrectLevel.M
+                    });
+                  } else {
+                    el.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${encodeURIComponent(qrText)}&color=047857" alt="QR">`;
+                  }
+                }
+              });
+            }, 100);
+          }
+
+          function showModalImportPeserta() {
+            document.getElementById('modalImportPeserta').classList.remove('hidden');
+          }
+
+          function closeModalImportPeserta() {
+            document.getElementById('modalImportPeserta').classList.add('hidden');
+          }
+
+          function prosesImportExcelPeserta() {
+            const fileInput = document.getElementById('fileExcelPeserta');
+            if (!fileInput.files || fileInput.files.length === 0) {
+              alert('Pilih file Excel terlebih dahulu.');
+              return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const data = new Uint8Array(e.target.result);
+              const workbook = XLSX.read(data, { type: 'array' });
+              const sheetName = workbook.SheetNames[0];
+              const sheet = workbook.Sheets[sheetName];
+              const json = XLSX.utils.sheet_to_json(sheet);
+
+              if (!json || json.length === 0) {
+                alert('File Excel kosong atau format tidak sesuai.');
+                return;
+              }
+
+              google.script.run
+                .withSuccessHandler(res => {
+                  closeModalImportPeserta();
+                  alert(res ? res.message : 'Import berhasil');
+                  loadPeserta();
+                })
+                .withFailureHandler(err => alert('Error import: ' + err))
+                .importPesertaExcel(json);
+            };
+            reader.readAsArrayBuffer(file);
+          }
+
+          function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
+          }
+
+          window.addEventListener('DOMContentLoaded', () => {
+            loadPeserta();
+          });
+        </script>
+    </main>
+</body>
+</html>

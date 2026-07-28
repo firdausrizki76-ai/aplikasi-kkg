@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jadwal Kegiatan MTQ</title>
+    <?!= include('Stylesheet'); ?>
+</head>
+<body class="bg-surface">
+
+    <!-- Sidebar -->
+    <aside class="h-screen w-64 fixed left-0 top-0 bg-white shadow-lg flex flex-col py-6 z-50">
+        <div class="px-6 mb-8">
+            <h1 class="text-xl font-extrabold text-emerald-700 tracking-tight">Portal MTQ</h1>
+            <p class="text-xs text-gray-400 font-semibold uppercase">Absensi & Pertemuan</p>
+        </div>
+        
+        <nav class="flex-1 space-y-1 px-3">
+            <a href="<?= scriptUrl ?>?page=dashboard" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-sm">Dashboard</span>
+            </a>
+            <a href="<?= scriptUrl ?>?page=kegiatan" target="_top" class="flex items-center gap-3 px-4 py-3 text-emerald-700 font-semibold border-r-4 border-emerald-600 bg-emerald-50 rounded-l-lg">
+                <span class="material-symbols-outlined">event_note</span>
+                <span class="text-sm">Kegiatan</span>
+            </a>
+            <a href="<?= scriptUrl ?>?page=scanner" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">qr_code_scanner</span>
+                <span class="text-sm">QR Scanner</span>
+            </a>
+            <a href="<?= scriptUrl ?>?page=hadir" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">assignment</span>
+                <span class="text-sm">Daftar Hadir</span>
+            </a>
+            <a href="<?= scriptUrl ?>?page=peserta" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">groups</span>
+                <span class="text-sm">Data Peserta</span>
+            </a>
+            <a href="<?= scriptUrl ?>?page=laporan" target="_top" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">description</span>
+                <span class="text-sm">Laporan</span>
+            </a>
+        </nav>
+        
+        <div class="mt-auto border-t pt-4 px-3">
+            <a href="#" onclick="logout(); return false;" class="flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="text-sm font-semibold">Keluar</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-8">
+        <div class="space-y-6 slide-in">
+          <!-- Header Title -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-card border border-gray-100">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-amber-100 text-amber-700 font-bold">
+                  <span class="material-symbols-outlined">event_note</span>
+                </span>
+                <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Jadwal & Kegiatan MTQ</h2>
+              </div>
+              <p class="text-sm text-gray-500 mt-1">Buat agenda pertemuan per hari. Setiap kegiatan akan menjadi acuan saat peserta melakukan absensi.</p>
+            </div>
+            
+            <button onclick="showModalKegiatan()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20">
+              <span class="material-symbols-outlined text-[20px]">add_circle</span>
+              <span>Tambah Kegiatan</span>
+            </button>
+          </div>
+
+          <!-- Table Section -->
+          <div class="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+              <h3 class="text-base font-bold text-gray-800">Daftar Semua Kegiatan</h3>
+              <button onclick="loadKegiatan()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+                <span class="material-symbols-outlined text-[16px]">refresh</span>
+                <span>Refresh</span>
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-200/80 text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                    <th class="py-3.5 px-4 w-12 text-center">No</th>
+                    <th class="py-3.5 px-4">Nama Kegiatan</th>
+                    <th class="py-3.5 px-4">Tanggal</th>
+                    <th class="py-3.5 px-4">Tempat / Lokasi</th>
+                    <th class="py-3.5 px-4">Keterangan</th>
+                    <th class="py-3.5 px-4">Status</th>
+                    <th class="py-3.5 px-4 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelKegiatanBody" class="divide-y divide-gray-100 text-sm">
+                  <tr>
+                    <td colspan="7" class="py-12 text-center text-gray-400">
+                      <span class="material-symbols-outlined text-4xl block mb-2 animate-spin">progress_activity</span>
+                      Memuat kegiatan...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL FORM KEGIATAN -->
+        <div id="modalKegiatan" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 slide-in">
+            <div class="px-6 py-5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-2xl">event</span>
+                <h3 id="modalKegiatanTitle" class="text-lg font-bold">Tambah Kegiatan MTQ</h3>
+              </div>
+              <button onclick="closeModalKegiatan()" class="p-1 hover:bg-white/10 rounded-lg text-white/80 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <form id="formKegiatan" onsubmit="submitFormKegiatan(event)" class="p-6 space-y-4">
+              <input type="hidden" id="kegiatanId">
+              
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Nama Kegiatan / Sesi <span class="text-red-500">*</span></label>
+                <input type="text" id="kegiatanNama" required placeholder="Contoh: Upacara Pembukaan MTQ / Penyisihan Tilawah Hari 1" 
+                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Tanggal Kegiatan <span class="text-red-500">*</span></label>
+                  <input type="date" id="kegiatanTanggal" required 
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Status Kegiatan</label>
+                  <select id="kegiatanStatus" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <option value="AKTIF">AKTIF (Sedang Berlangsung)</option>
+                    <option value="SELESAI">SELESAI</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Tempat / Lokasi</label>
+                <input type="text" id="kegiatanLokasi" placeholder="Contoh: Arena Utama - Masjid Agung" 
+                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Keterangan / Waktu</label>
+                <textarea id="kegiatanKet" rows="2" placeholder="Contoh: 08:00 - 12:00 WIB. Wajib dihadiri oleh seluruh kafilah." 
+                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
+              </div>
+
+              <div class="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
+                <button type="button" onclick="closeModalKegiatan()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm">
+                  Batal
+                </button>
+                <button type="submit" id="btnSimpanKegiatan" class="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md">
+                  <span class="material-symbols-outlined text-[18px]">save</span>
+                  <span>Simpan Kegiatan</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <script>
+          function loadKegiatan() {
+            const tbody = document.getElementById('tabelKegiatanBody');
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="7" class="py-12 text-center text-gray-400">
+                  <span class="material-symbols-outlined text-4xl block mb-2 animate-spin">progress_activity</span>
+                  Memuat jadwal kegiatan...
+                </td>
+              </tr>
+            `;
+
+            google.script.run
+              .withSuccessHandler(list => {
+                renderTabelKegiatan(list || []);
+              })
+              .withFailureHandler(err => {
+                tbody.innerHTML = `
+                  <tr>
+                    <td colspan="7" class="py-12 text-center text-red-500 font-semibold">
+                      Gagal memuat kegiatan: ${err.message || err}
+                    </td>
+                  </tr>
+                `;
+              })
+              .getListKegiatan();
+          }
+
+          function renderTabelKegiatan(list) {
+            const tbody = document.getElementById('tabelKegiatanBody');
+            if (!list || list.length === 0) {
+              tbody.innerHTML = `
+                <tr>
+                  <td colspan="7" class="py-12 text-center text-gray-400">
+                    <span class="material-symbols-outlined text-4xl block mb-2 text-gray-300">event_busy</span>
+                    Belum ada kegiatan MTQ. Silakan klik tombol "Tambah Kegiatan".
+                  </td>
+                </tr>
+              `;
+              return;
+            }
+
+            tbody.innerHTML = list.map((item, idx) => {
+              const isAktif = item.status === 'AKTIF' || item.status === 'ACTIVE';
+              const badgeClass = isAktif ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-gray-100 text-gray-500';
+              return `
+                <tr class="hover:bg-emerald-50/40 transition-colors">
+                  <td class="py-3.5 px-4 text-center font-semibold text-gray-500">${idx + 1}</td>
+                  <td class="py-3.5 px-4 font-extrabold text-gray-900">${escapeHtml(item.nama)}</td>
+                  <td class="py-3.5 px-4 font-medium text-gray-700">${escapeHtml(item.tanggal)}</td>
+                  <td class="py-3.5 px-4 text-gray-600">${escapeHtml(item.lokasi || '-')}</td>
+                  <td class="py-3.5 px-4 text-xs text-gray-500">${escapeHtml(item.keterangan || '-')}</td>
+                  <td class="py-3.5 px-4">
+                    <span class="px-3 py-1 text-xs font-bold rounded-full ${badgeClass}">
+                      ${isAktif ? 'AKTIF' : 'SELESAI'}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                      ${!isAktif ? `
+                      <button onclick="setAktifKegiatan('${item.id}', '${escapeHtml(item.nama)}')" 
+                        class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold transition-all" title="Jadikan Aktif">
+                        Aktifkan
+                      </button>` : ''}
+                      <button onclick="editKegiatan('${item.id}', '${escapeHtml(item.nama)}', '${item.tanggal}', '${escapeHtml(item.lokasi || '')}', '${escapeHtml(item.keterangan || '')}', '${item.status}')" 
+                        class="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all" title="Edit Kegiatan">
+                        <span class="material-symbols-outlined text-[18px]">edit</span>
+                      </button>
+                      <button onclick="hapusKegiatanConfirm('${item.id}', '${escapeHtml(item.nama)}')" 
+                        class="p-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all" title="Hapus Kegiatan">
+                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+          }
+
+          function showModalKegiatan() {
+            document.getElementById('kegiatanId').value = '';
+            document.getElementById('kegiatanNama').value = '';
+            document.getElementById('kegiatanTanggal').value = new Date().toISOString().split('T')[0];
+            document.getElementById('kegiatanLokasi').value = '';
+            document.getElementById('kegiatanKet').value = '';
+            document.getElementById('kegiatanStatus').value = 'AKTIF';
+            document.getElementById('modalKegiatanTitle').textContent = 'Tambah Kegiatan MTQ';
+            document.getElementById('modalKegiatan').classList.remove('hidden');
+          }
+
+          function editKegiatan(id, nama, tanggal, lokasi, ket, status) {
+            document.getElementById('kegiatanId').value = id;
+            document.getElementById('kegiatanNama').value = nama;
+            document.getElementById('kegiatanTanggal').value = tanggal;
+            document.getElementById('kegiatanLokasi').value = lokasi;
+            document.getElementById('kegiatanKet').value = ket;
+            document.getElementById('kegiatanStatus').value = status || 'AKTIF';
+            document.getElementById('modalKegiatanTitle').textContent = 'Edit Kegiatan MTQ';
+            document.getElementById('modalKegiatan').classList.remove('hidden');
+          }
+
+          function closeModalKegiatan() {
+            document.getElementById('modalKegiatan').classList.add('hidden');
+          }
+
+          function submitFormKegiatan(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSimpanKegiatan');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> <span>Menyimpan...</span>`;
+
+            const params = {
+              id: document.getElementById('kegiatanId').value,
+              nama: document.getElementById('kegiatanNama').value.trim(),
+              tanggal: document.getElementById('kegiatanTanggal').value,
+              lokasi: document.getElementById('kegiatanLokasi').value.trim(),
+              keterangan: document.getElementById('kegiatanKet').value.trim(),
+              status: document.getElementById('kegiatanStatus').value
+            };
+
+            google.script.run
+              .withSuccessHandler(res => {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">save</span> <span>Simpan Kegiatan</span>`;
+                if (res && res.success) {
+                  closeModalKegiatan();
+                  loadKegiatan();
+                } else {
+                  alert(res ? res.message : 'Gagal menyimpan kegiatan');
+                }
+              })
+              .withFailureHandler(err => {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">save</span> <span>Simpan Kegiatan</span>`;
+                alert('Error: ' + err);
+              })
+              .simpanKegiatan(params);
+          }
+
+          function setAktifKegiatan(id, nama) {
+            google.script.run
+              .withSuccessHandler(res => {
+                if (res && res.success) {
+                  loadKegiatan();
+                } else {
+                  alert(res ? res.message : 'Gagal mengaktifkan kegiatan');
+                }
+              })
+              .withFailureHandler(err => alert('Error: ' + err))
+              .setKegiatanStatus(id, 'AKTIF');
+          }
+
+          function hapusKegiatanConfirm(id, nama) {
+            if (!confirm(`Hapus kegiatan "${nama}"?`)) return;
+
+            google.script.run
+              .withSuccessHandler(res => {
+                if (res && res.success) {
+                  loadKegiatan();
+                } else {
+                  alert(res ? res.message : 'Gagal menghapus kegiatan');
+                }
+              })
+              .withFailureHandler(err => alert('Error: ' + err))
+              .hapusKegiatan(id);
+          }
+
+          function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
+          }
+
+          window.addEventListener('DOMContentLoaded', () => {
+            loadKegiatan();
+          });
+        </script>
+    </main>
+</body>
+</html>
