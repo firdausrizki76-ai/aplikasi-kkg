@@ -13,15 +13,26 @@ export default async function handler(req, res) {
     
     try {
         const url = new URL(API_URL);
-        url.searchParams.append('action', action);
+        if (action) url.searchParams.append('action', action);
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
         console.log('Proxying to:', url.toString());
 
-        const response = await fetch(url.toString(), {
+        const fetchOptions = {
             method: req.method,
-            redirect: 'follow'
-        });
+            redirect: 'follow',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*'
+            }
+        };
+
+        if (req.method === 'POST' && req.body) {
+            fetchOptions.headers['Content-Type'] = 'application/json';
+            fetchOptions.body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+        }
+
+        const response = await fetch(url.toString(), fetchOptions);
 
         const text = await response.text();
         console.log('Response from GAS:', text.substring(0, 100));
@@ -31,7 +42,11 @@ export default async function handler(req, res) {
             return res.status(200).json(data);
         } catch (e) {
             // If not JSON, return as error with the text
-            return res.status(200).json({ error: 'GAS returned non-JSON response', detail: text });
+            return res.status(200).json({ 
+                error: 'GAS returned non-JSON response', 
+                detail: text,
+                hint: 'Pastikan di Google Apps Script sudah di-deploy dengan Who has access: Anyone' 
+            });
         }
     } catch (error) {
         console.error('Proxy Server Error:', error);

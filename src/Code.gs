@@ -4,15 +4,26 @@
 
 // CONSTANTS
 const SPREADSHEET_ID = ''; // Isi jika script standalone (bukan dari Extensions > Apps Script)
-const SHEET_PESERTA = 'PESERTA_MTQ';
-const SHEET_KEGIATAN = 'KEGIATAN_MTQ';
-const SHEET_ABSENSI = 'ABSENSI_MTQ';
+const SHEET_PESERTA = 'GURU'; // Utama: 'GURU' (Sesuai dengan database KKG)
+const SHEET_KEGIATAN = 'EVENT_KKG';
+const SHEET_ABSENSI = 'ABSENSI';
 const SHEET_LOG = 'LOG';
 const SHEET_USERS = 'USERS';
 
 // Alias backward compatibility untuk integrasi lama jika dibutuhkan
-const SHEET_GURU = 'PESERTA_MTQ';
-const SHEET_EVENT = 'KEGIATAN_MTQ';
+const SHEET_GURU = 'GURU';
+const SHEET_EVENT = 'EVENT_KKG';
+
+// Helper pemanggilan nama sheet otomatis (mendukung KKG maupun MTQ)
+function getSheetPeserta(ss) {
+  return ss.getSheetByName('GURU') || ss.getSheetByName('PESERTA_MTQ') || ss.getSheetByName('PESERTA') || ss.insertSheet('GURU');
+}
+function getSheetKegiatan(ss) {
+  return ss.getSheetByName('EVENT_KKG') || ss.getSheetByName('KEGIATAN_MTQ') || ss.getSheetByName('KEGIATAN') || ss.insertSheet('EVENT_KKG');
+}
+function getSheetAbsensi(ss) {
+  return ss.getSheetByName('ABSENSI') || ss.getSheetByName('ABSENSI_MTQ') || ss.getSheetByName('KEHADIRAN') || ss.insertSheet('ABSENSI');
+}
 
 // ============================================
 // SETUP - Jalankan fungsi ini SATU KALI dari editor
@@ -275,12 +286,9 @@ function getUserInfo() {
 // ============================================
 function cariPeserta(keyword) {
   try {
+  try {
     const ss = getSS();
-    let sheet = ss.getSheetByName(SHEET_PESERTA);
-    if (!sheet) {
-      // Cek sheet GURU lama jika sheet PESERTA_MTQ belum dibuat
-      sheet = ss.getSheetByName('GURU');
-    }
+    const sheet = getSheetPeserta(ss);
     if (!sheet) return null;
 
     const data = sheet.getDataRange().getValues();
@@ -317,10 +325,9 @@ function simpanPeserta(params) {
   try {
     lock.waitLock(15000);
     const ss = getSS();
-    let sheet = ss.getSheetByName(SHEET_PESERTA);
-    if (!sheet) {
-      sheet = ss.insertSheet(SHEET_PESERTA);
-      sheet.getRange(1, 1, 1, 8).setValues([['ID', 'NO_PESERTA', 'NAMA_PESERTA', 'CABANG_LOMBA', 'KAFILAH', 'NO_HP', 'RAW_QR', 'TGL_DAFTAR']]);
+    let sheet = getSheetPeserta(ss);
+    if (sheet.getLastRow() === 0) {
+      sheet.getRange(1, 1, 1, 8).setValues([['ID', 'NIP', 'NAMA', 'GELAR', 'SEKOLAH', 'KOTA', 'RAW_BARCODE', 'TGL_DAFTAR']]);
       sheet.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#e6f4ea');
     }
 
@@ -382,7 +389,7 @@ function hapusPeserta(id) {
   try {
     lock.waitLock(10000);
     const ss = getSS();
-    const sheet = ss.getSheetByName(SHEET_PESERTA) || ss.getSheetByName('GURU');
+    const sheet = getSheetPeserta(ss);
     if (!sheet) return { success: false, message: 'Sheet tidak ditemukan' };
 
     const data = sheet.getDataRange().getValues();
@@ -406,10 +413,9 @@ function importPesertaExcel(dataArray) {
   try {
     lock.waitLock(25000);
     const ss = getSS();
-    let sheet = ss.getSheetByName(SHEET_PESERTA);
-    if (!sheet) {
-      sheet = ss.insertSheet(SHEET_PESERTA);
-      sheet.getRange(1, 1, 1, 8).setValues([['ID', 'NO_PESERTA', 'NAMA_PESERTA', 'CABANG_LOMBA', 'KAFILAH', 'NO_HP', 'RAW_QR', 'TGL_DAFTAR']]);
+    let sheet = getSheetPeserta(ss);
+    if (sheet.getLastRow() === 0) {
+      sheet.getRange(1, 1, 1, 8).setValues([['ID', 'NIP', 'NAMA', 'GELAR', 'SEKOLAH', 'KOTA', 'RAW_BARCODE', 'TGL_DAFTAR']]);
       sheet.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#e6f4ea');
     }
 
@@ -460,8 +466,7 @@ function importPesertaExcel(dataArray) {
 function getListPeserta(keyword, cabang, kafilah) {
   try {
     const ss = getSS();
-    let sheet = ss.getSheetByName(SHEET_PESERTA);
-    if (!sheet) sheet = ss.getSheetByName('GURU');
+    const sheet = getSheetPeserta(ss);
     if (!sheet) return [];
 
     const data = sheet.getDataRange().getValues();
@@ -520,8 +525,7 @@ function getListPeserta(keyword, cabang, kafilah) {
 function getKegiatanById(id) {
   try {
     const ss = getSS();
-    let sheet = ss.getSheetByName(SHEET_KEGIATAN);
-    if (!sheet) sheet = ss.getSheetByName('EVENT_KKG');
+    const sheet = getSheetKegiatan(ss);
     if (!sheet) return null;
 
     const data = sheet.getDataRange().getValues();
@@ -546,9 +550,8 @@ function getKegiatanById(id) {
 function getKegiatanAktif() {
   try {
     const ss = getSS();
-    let sheet = ss.getSheetByName(SHEET_KEGIATAN);
-    if (!sheet) sheet = ss.getSheetByName('EVENT_KKG');
-    if (!sheet) return { error: "Sheet KEGIATAN_MTQ belum dibuat." };
+    const sheet = getSheetKegiatan(ss);
+    if (!sheet) return { error: "Sheet KEGIATAN belum dibuat." };
     
     const data = sheet.getDataRange().getValues();
     if (data.length < 2) return { error: "Belum ada Kegiatan MTQ yang dibuat. Silakan buat di menu Kegiatan." };
@@ -610,8 +613,7 @@ function getKegiatanAktif() {
 function getListKegiatan() {
   try {
     const ss = getSS();
-    let sheet = ss.getSheetByName(SHEET_KEGIATAN);
-    if (!sheet) sheet = ss.getSheetByName('EVENT_KKG');
+    const sheet = getSheetKegiatan(ss);
     if (!sheet) return [];
 
     const data = sheet.getDataRange().getValues();
@@ -649,10 +651,9 @@ function simpanKegiatan(params) {
   try {
     lock.waitLock(10000);
     const ss = getSS();
-    let sheet = ss.getSheetByName(SHEET_KEGIATAN);
-    if (!sheet) {
-      sheet = ss.insertSheet(SHEET_KEGIATAN);
-      sheet.getRange(1, 1, 1, 6).setValues([['ID', 'NAMA_KEGIATAN', 'TANGGAL', 'LOKASI', 'KETERANGAN', 'STATUS']]);
+    let sheet = getSheetKegiatan(ss);
+    if (sheet.getLastRow() === 0) {
+      sheet.getRange(1, 1, 1, 6).setValues([['ID', 'NAMA_EVENT', 'TANGGAL', 'LOKASI', 'KETERANGAN', 'STATUS']]);
       sheet.getRange(1, 1, 1, 6).setFontWeight('bold').setBackground('#e6f4ea');
     }
 
@@ -706,7 +707,7 @@ function hapusKegiatan(id) {
   try {
     lock.waitLock(10000);
     const ss = getSS();
-    let sheet = ss.getSheetByName(SHEET_KEGIATAN) || ss.getSheetByName('EVENT_KKG');
+    const sheet = getSheetKegiatan(ss);
     if (!sheet) return { success: false, message: 'Sheet tidak ditemukan' };
 
     const data = sheet.getDataRange().getValues();
@@ -730,7 +731,7 @@ function setKegiatanStatus(id, status) {
   try {
     lock.waitLock(10000);
     const ss = getSS();
-    let sheet = ss.getSheetByName(SHEET_KEGIATAN) || ss.getSheetByName('EVENT_KKG');
+    const sheet = getSheetKegiatan(ss);
     const data = sheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][0]) === String(id)) {
@@ -769,11 +770,10 @@ function prosesScan(rawBarcode, kegiatanId, tipe, statusKehadiran, keterangan) {
     
     const ss = getSS();
     const tz = ss.getSpreadsheetTimeZone();
-    let sheet = ss.getSheetByName(SHEET_ABSENSI);
-    if (!sheet) {
-      sheet = ss.insertSheet(SHEET_ABSENSI);
-      sheet.getRange(1, 1, 1, 13).setValues([['ID', 'KEGIATAN_ID', 'PESERTA_ID', 'NO_PESERTA', 'NAMA_PESERTA', 'CABANG_LOMBA', 'KAFILAH', 'TANGGAL', 'JAM_MASUK', 'STATUS_MASUK', 'JAM_SELESAI', 'STATUS_SELESAI', 'KETERANGAN']]);
-      sheet.getRange(1, 1, 1, 13).setFontWeight('bold').setBackground('#e6f4ea');
+    let sheet = getSheetAbsensi(ss);
+    if (sheet.getLastRow() === 0) {
+      sheet.getRange(1, 1, 1, 10).setValues([['ID', 'EVENT_ID', 'GURU_ID', 'NIP', 'NAMA', 'SEKOLAH', 'TANGGAL', 'JAM_HADIR', 'STATUS', 'JAM_PULANG']]);
+      sheet.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground('#e6f4ea');
     }
     
     const today = new Date();
@@ -1117,9 +1117,9 @@ function getLaporanByKegiatan(kegiatanId) {
 function getLaporan(bulan, kegiatanId) {
   try {
     const ss = getSS();
-    let sheetAbsensi = ss.getSheetByName(SHEET_ABSENSI) || ss.getSheetByName('ABSENSI');
-    let sheetPeserta = ss.getSheetByName(SHEET_PESERTA) || ss.getSheetByName('GURU');
-    let sheetKegiatan = ss.getSheetByName(SHEET_KEGIATAN) || ss.getSheetByName('EVENT_KKG');
+    let sheetAbsensi = getSheetAbsensi(ss);
+    let sheetPeserta = getSheetPeserta(ss);
+    let sheetKegiatan = getSheetKegiatan(ss);
     
     const dataAbsensi = sheetAbsensi ? sheetAbsensi.getDataRange().getValues() : [];
     const dataPeserta = sheetPeserta ? sheetPeserta.getDataRange().getValues() : [];
@@ -1239,9 +1239,9 @@ function getLaporan(bulan, kegiatanId) {
 function getDashboardStats() {
   try {
     const ss = getSS();
-    let sheetAbsensi = ss.getSheetByName(SHEET_ABSENSI) || ss.getSheetByName('ABSENSI');
-    let sheetPeserta = ss.getSheetByName(SHEET_PESERTA) || ss.getSheetByName('GURU');
-    let sheetKegiatan = ss.getSheetByName(SHEET_KEGIATAN) || ss.getSheetByName('EVENT_KKG');
+    let sheetAbsensi = getSheetAbsensi(ss);
+    let sheetPeserta = getSheetPeserta(ss);
+    let sheetKegiatan = getSheetKegiatan(ss);
     
     const dataAbsensi = sheetAbsensi ? sheetAbsensi.getDataRange().getValues() : [];
     const dataPeserta = sheetPeserta ? sheetPeserta.getDataRange().getValues() : [];
@@ -1352,15 +1352,15 @@ function setupDatabase() {
     const ss = getSS();
 
     const sheets = [
-      { name: SHEET_PESERTA, headers: ['ID', 'NO_PESERTA', 'NAMA_PESERTA', 'CABANG_LOMBA', 'KAFILAH', 'NO_HP', 'RAW_QR', 'TGL_DAFTAR'] },
-      { name: SHEET_KEGIATAN, headers: ['ID', 'NAMA_KEGIATAN', 'TANGGAL', 'LOKASI', 'KETERANGAN', 'STATUS'] },
-      { name: SHEET_ABSENSI, headers: ['ID', 'KEGIATAN_ID', 'PESERTA_ID', 'NO_PESERTA', 'NAMA_PESERTA', 'CABANG_LOMBA', 'KAFILAH', 'TANGGAL', 'JAM_MASUK', 'STATUS_MASUK', 'JAM_SELESAI', 'STATUS_SELESAI', 'KETERANGAN'] },
+      { name: 'GURU', alt: 'PESERTA_MTQ', headers: ['ID', 'NIP', 'NAMA', 'GELAR', 'SEKOLAH', 'KOTA', 'RAW_BARCODE', 'TGL_DAFTAR'] },
+      { name: 'EVENT_KKG', alt: 'KEGIATAN_MTQ', headers: ['ID', 'NAMA_EVENT', 'TANGGAL', 'LOKASI', 'KETERANGAN', 'STATUS'] },
+      { name: 'ABSENSI', alt: 'ABSENSI_MTQ', headers: ['ID', 'EVENT_ID', 'GURU_ID', 'NIP', 'NAMA', 'SEKOLAH', 'TANGGAL', 'JAM_HADIR', 'STATUS', 'JAM_PULANG'] },
       { name: SHEET_USERS, headers: ['NAMA', 'EMAIL', 'PASSWORD', 'STATUS', 'ROLE'] },
       { name: SHEET_LOG, headers: ['WAKTU', 'AKSI', 'NIP', 'KETERANGAN'] }
     ];
 
     sheets.forEach(sheetInfo => {
-      let sheet = ss.getSheetByName(sheetInfo.name);
+      let sheet = ss.getSheetByName(sheetInfo.name) || (sheetInfo.alt ? ss.getSheetByName(sheetInfo.alt) : null);
       if (!sheet) {
         sheet = ss.insertSheet(sheetInfo.name);
         Logger.log('Membuat sheet: ' + sheetInfo.name);
@@ -1369,7 +1369,7 @@ function setupDatabase() {
       if (sheet.getLastRow() === 0) {
         sheet.getRange(1, 1, 1, sheetInfo.headers.length).setValues([sheetInfo.headers]);
         sheet.getRange(1, 1, 1, sheetInfo.headers.length).setFontWeight('bold').setBackground('#e6f4ea');
-        Logger.log('Set header untuk sheet: ' + sheetInfo.name);
+        Logger.log('Set header untuk sheet: ' + sheet.getName());
       }
     });
 
