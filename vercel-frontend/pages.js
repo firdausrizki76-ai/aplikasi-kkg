@@ -159,9 +159,13 @@ const PAGES = {
                                     <input type="date" id="kegTgl" required class="w-full p-3 bg-gray-50 border rounded-xl outline-none text-sm">
                                 </div>
                                 <div>
-                                    <label class="text-xs font-bold text-gray-500 uppercase">Lokasi</label>
-                                    <input type="text" id="kegLok" required class="w-full p-3 bg-gray-50 border rounded-xl outline-none text-sm" placeholder="Masjid Raya / Aula">
+                                    <label class="text-xs font-bold text-gray-500 uppercase">Jam Kegiatan</label>
+                                    <input type="text" id="kegJam" required class="w-full p-3 bg-gray-50 border rounded-xl outline-none text-sm font-medium" placeholder="08:00 - 12:00 WIB" value="08:00 - 12:00 WIB">
                                 </div>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase">Lokasi</label>
+                                <input type="text" id="kegLok" required class="w-full p-3 bg-gray-50 border rounded-xl outline-none text-sm" placeholder="Masjid Raya / Aula">
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-gray-500 uppercase">Keterangan</label>
@@ -499,9 +503,10 @@ function initKegiatan() {
                 const id = item.id || item[0] || '';
                 const nama = item.nama || item.namaEvent || item[1] || '-';
                 const tanggal = item.tanggal || item[2] || '-';
-                const lokasi = item.lokasi || item[3] || '-';
-                const ket = item.keterangan || item[4] || '';
-                const status = item.status || item[5] || 'NONAKTIF';
+                const jam = item.jam || '08:00 - 12:00 WIB';
+                const lokasi = item.lokasi || item[4] || item[3] || '-';
+                const ket = item.keterangan || item[5] || item[4] || '';
+                const status = item.status || item[6] || item[5] || 'NONAKTIF';
                 return `
                     <div class="bg-white p-6 rounded-2xl border ${status === 'AKTIF' ? 'border-emerald-500 shadow-md' : 'border-gray-100'} flex flex-col justify-between">
                         <div>
@@ -510,7 +515,8 @@ function initKegiatan() {
                                 <button onclick="hapusKegiatan('${id}')" class="text-red-400 hover:text-red-600 text-xs font-bold">Hapus</button>
                             </div>
                             <h3 class="text-lg font-bold text-gray-900 mt-2">${nama}</h3>
-                            <p class="text-xs text-gray-500 mt-1">📅 ${tanggal} | 📍 ${lokasi}</p>
+                            <p class="text-xs text-gray-600 mt-1.5 font-medium">📅 ${tanggal} &nbsp;|&nbsp; ⏰ <strong>${jam}</strong></p>
+                            <p class="text-xs text-gray-500 mt-1">📍 ${lokasi}</p>
                             <p class="text-xs text-gray-400 mt-2 italic">${ket}</p>
                         </div>
                         <div class="mt-6 pt-4 border-t">
@@ -543,6 +549,7 @@ function simpanKegiatan(e) {
     const data = {
         nama: document.getElementById('kegNama').value.trim(),
         tanggal: document.getElementById('kegTgl').value,
+        jam: document.getElementById('kegJam') ? document.getElementById('kegJam').value.trim() : '08:00 - 12:00 WIB',
         lokasi: document.getElementById('kegLok').value.trim(),
         keterangan: document.getElementById('kegKet').value.trim()
     };
@@ -793,10 +800,11 @@ function initScannerPage() {
                 const id = item.id || item[0] || '';
                 const nama = item.nama || item.namaEvent || item[1] || '-';
                 const tgl = item.tanggal || item[2] || '-';
-                const status = item.status || item[5] || '';
+                const jam = item.jam || '08:00 - 12:00 WIB';
+                const status = item.status || item[6] || item[5] || '';
                 return `
                     <option value="${id}" ${status === 'AKTIF' ? 'selected' : ''}>
-                        ${nama} (${tgl}) ${status === 'AKTIF' ? '🟢 AKTIF' : ''}
+                        ${nama} | ⏰ ${jam} (${tgl}) ${status === 'AKTIF' ? '🟢 AKTIF' : ''}
                     </option>
                 `;
             }).join('');

@@ -156,6 +156,7 @@ function handleAction(action, params) {
     case 'hapusKegiatan': return hapusKegiatan(params.id);
     case 'setKegiatanStatus': return setKegiatanStatus(params.id, params.status);
     case 'aktifkanKegiatan': return setKegiatanStatus(params.id, 'AKTIF');
+    case 'setupHeaderJamKegiatan': return setupHeaderJamKegiatan();
 
     // PESERTA MTQ
     case 'getListGuru':
@@ -285,7 +286,6 @@ function getUserInfo() {
 // PESERTA MTQ MANAGEMENT (TANPA INITIAL SCAN)
 // ============================================
 function cariPeserta(keyword) {
-  try {
   try {
     const ss = getSS();
     const sheet = getSheetPeserta(ss);
@@ -522,6 +522,46 @@ function getListPeserta(keyword, cabang, kafilah) {
 // ============================================
 // KEGIATAN MTQ MANAGEMENT
 // ============================================
+/**
+ * SETUP HEADER JAM KEGIATAN
+ * Fungsi untuk memperbarui header sheet EVENT_KKG / KEGIATAN agar memiliki kolom "JAM" (Jam Kegiatan)
+ */
+function setupHeaderJamKegiatan() {
+  try {
+    const ss = getSS();
+    let sheet = getSheetKegiatan(ss);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_KEGIATAN);
+    }
+    
+    const targetHeaders = ['ID', 'NAMA_EVENT', 'TANGGAL', 'JAM', 'LOKASI', 'KETERANGAN', 'STATUS'];
+    const lastCol = Math.max(1, sheet.getLastColumn());
+    const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    
+    let jamIdx = headers.indexOf('JAM');
+    if (jamIdx === -1 && headers.indexOf('JAM_KEGIATAN') === -1 && headers.indexOf('WAKTU') === -1) {
+      if (sheet.getLastRow() === 0 || headers.length <= 1) {
+        sheet.getRange(1, 1, 1, targetHeaders.length).setValues([targetHeaders]);
+        sheet.getRange(1, 1, 1, targetHeaders.length).setFontWeight('bold').setBackground('#e6f4ea');
+        Logger.log('Header baru EVENT_KKG dibuat dengan kolom JAM.');
+      } else {
+        sheet.insertColumnAfter(3);
+        sheet.getRange(1, 4).setValue('JAM').setFontWeight('bold').setBackground('#e6f4ea');
+        
+        const lastRow = sheet.getLastRow();
+        if (lastRow > 1) {
+          sheet.getRange(2, 4, lastRow - 1, 1).setValue('08:00 - 12:00 WIB');
+        }
+        Logger.log('Kolom JAM berhasil ditambahkan ke sheet EVENT_KKG setelah kolom TANGGAL.');
+      }
+    }
+    return { success: true, message: 'Header sheet kegiatan berhasil diperbarui dengan kolom JAM.' };
+  } catch (e) {
+    Logger.log('Error setupHeaderJamKegiatan: ' + e.toString());
+    return { success: false, message: e.toString() };
+  }
+}
+
 function getKegiatanById(id) {
   try {
     const ss = getSS();
@@ -529,15 +569,22 @@ function getKegiatanById(id) {
     if (!sheet) return null;
 
     const data = sheet.getDataRange().getValues();
+    const hasJam = String(data[0][3] || '').toUpperCase() === 'JAM' || String(data[0][3] || '').toUpperCase() === 'WAKTU';
+    const idxJam = hasJam ? 3 : -1;
+    const idxLok = hasJam ? 4 : 3;
+    const idxKet = hasJam ? 5 : 4;
+    const idxSts = hasJam ? 6 : 5;
+
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][0]) === String(id)) {
         return {
           id: String(data[i][0]),
           nama: String(data[i][1]),
           tanggal: data[i][2] ? (data[i][2] instanceof Date ? Utilities.formatDate(data[i][2], ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : String(data[i][2])) : Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd'),
-          lokasi: String(data[i][3] || '-'),
-          keterangan: String(data[i][4] || '-'),
-          status: String(data[i][5] || 'AKTIF')
+          jam: idxJam !== -1 ? String(data[i][idxJam] || '08:00 - 12:00 WIB') : '08:00 - 12:00 WIB',
+          lokasi: String(data[i][idxLok] || '-'),
+          keterangan: String(data[i][idxKet] || '-'),
+          status: String(data[i][idxSts] || 'AKTIF')
         };
       }
     }
@@ -560,10 +607,16 @@ function getKegiatanAktif() {
     let result = null;
     let fallback = null;
     
+    const hasJam = String(data[0][3] || '').toUpperCase() === 'JAM' || String(data[0][3] || '').toUpperCase() === 'WAKTU';
+    const idxJam = hasJam ? 3 : -1;
+    const idxLok = hasJam ? 4 : 3;
+    const idxKet = hasJam ? 5 : 4;
+    const idxSts = hasJam ? 6 : 5;
+
     for (let i = 1; i < data.length; i++) {
       if (!data[i][0] && !data[i][1]) continue;
       
-      const statusVal = String(data[i][5] || '').toUpperCase().trim();
+      const statusVal = String(data[i][idxSts] || '').toUpperCase().trim();
       const isAktif = statusVal.startsWith('AKT') || statusVal === 'AKTIF' || statusVal === 'ACTIVE';
       
       let tglStr = '';
@@ -577,9 +630,10 @@ function getKegiatanAktif() {
         id: String(data[i][0]),
         nama: String(data[i][1]),
         tanggal: tglStr || todayStr,
-        lokasi: String(data[i][3] || '-'),
-        keterangan: String(data[i][4] || '-'),
-        status: String(data[i][5] || 'AKTIF')
+        jam: idxJam !== -1 ? String(data[i][idxJam] || '08:00 - 12:00 WIB') : '08:00 - 12:00 WIB',
+        lokasi: String(data[i][idxLok] || '-'),
+        keterangan: String(data[i][idxKet] || '-'),
+        status: String(data[i][idxSts] || 'AKTIF')
       };
 
       if (isAktif) {
@@ -594,15 +648,15 @@ function getKegiatanAktif() {
     if (result) return result;
     if (fallback) return fallback;
     
-    // Jika tidak ada yang berstatus AKTIF, ambil kegiatan terbaru
     const lastRow = data[data.length - 1];
     return {
       id: String(lastRow[0]),
       nama: String(lastRow[1]),
       tanggal: String(lastRow[2] || todayStr),
-      lokasi: String(lastRow[3] || '-'),
-      keterangan: String(lastRow[4] || '-'),
-      status: String(lastRow[5] || 'SELESAI')
+      jam: idxJam !== -1 ? String(lastRow[idxJam] || '08:00 - 12:00 WIB') : '08:00 - 12:00 WIB',
+      lokasi: String(lastRow[idxLok] || '-'),
+      keterangan: String(lastRow[idxKet] || '-'),
+      status: String(lastRow[idxSts] || 'SELESAI')
     };
   } catch (e) {
     Logger.log('Error getKegiatanAktif: ' + e.toString());
@@ -620,6 +674,12 @@ function getListKegiatan() {
     const result = [];
     const tz = ss.getSpreadsheetTimeZone();
 
+    const hasJam = String(data[0][3] || '').toUpperCase() === 'JAM' || String(data[0][3] || '').toUpperCase() === 'WAKTU';
+    const idxJam = hasJam ? 3 : -1;
+    const idxLok = hasJam ? 4 : 3;
+    const idxKet = hasJam ? 5 : 4;
+    const idxSts = hasJam ? 6 : 5;
+
     for (let i = 1; i < data.length; i++) {
       if (!data[i][0] && !data[i][1]) continue;
       
@@ -634,9 +694,10 @@ function getListKegiatan() {
         id: String(data[i][0]),
         nama: String(data[i][1]),
         tanggal: tglStr,
-        lokasi: String(data[i][3] || '-'),
-        keterangan: String(data[i][4] || '-'),
-        status: String(data[i][5] || 'AKTIF')
+        jam: idxJam !== -1 ? String(data[i][idxJam] || '08:00 - 12:00 WIB') : '08:00 - 12:00 WIB',
+        lokasi: String(data[i][idxLok] || '-'),
+        keterangan: String(data[i][idxKet] || '-'),
+        status: String(data[i][idxSts] || 'AKTIF')
       });
     }
     return result.reverse(); 
@@ -650,11 +711,12 @@ function simpanKegiatan(params) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000);
+    setupHeaderJamKegiatan();
     const ss = getSS();
     let sheet = getSheetKegiatan(ss);
     if (sheet.getLastRow() === 0) {
-      sheet.getRange(1, 1, 1, 6).setValues([['ID', 'NAMA_EVENT', 'TANGGAL', 'LOKASI', 'KETERANGAN', 'STATUS']]);
-      sheet.getRange(1, 1, 1, 6).setFontWeight('bold').setBackground('#e6f4ea');
+      sheet.getRange(1, 1, 1, 7).setValues([['ID', 'NAMA_EVENT', 'TANGGAL', 'JAM', 'LOKASI', 'KETERANGAN', 'STATUS']]);
+      sheet.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#e6f4ea');
     }
 
     const data = sheet.getDataRange().getValues();
@@ -665,9 +727,10 @@ function simpanKegiatan(params) {
         if (String(data[i][0]) === String(params.id)) {
           sheet.getRange(i + 1, 2).setValue(params.nama || '-');
           sheet.getRange(i + 1, 3).setValue(params.tanggal || new Date());
-          sheet.getRange(i + 1, 4).setValue(params.lokasi || '-');
-          sheet.getRange(i + 1, 5).setValue(params.keterangan || '-');
-          sheet.getRange(i + 1, 6).setValue(params.status || 'AKTIF');
+          sheet.getRange(i + 1, 4).setValue(params.jam || '08:00 - 12:00 WIB');
+          sheet.getRange(i + 1, 5).setValue(params.lokasi || '-');
+          sheet.getRange(i + 1, 6).setValue(params.keterangan || '-');
+          sheet.getRange(i + 1, 7).setValue(params.status || 'AKTIF');
           tuliLog('EDIT_KEGIATAN', params.id, 'Edit kegiatan: ' + params.nama);
           return { success: true, message: 'Kegiatan berhasil diperbarui', id: params.id };
         }
@@ -676,9 +739,10 @@ function simpanKegiatan(params) {
 
     // Jika membuat baru dengan status AKTIF, non-aktifkan kegiatan lain bila diinginkan
     if (params.status === 'AKTIF') {
+      const stsCol = sheet.getLastColumn() >= 7 ? 7 : 6;
       for (let i = 1; i < data.length; i++) {
-        if (String(data[i][5]) === 'AKTIF') {
-          sheet.getRange(i + 1, 6).setValue('SELESAI');
+        if (String(data[i][stsCol - 1]) === 'AKTIF') {
+          sheet.getRange(i + 1, stsCol).setValue('SELESAI');
         }
       }
     }
@@ -688,6 +752,7 @@ function simpanKegiatan(params) {
       newId,
       params.nama,
       params.tanggal || new Date(),
+      params.jam || '08:00 - 12:00 WIB',
       params.lokasi || '-',
       params.keterangan || '-',
       params.status || 'AKTIF'
@@ -733,9 +798,12 @@ function setKegiatanStatus(id, status) {
     const ss = getSS();
     const sheet = getSheetKegiatan(ss);
     const data = sheet.getDataRange().getValues();
+    const hasJam = String(data[0][3] || '').toUpperCase() === 'JAM' || String(data[0][3] || '').toUpperCase() === 'WAKTU';
+    const idxSts = hasJam ? 7 : 6;
+
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][0]) === String(id)) {
-        sheet.getRange(i + 1, 6).setValue(status);
+        sheet.getRange(i + 1, idxSts).setValue(status);
         tuliLog('STATUS_KEGIATAN', id, 'Ubah status ke ' + status);
         return { success: true, message: 'Status berhasil diubah menjadi ' + status };
       }
@@ -1353,7 +1421,7 @@ function setupDatabase() {
 
     const sheets = [
       { name: 'GURU', alt: 'PESERTA_MTQ', headers: ['ID', 'NIP', 'NAMA', 'GELAR', 'SEKOLAH', 'KOTA', 'RAW_BARCODE', 'TGL_DAFTAR'] },
-      { name: 'EVENT_KKG', alt: 'KEGIATAN_MTQ', headers: ['ID', 'NAMA_EVENT', 'TANGGAL', 'LOKASI', 'KETERANGAN', 'STATUS'] },
+      { name: 'EVENT_KKG', alt: 'KEGIATAN_MTQ', headers: ['ID', 'NAMA_EVENT', 'TANGGAL', 'JAM', 'LOKASI', 'KETERANGAN', 'STATUS'] },
       { name: 'ABSENSI', alt: 'ABSENSI_MTQ', headers: ['ID', 'EVENT_ID', 'GURU_ID', 'NIP', 'NAMA', 'SEKOLAH', 'TANGGAL', 'JAM_HADIR', 'STATUS', 'JAM_PULANG'] },
       { name: SHEET_USERS, headers: ['NAMA', 'EMAIL', 'PASSWORD', 'STATUS', 'ROLE'] },
       { name: SHEET_LOG, headers: ['WAKTU', 'AKSI', 'NIP', 'KETERANGAN'] }
@@ -1372,6 +1440,8 @@ function setupDatabase() {
         Logger.log('Set header untuk sheet: ' + sheet.getName());
       }
     });
+
+    setupHeaderJamKegiatan();
 
     const userSheet = ss.getSheetByName(SHEET_USERS);
     if (userSheet && userSheet.getLastRow() <= 1) {
