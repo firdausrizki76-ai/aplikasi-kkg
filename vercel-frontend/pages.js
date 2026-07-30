@@ -456,16 +456,25 @@ function initDashboard() {
             if (elKegiatan) elKegiatan.innerText = res.kegiatanAktifNama || 'Belum Ada';
 
             const listEl = document.getElementById('dashboardRecentList');
-            if (listEl && res.recentAbsensi && res.recentAbsensi.length > 0) {
-                listEl.innerHTML = res.recentAbsensi.map(item => `
-                    <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                        <div>
-                            <p class="font-bold text-gray-900">${item[4] || '-'} <span class="text-xs text-gray-400 font-normal">(${item[5] || '-'} / ${item[6] || '-'})</span></p>
-                            <p class="text-xs text-gray-500">${item[8] ? 'Masuk: ' + item[8] : ''} ${item[10] ? '| Selesai: ' + item[10] : ''}</p>
+            const items = Array.isArray(res.recentAbsensi) ? res.recentAbsensi : [];
+            if (listEl && items.length > 0) {
+                listEl.innerHTML = items.map(item => {
+                    const nama = item.nama || item[4] || '-';
+                    const cabang = item.cabangLomba || item.gelar || item[5] || '-';
+                    const kafilah = item.kafilah || item.sekolah || item[6] || '-';
+                    const jam = item.jam || item[8] || '';
+                    const jamPulang = item.jamPulang || item[10] || '';
+                    const status = item.status || item[9] || 'HADIR';
+                    return `
+                        <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                            <div>
+                                <p class="font-bold text-gray-900">${nama} <span class="text-xs text-gray-400 font-normal">(${cabang} / ${kafilah})</span></p>
+                                <p class="text-xs text-gray-500">${jam ? 'Masuk: ' + jam : ''} ${jamPulang ? '| Selesai: ' + jamPulang : ''}</p>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${status === 'HADIR' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${status}</span>
                         </div>
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${item[9] === 'HADIR' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${item[9] || 'HADIR'}</span>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } else if (listEl) {
                 listEl.innerHTML = '<p class="text-gray-400 italic">Belum ada aktivitas hari ini.</p>';
             }
@@ -478,32 +487,44 @@ function initKegiatan() {
         .withSuccessHandler(list => {
             const container = document.getElementById('kegiatanList');
             if (!container) return;
-            if (!list || list.length === 0) {
+            if (!Array.isArray(list) || list.length === 0) {
+                if (list && list.error) {
+                    container.innerHTML = `<div class="col-span-full p-8 text-center bg-red-50 rounded-2xl border border-red-200 text-red-600 font-semibold">Gagal memuat kegiatan: ${list.error}<br><span class="text-xs text-gray-500 font-normal mt-1 block">Pastikan Apps Script di-deploy sebagai Web App dengan pengaturan "Who has access: Anyone".</span></div>`;
+                    return;
+                }
                 container.innerHTML = '<div class="col-span-full p-12 text-center text-gray-400 italic">Belum ada kegiatan MTQ. Klik Tambah Kegiatan.</div>';
                 return;
             }
-            container.innerHTML = list.map(item => `
-                <div class="bg-white p-6 rounded-2xl border ${item[5] === 'AKTIF' ? 'border-emerald-500 shadow-md' : 'border-gray-100'} flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${item[5] === 'AKTIF' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}">${item[5] || 'NONAKTIF'}</span>
-                            <button onclick="hapusKegiatan('${item[0]}')" class="text-red-400 hover:text-red-600 text-xs font-bold">Hapus</button>
+            container.innerHTML = list.map(item => {
+                const id = item.id || item[0] || '';
+                const nama = item.nama || item.namaEvent || item[1] || '-';
+                const tanggal = item.tanggal || item[2] || '-';
+                const lokasi = item.lokasi || item[3] || '-';
+                const ket = item.keterangan || item[4] || '';
+                const status = item.status || item[5] || 'NONAKTIF';
+                return `
+                    <div class="bg-white p-6 rounded-2xl border ${status === 'AKTIF' ? 'border-emerald-500 shadow-md' : 'border-gray-100'} flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${status === 'AKTIF' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}">${status}</span>
+                                <button onclick="hapusKegiatan('${id}')" class="text-red-400 hover:text-red-600 text-xs font-bold">Hapus</button>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 mt-2">${nama}</h3>
+                            <p class="text-xs text-gray-500 mt-1">📅 ${tanggal} | 📍 ${lokasi}</p>
+                            <p class="text-xs text-gray-400 mt-2 italic">${ket}</p>
                         </div>
-                        <h3 class="text-lg font-bold text-gray-900 mt-2">${item[1]}</h3>
-                        <p class="text-xs text-gray-500 mt-1">📅 ${item[2] || '-'} | 📍 ${item[3] || '-'}</p>
-                        <p class="text-xs text-gray-400 mt-2 italic">${item[4] || ''}</p>
+                        <div class="mt-6 pt-4 border-t">
+                            ${status !== 'AKTIF' ? `
+                                <button onclick="aktifkanKegiatan('${id}')" class="w-full bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-bold text-xs py-2.5 rounded-xl transition-all">
+                                    Aktifkan Kegiatan Ini
+                                </button>
+                            ` : `
+                                <p class="text-center text-xs text-emerald-700 font-bold">✔ Sedang Berlangsung</p>
+                            `}
+                        </div>
                     </div>
-                    <div class="mt-6 pt-4 border-t">
-                        ${item[5] !== 'AKTIF' ? `
-                            <button onclick="aktifkanKegiatan('${item[0]}')" class="w-full bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-bold text-xs py-2.5 rounded-xl transition-all">
-                                Aktifkan Kegiatan Ini
-                            </button>
-                        ` : `
-                            <p class="text-center text-xs text-emerald-700 font-bold">✔ Sedang Berlangsung</p>
-                        `}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         })
         .getListKegiatan();
 }
@@ -554,8 +575,8 @@ let allPesertaData = [];
 function initPeserta() {
     google.script.run
         .withSuccessHandler(data => {
-            allPesertaData = data || [];
-            renderPesertaList(allPesertaData);
+            allPesertaData = Array.isArray(data) ? data : [];
+            renderPesertaList(data);
         })
         .getListPeserta();
 }
@@ -563,31 +584,47 @@ function initPeserta() {
 function renderPesertaList(data) {
     const tbody = document.getElementById('pesertaTableBody');
     if (!tbody) return;
-    if (!data || data.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
+        if (data && data.error) {
+            tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center bg-red-50 text-red-600 font-semibold">Gagal memuat data peserta: ${data.error}<br><span class="text-xs text-gray-500 font-normal mt-1 block">Pastikan Google Apps Script di-deploy dengan opsi "Who has access: Anyone".</span></td></tr>`;
+            return;
+        }
         tbody.innerHTML = '<tr><td colspan="6" class="p-12 text-center text-gray-400 italic">Belum ada peserta terdaftar.</td></tr>';
         return;
     }
-    tbody.innerHTML = data.map(row => `
-        <tr class="hover:bg-gray-50 transition-all">
-            <td class="p-4 font-bold text-gray-900">${row[1] || '-'}</td>
-            <td class="p-4 font-semibold text-gray-800">${row[2] || '-'}</td>
-            <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">${row[3] || '-'}</span></td>
-            <td class="p-4 font-medium text-gray-600">${row[4] || '-'}</td>
-            <td class="p-4 text-gray-500">${row[5] || '-'}</td>
-            <td class="p-4 text-right">
-                <button onclick="hapusPeserta('${row[0]}')" class="text-red-500 hover:text-red-700 font-bold text-xs px-2 py-1">Hapus</button>
-            </td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = data.map(row => {
+        const id = row.id || row[0] || '';
+        const noPeserta = row.noPeserta || row.nip || row[1] || '-';
+        const nama = row.nama || row[2] || '-';
+        const cabang = row.cabangLomba || row.gelar || row[3] || '-';
+        const kafilah = row.kafilah || row.sekolah || row[4] || '-';
+        const noHp = row.noHp || row.kota || row[5] || '-';
+        return `
+            <tr class="hover:bg-gray-50 transition-all">
+                <td class="p-4 font-bold text-gray-900">${noPeserta}</td>
+                <td class="p-4 font-semibold text-gray-800">${nama}</td>
+                <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">${cabang}</span></td>
+                <td class="p-4 font-medium text-gray-600">${kafilah}</td>
+                <td class="p-4 text-gray-500">${noHp}</td>
+                <td class="p-4 text-right">
+                    <button onclick="hapusPeserta('${id}')" class="text-red-500 hover:text-red-700 font-bold text-xs px-2 py-1">Hapus</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function filterPesertaList() {
     const q = document.getElementById('pesertaSearch').value.toLowerCase();
+    if (!Array.isArray(allPesertaData)) {
+        renderPesertaList([]);
+        return;
+    }
     const filtered = allPesertaData.filter(row => 
-        (row[1] && row[1].toString().toLowerCase().includes(q)) ||
-        (row[2] && row[2].toString().toLowerCase().includes(q)) ||
-        (row[3] && row[3].toString().toLowerCase().includes(q)) ||
-        (row[4] && row[4].toString().toLowerCase().includes(q))
+        ((row.noPeserta || row.nip || row[1] || '').toString().toLowerCase().includes(q)) ||
+        ((row.nama || row[2] || '').toString().toLowerCase().includes(q)) ||
+        ((row.cabangLomba || row.gelar || row[3] || '').toString().toLowerCase().includes(q)) ||
+        ((row.kafilah || row.sekolah || row[4] || '').toString().toLowerCase().includes(q))
     );
     renderPesertaList(filtered);
 }
@@ -670,53 +707,66 @@ function closeModalQrMassal() {
 function generateQrMassal() {
     const container = document.getElementById('qrMassalContainer');
     if (!container) return;
-    if (!allPesertaData || allPesertaData.length === 0) {
+    if (!Array.isArray(allPesertaData) || allPesertaData.length === 0) {
         container.innerHTML = '<p class="text-center text-gray-400 col-span-full py-8">Belum ada peserta untuk digenerate QR.</p>';
         return;
     }
 
-    container.innerHTML = allPesertaData.map((row, idx) => `
-        <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between gap-4">
-            <div>
-                <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full uppercase">${row[3] || 'MTQ'}</span>
-                <h4 class="font-extrabold text-gray-900 text-base mt-2">${row[2] || '-'}</h4>
-                <p class="text-xs text-gray-500 font-medium">${row[4] || '-'}</p>
-                <p class="text-xs text-gray-400 font-mono mt-1">ID: ${row[1] || '-'}</p>
+    container.innerHTML = allPesertaData.map((row, idx) => {
+        const cabang = row.cabangLomba || row.gelar || row[3] || 'MTQ';
+        const nama = row.nama || row[2] || '-';
+        const kafilah = row.kafilah || row.sekolah || row[4] || '-';
+        const noPeserta = row.noPeserta || row.nip || row[1] || '-';
+        return `
+            <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between gap-4">
+                <div>
+                    <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full uppercase">${cabang}</span>
+                    <h4 class="font-extrabold text-gray-900 text-base mt-2">${nama}</h4>
+                    <p class="text-xs text-gray-500 font-medium">${kafilah}</p>
+                    <p class="text-xs text-gray-400 font-mono mt-1">ID: ${noPeserta}</p>
+                </div>
+                <div id="qrcode-${idx}" class="p-2 bg-white border rounded-xl shadow-inner"></div>
             </div>
-            <div id="qrcode-${idx}" class="p-2 bg-white border rounded-xl shadow-inner"></div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     setTimeout(() => {
-        allPesertaData.forEach((row, idx) => {
-            const el = document.getElementById('qrcode-' + idx);
-            if (el && typeof QRCode !== 'undefined') {
-                el.innerHTML = '';
-                new QRCode(el, {
-                    text: row[6] || row[1] || row[0],
-                    width: 84,
-                    height: 84
-                });
-            }
-        });
+        if (Array.isArray(allPesertaData)) {
+            allPesertaData.forEach((row, idx) => {
+                const el = document.getElementById('qrcode-' + idx);
+                if (el && typeof QRCode !== 'undefined') {
+                    el.innerHTML = '';
+                    const rawQrText = row.rawQr || row.noPeserta || row.nip || row[6] || row[1] || row[0] || '';
+                    new QRCode(el, {
+                        text: String(rawQrText),
+                        width: 84,
+                        height: 84
+                    });
+                }
+            });
+        }
     }, 100);
 }
 
 function printIdCards() {
     const printArea = document.getElementById('printArea');
-    if (!printArea) return;
+    if (!printArea || !Array.isArray(allPesertaData)) return;
     
     let html = `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 20px; font-family: 'Inter', sans-serif;">`;
     allPesertaData.forEach((row, idx) => {
         const qrEl = document.getElementById('qrcode-' + idx);
         const qrImg = qrEl ? qrEl.innerHTML : '';
+        const cabang = row.cabangLomba || row.gelar || row[3] || '-';
+        const nama = row.nama || row[2] || '-';
+        const kafilah = row.kafilah || row.sekolah || row[4] || '-';
+        const noPeserta = row.noPeserta || row.nip || row[1] || '-';
         html += `
             <div style="border: 2px solid #059669; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; background: white; page-break-inside: avoid;">
                 <div>
                     <div style="font-size: 10px; font-weight: bold; color: #059669; text-transform: uppercase;">KAFILAH MTQ</div>
-                    <div style="font-size: 16px; font-weight: 800; color: #111827; margin-top: 4px;">${row[2] || '-'}</div>
-                    <div style="font-size: 12px; color: #4B5563; font-weight: 600;">${row[3] || '-'} | ${row[4] || '-'}</div>
-                    <div style="font-size: 11px; color: #6B7280; margin-top: 6px;">No. Peserta: <strong>${row[1] || '-'}</strong></div>
+                    <div style="font-size: 16px; font-weight: 800; color: #111827; margin-top: 4px;">${nama}</div>
+                    <div style="font-size: 12px; color: #4B5563; font-weight: 600;">${cabang} | ${kafilah}</div>
+                    <div style="font-size: 11px; color: #6B7280; margin-top: 6px;">No. Peserta: <strong>${noPeserta}</strong></div>
                 </div>
                 <div>${qrImg}</div>
             </div>
@@ -735,15 +785,21 @@ function initScannerPage() {
         .withSuccessHandler(list => {
             const select = document.getElementById('kegiatanSelect');
             if (!select) return;
-            if (!list || list.length === 0) {
+            if (!Array.isArray(list) || list.length === 0) {
                 select.innerHTML = '<option value="">-- Belum Ada Kegiatan --</option>';
                 return;
             }
-            select.innerHTML = list.map(item => `
-                <option value="${item[0]}" ${item[5] === 'AKTIF' ? 'selected' : ''}>
-                    ${item[1]} (${item[2] || '-'}) ${item[5] === 'AKTIF' ? '🟢 AKTIF' : ''}
-                </option>
-            `).join('');
+            select.innerHTML = list.map(item => {
+                const id = item.id || item[0] || '';
+                const nama = item.nama || item.namaEvent || item[1] || '-';
+                const tgl = item.tanggal || item[2] || '-';
+                const status = item.status || item[5] || '';
+                return `
+                    <option value="${id}" ${status === 'AKTIF' ? 'selected' : ''}>
+                        ${nama} (${tgl}) ${status === 'AKTIF' ? '🟢 AKTIF' : ''}
+                    </option>
+                `;
+            }).join('');
         })
         .getListKegiatan();
 }
@@ -752,9 +808,9 @@ function initDaftarHadir() {
     google.script.run
         .withSuccessHandler(list => {
             const sel = document.getElementById('hadirKegiatanFilter');
-            if (sel && list) {
+            if (sel && Array.isArray(list)) {
                 sel.innerHTML = '<option value="">Semua Kegiatan</option>' + 
-                    list.map(k => `<option value="${k[0]}">${k[1]}</option>`).join('');
+                    list.map(k => `<option value="${k.id || k[0]}">${k.nama || k.namaEvent || k[1]}</option>`).join('');
             }
             loadDaftarHadirData();
         })
@@ -769,32 +825,48 @@ function loadDaftarHadirData() {
         .withSuccessHandler(data => {
             const tbody = document.getElementById('hadirTableBody');
             if (!tbody) return;
-            if (!data || data.length === 0) {
+            if (!Array.isArray(data) || data.length === 0) {
+                if (data && data.error) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center bg-red-50 text-red-600 font-semibold">Gagal memuat kehadiran: ${data.error}<br><span class="text-xs text-gray-500 font-normal mt-1 block">Pastikan Apps Script di-deploy dengan opsi "Who has access: Anyone".</span></td></tr>`;
+                    return;
+                }
                 tbody.innerHTML = '<tr><td colspan="6" class="p-12 text-center text-gray-400 italic">Belum ada riwayat kehadiran.</td></tr>';
                 return;
             }
-            tbody.innerHTML = data.map(row => `
-                <tr class="hover:bg-gray-50 transition-all">
-                    <td class="p-4">
-                        <p class="font-bold text-gray-800">${row[7] || '-'}</p>
-                        <p class="text-xs text-emerald-700 font-semibold">${row[1] || '-'}</p>
-                    </td>
-                    <td class="p-4">
-                        <p class="font-bold text-gray-900">${row[4] || '-'}</p>
-                        <p class="text-xs text-gray-400 font-mono">${row[3] || '-'}</p>
-                    </td>
-                    <td class="p-4">
-                        <p class="font-semibold text-gray-800">${row[5] || '-'}</p>
-                        <p class="text-xs text-gray-500">${row[6] || '-'}</p>
-                    </td>
-                    <td class="p-4 text-center font-mono text-sm">${row[8] || '-'}</td>
-                    <td class="p-4 text-center font-mono text-sm">${row[10] || '-'}</td>
-                    <td class="p-4">
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${row[9] === 'HADIR' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${row[9] || 'HADIR'}</span>
-                        ${row[12] ? `<p class="text-xs text-gray-500 mt-1 italic">"${row[12]}"</p>` : ''}
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = data.map(row => {
+                const tanggal = row.tanggal || row[7] || '-';
+                const kegNama = row.kegiatanNama || row.namaEvent || row[1] || '-';
+                const nama = row.nama || row[4] || '-';
+                const noPeserta = row.noPeserta || row.nip || row[3] || '-';
+                const cabang = row.cabangLomba || row.gelar || row[5] || '-';
+                const kafilah = row.kafilah || row.sekolah || row[6] || '-';
+                const jam = row.jam || row.jamMasuk || row[8] || '-';
+                const jamPulang = row.jamSelesai || row.jamPulang || row[10] || '-';
+                const status = row.status || row.statusMasuk || row[9] || 'HADIR';
+                const ket = row.keterangan || row[12] || '';
+                return `
+                    <tr class="hover:bg-gray-50 transition-all">
+                        <td class="p-4">
+                            <p class="font-bold text-gray-800">${tanggal}</p>
+                            <p class="text-xs text-emerald-700 font-semibold">${kegNama}</p>
+                        </td>
+                        <td class="p-4">
+                            <p class="font-bold text-gray-900">${nama}</p>
+                            <p class="text-xs text-gray-400 font-mono">${noPeserta}</p>
+                        </td>
+                        <td class="p-4">
+                            <p class="font-semibold text-gray-800">${cabang}</p>
+                            <p class="text-xs text-gray-500">${kafilah}</p>
+                        </td>
+                        <td class="p-4 text-center font-mono text-sm">${jam}</td>
+                        <td class="p-4 text-center font-mono text-sm">${jamPulang}</td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${status === 'HADIR' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${status}</span>
+                            ${ket ? `<p class="text-xs text-gray-500 mt-1 italic">"${ket}"</p>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         })
         .getDaftarHadir(tgl, kegId);
 }
@@ -806,9 +878,9 @@ function initLaporan() {
     google.script.run
         .withSuccessHandler(list => {
             const sel = document.getElementById('lapKegiatan');
-            if (sel && list) {
+            if (sel && Array.isArray(list)) {
                 sel.innerHTML = '<option value="">Semua Kegiatan</option>' + 
-                    list.map(k => `<option value="${k[0]}">${k[1]}</option>`).join('');
+                    list.map(k => `<option value="${k.id || k[0]}">${k.nama || k.namaEvent || k[1]}</option>`).join('');
             }
             loadLaporanData();
         })
@@ -823,21 +895,35 @@ function loadLaporanData() {
         .withSuccessHandler(data => {
             const tbody = document.getElementById('laporanTableBody');
             if (!tbody) return;
-            if (!data || data.length === 0) {
+            const rows = Array.isArray(data) ? data : (data && (data.perPeserta || data.perGuru || []));
+            if (!Array.isArray(rows) || rows.length === 0) {
+                if (data && data.error) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center bg-red-50 text-red-600 font-semibold">Gagal memuat rekapitulasi: ${data.error}<br><span class="text-xs text-gray-500 font-normal mt-1 block">Pastikan Apps Script di-deploy dengan opsi "Who has access: Anyone".</span></td></tr>`;
+                    return;
+                }
                 tbody.innerHTML = '<tr><td colspan="7" class="p-12 text-center text-gray-400 italic">Belum ada data rekapitulasi.</td></tr>';
                 return;
             }
-            tbody.innerHTML = data.map(row => `
-                <tr class="hover:bg-gray-50 transition-all">
-                    <td class="p-4 font-mono text-xs text-gray-500">${row[3] || '-'}</td>
-                    <td class="p-4 font-bold text-gray-900">${row[4] || '-'}</td>
-                    <td class="p-4 font-semibold text-emerald-700">${row[5] || '-'}</td>
-                    <td class="p-4 text-gray-600">${row[6] || '-'}</td>
-                    <td class="p-4 text-xs font-medium">${row[1] || '-'} (${row[7] || ''})</td>
-                    <td class="p-4 text-center font-mono text-xs">${row[8] || '-'}</td>
-                    <td class="p-4 text-center font-mono text-xs">${row[10] || '-'}</td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = rows.map(row => {
+                const noPeserta = row.noPeserta || row.nip || row[1] || '-';
+                const nama = row.nama || row[2] || row[4] || '-';
+                const cabangVal = row.cabangLomba || row.gelar || row[3] || row[5] || '-';
+                const kafilah = row.kafilah || row.sekolah || row[4] || row[6] || '-';
+                const hadir = row.hadir !== undefined ? row.hadir : (row[8] || 0);
+                const izin = row.izin !== undefined ? row.izin : (row[10] || 0);
+                const persentase = row.persentase !== undefined ? row.persentase + '%' : '';
+                return `
+                    <tr class="hover:bg-gray-50 transition-all">
+                        <td class="p-4 font-mono text-xs text-gray-500">${noPeserta}</td>
+                        <td class="p-4 font-bold text-gray-900">${nama}</td>
+                        <td class="p-4 font-semibold text-emerald-700">${cabangVal}</td>
+                        <td class="p-4 text-gray-600">${kafilah}</td>
+                        <td class="p-4 text-xs font-medium">${persentase}</td>
+                        <td class="p-4 text-center font-mono text-xs font-bold text-emerald-600">${hadir}</td>
+                        <td class="p-4 text-center font-mono text-xs font-bold text-amber-600">${izin}</td>
+                    </tr>
+                `;
+            }).join('');
         })
         .getLaporan(kegId, cabang);
 }
