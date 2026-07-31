@@ -22,9 +22,11 @@
         .scan-status.active { transform: translate(-50%, 0); opacity: 1; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         @media print {
+            body, html { height: auto !important; overflow: visible !important; background: white !important; }
             body * { visibility: hidden; }
-            #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+            #printArea, #printArea * { visibility: visible !important; }
+            #printArea { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
 </head>
@@ -41,7 +43,7 @@
     </div>
 
     <!-- Area untuk Print ID Card -->
-    <div id="printArea" class="hidden"></div>
+    <div id="printArea" style="display: none;"></div>
 
     <script>
         const API_URL = '/api/proxy';

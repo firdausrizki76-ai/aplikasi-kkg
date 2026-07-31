@@ -173,7 +173,14 @@ function handleAction(action, params) {
     case 'getDaftarHadirByTanggal': return getDaftarHadirByTanggal(params.tanggal, params.kegiatanId);
     case 'getDaftarHadirByEvent': return getDaftarHadirByKegiatan(params.eventId || params.kegiatanId);
     case 'getLaporanByEvent': return getLaporanByKegiatan(params.eventId || params.kegiatanId);
-    case 'getLaporan': return getLaporan(params.bulan, params.kegiatanId);
+    case 'getLaporan':
+    case 'getLaporanMTQ': 
+      return getLaporanMTQ(
+        params.startDate || params.mulai || params.bulan || '',
+        params.endDate || params.selesai || '',
+        params.kegiatanId || params.kegId || params.eventId || '',
+        params.cabangLomba || params.cabang || ''
+      );
     
     // SCAN ABSENSI PER KEGIATAN (TANPA INITIAL SCAN)
     case 'prosesScan':
@@ -1182,9 +1189,54 @@ function getLaporanByKegiatan(kegiatanId) {
   }
 }
 
-function getLaporan(bulan, kegiatanId) {
+function formatTanggalIndoMTQ(dateObjOrStr, tz) {
+  if (!dateObjOrStr || dateObjOrStr === '-') return '-';
   try {
+    const d = (dateObjOrStr instanceof Date) ? dateObjOrStr : new Date(dateObjOrStr);
+    if (isNaN(d.getTime())) return String(dateObjOrStr);
+    const hariArr = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const blnArr = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+    const hari = hariArr[d.getDay()];
+    const tgl = ('0' + d.getDate()).slice(-2);
+    const bln = blnArr[d.getMonth()];
+    const thn = d.getFullYear();
+    return hari + ', ' + tgl + '-' + bln + '-' + thn;
+  } catch(e) {
+    return String(dateObjOrStr);
+  }
+}
+
+function getLaporan(bulan, kegiatanId) {
+  return getLaporanMTQ(bulan || '', '', kegiatanId || '', '');
+}
+
+function getLaporanMTQ(startDate, endDate, kegiatanId, cabangLomba) {
+  try {
+    let tglMulai = '', tglSelesai = '', kegId = '', cabang = '';
+    if (typeof startDate === 'object' && startDate !== null) {
+      tglMulai = startDate.startDate || startDate.mulai || '';
+      tglSelesai = startDate.endDate || startDate.selesai || '';
+      kegId = startDate.kegiatanId || startDate.kegId || '';
+      cabang = startDate.cabangLomba || startDate.cabang || '';
+    } else {
+      tglMulai = String(startDate || '').trim();
+      tglSelesai = String(endDate || '').trim();
+      kegId = String(kegiatanId || '').trim();
+      cabang = String(cabangLomba || '').trim();
+    }
+
+    // Jika tglMulai berformat YYYY-MM saja (misal dari input month lama '2026-07'), ubah jadi range bulan
+    if (tglMulai && tglMulai.length === 7 && tglMulai.includes('-') && !tglSelesai) {
+      const parts = tglMulai.split('-');
+      const thn = parseInt(parts[0], 10);
+      const bln = parseInt(parts[1], 10);
+      tglMulai = thn + '-' + ('0' + bln).slice(-2) + '-01';
+      const lastDay = new Date(thn, bln, 0).getDate();
+      tglSelesai = thn + '-' + ('0' + bln).slice(-2) + '-' + ('0' + lastDay).slice(-2);
+    }
+
     const ss = getSS();
+    const tz = ss.getSpreadsheetTimeZone();
     let sheetAbsensi = getSheetAbsensi(ss);
     let sheetPeserta = getSheetPeserta(ss);
     let sheetKegiatan = getSheetKegiatan(ss);
@@ -1193,109 +1245,192 @@ function getLaporan(bulan, kegiatanId) {
     const dataPeserta = sheetPeserta ? sheetPeserta.getDataRange().getValues() : [];
     const dataKegiatan = sheetKegiatan ? sheetKegiatan.getDataRange().getValues() : [];
     
-    let tahun = 0, bln = 0;
-    if (bulan && bulan.includes('-')) {
-      const parts = bulan.split('-').map(Number);
-      tahun = parts[0];
-      bln = parts[1];
-    }
+    // Map Kegiatan: id -> info kegiatan
+    const kegiatanMap = {};
+    let totalKegiatanFiltered = 0;
     
-    const kehadiranMap = {};
-    const pesertaList = [];
+    const hasJamKeg = dataKegiatan.length > 0 && (String(dataKegiatan[0][3] || '').toUpperCase() === 'JAM' || String(dataKegiatan[0][3] || '').toUpperCase() === 'WAKTU');
+    const idxJamKeg = hasJamKeg ? 3 : -1;
+    const idxLokKeg = hasJamKeg ? 4 : 3;
 
+    for (let i = 1; i < dataKegiatan.length; i++) {
+      if (!dataKegiatan[i][0]) continue;
+      const idK = String(dataKegiatan[i][0]);
+      let tglStr = '';
+      try {
+        tglStr = (dataKegiatan[i][2] instanceof Date) ? Utilities.formatDate(dataKegiatan[i][2], tz, 'yyyy-MM-dd') : String(dataKegiatan[i][2]).split('T')[0];
+      } catch(e) { tglStr = String(dataKegiatan[i][2]); }
+      
+      const jamK = idxJamKeg !== -1 ? String(dataKegiatan[i][idxJamKeg] || '08:00 WIB') : '08:00 WIB';
+      
+      kegiatanMap[idK] = {
+        id: idK,
+        nama: String(dataKegiatan[i][1] || ('Kegiatan ' + idK)),
+        tanggal: tglStr,
+        jam: jamK,
+        lokasi: String(dataKegiatan[i][idxLokKeg] || '-')
+      };
+
+      // Cek apakah kegiatan masuk filter
+      if (kegId && idK !== String(kegId)) continue;
+      if (tglMulai && tglStr && tglStr < tglMulai) continue;
+      if (tglSelesai && tglStr && tglStr > tglSelesai) continue;
+      totalKegiatanFiltered++;
+    }
+
+    // Map Peserta: noPeserta -> info peserta & counter
+    const pesertaMap = {};
+    const pesertaList = [];
     for (let i = 1; i < dataPeserta.length; i++) {
       if (!dataPeserta[i][0] && !dataPeserta[i][1]) continue;
-      const noPeserta = String(dataPeserta[i][1]);
-      kehadiranMap[noPeserta] = {
-        noPeserta: noPeserta,
-        nip: noPeserta,
-        nama: dataPeserta[i][2],
-        cabangLomba: dataPeserta[i][3],
-        gelar: dataPeserta[i][3],
-        kafilah: dataPeserta[i][4],
-        sekolah: dataPeserta[i][4],
+      const noP = String(dataPeserta[i][1] || dataPeserta[i][0]);
+      const cbg = String(dataPeserta[i][3] || '-');
+      if (cabang && cbg !== cabang) continue; // filter cabang lomba
+
+      const pObj = {
+        id: String(dataPeserta[i][0]),
+        noPeserta: noP,
+        nip: noP,
+        nama: String(dataPeserta[i][2] || '-'),
+        cabangLomba: cbg,
+        gelar: cbg,
+        kafilah: String(dataPeserta[i][4] || '-'),
+        sekolah: String(dataPeserta[i][4] || '-'),
         hadir: 0,
         izin: 0
       };
+      pesertaMap[noP] = pObj;
+      pesertaList.push(pObj);
     }
 
-    let totalKegiatan = 0;
-    for (let i = 1; i < dataKegiatan.length; i++) {
-      if (!dataKegiatan[i][0]) continue;
-      if (kegiatanId && String(dataKegiatan[i][0]) !== String(kegiatanId)) continue;
-      totalKegiatan++;
-    }
-
+    // Proses Absensi (Rekap Harian per Kegiatan per Hari)
+    const rekapHarian = [];
     for (let i = 1; i < dataAbsensi.length; i++) {
-      if (!dataAbsensi[i][0]) continue;
-      const dbKegiatanId = String(dataAbsensi[i][1]);
-      if (kegiatanId && dbKegiatanId !== String(kegiatanId)) continue;
-
-      if (tahun > 0 && bln > 0) {
-        let tgl = new Date(dataAbsensi[i][7]);
-        if (tgl.getFullYear() !== tahun || (tgl.getMonth() + 1) !== bln) continue;
-      }
-
-      const noPeserta = String(dataAbsensi[i][3]);
+      if (!dataAbsensi[i][0] && !dataAbsensi[i][1]) continue;
+      const dbKegId = String(dataAbsensi[i][1] || '');
+      const noP = String(dataAbsensi[i][3] || '');
       const statusMasuk = String(dataAbsensi[i][9] || 'HADIR').toUpperCase();
-      
-      if (!kehadiranMap[noPeserta]) {
-        kehadiranMap[noPeserta] = {
-          noPeserta: noPeserta,
-          nip: noPeserta,
-          nama: dataAbsensi[i][4],
-          cabangLomba: dataAbsensi[i][5],
-          gelar: dataAbsensi[i][5],
-          kafilah: dataAbsensi[i][6],
-          sekolah: dataAbsensi[i][6],
-          hadir: 0,
-          izin: 0
-        };
-      }
+      const ket = String(dataAbsensi[i][12] || '-');
+      const jamHadir = String(dataAbsensi[i][8] || '-');
 
-      if (statusMasuk === 'IZIN') {
-        kehadiranMap[noPeserta].izin++;
-      } else {
-        kehadiranMap[noPeserta].hadir++;
+      let tglStr = '';
+      try {
+        tglStr = (dataAbsensi[i][7] instanceof Date) ? Utilities.formatDate(dataAbsensi[i][7], tz, 'yyyy-MM-dd') : String(dataAbsensi[i][7]).split('T')[0];
+      } catch(e) { tglStr = String(dataAbsensi[i][7]); }
+
+      // Filter tanggal
+      if (tglMulai && tglStr && tglStr < tglMulai) continue;
+      if (tglSelesai && tglStr && tglStr > tglSelesai) continue;
+      // Filter kegiatan
+      if (kegId && dbKegId !== String(kegId)) continue;
+      // Filter cabang lomba
+      const cbgP = pesertaMap[noP] ? pesertaMap[noP].cabangLomba : String(dataAbsensi[i][5] || '-');
+      if (cabang && cbgP !== cabang) continue;
+
+      const kegInfo = kegiatanMap[dbKegId];
+      const namaKeg = kegInfo ? kegInfo.nama : ('Kegiatan MTQ (' + dbKegId + ')');
+      const infoP = pesertaMap[noP] || {
+        noPeserta: noP,
+        nama: String(dataAbsensi[i][4] || '-'),
+        cabangLomba: String(dataAbsensi[i][5] || '-'),
+        kafilah: String(dataAbsensi[i][6] || '-')
+      };
+
+      rekapHarian.push({
+        no: rekapHarian.length + 1,
+        tanggal: formatTanggalIndoMTQ(tglStr, tz),
+        tanggalRaw: tglStr,
+        jam: jamHadir,
+        kegiatanId: dbKegId,
+        namaKegiatan: namaKeg,
+        noPeserta: infoP.noPeserta,
+        nama: infoP.nama,
+        cabangLomba: infoP.cabangLomba,
+        kafilah: infoP.kafilah,
+        status: statusMasuk,
+        keterangan: ket
+      });
+
+      // Update counter ringkasan per peserta
+      if (pesertaMap[noP]) {
+        if (statusMasuk === 'IZIN' || statusMasuk === 'SAKIT') {
+          pesertaMap[noP].izin++;
+        } else {
+          pesertaMap[noP].hadir++;
+        }
       }
     }
 
-    const perPeserta = [];
-    for (let k in kehadiranMap) {
-      const p = kehadiranMap[k];
-      const totalHadir = p.hadir + p.izin;
-      perPeserta.push({
-        no: perPeserta.length + 1,
+    // Urutkan rekapHarian dari yang terbaru
+    rekapHarian.sort((a, b) => {
+      const cmp = b.tanggalRaw.localeCompare(a.tanggalRaw);
+      if (cmp !== 0) return cmp;
+      return String(b.jam).localeCompare(String(a.jam));
+    });
+    rekapHarian.forEach((item, index) => { item.no = index + 1; });
+
+    // Rakit rekapRingkasan (per peserta)
+    const rekapRingkasan = [];
+    pesertaList.forEach((p, idx) => {
+      const totalH = (p.hadir || 0) + (p.izin || 0);
+      const persentase = totalKegiatanFiltered > 0 
+        ? Math.round((totalH / totalKegiatanFiltered) * 100) 
+        : (totalH > 0 ? 100 : 0);
+      
+      rekapRingkasan.push({
+        no: idx + 1,
         noPeserta: p.noPeserta,
         nip: p.noPeserta,
         nama: p.nama,
         cabangLomba: p.cabangLomba,
         kafilah: p.kafilah,
-        hadir: p.hadir,
-        izin: p.izin,
-        persentase: totalKegiatan > 0 ? Math.round((totalHadir / totalKegiatan) * 100) : (totalHadir > 0 ? 100 : 0)
+        totalKegiatan: totalKegiatanFiltered,
+        hadir: p.hadir || 0,
+        izin: p.izin || 0,
+        persentase: Math.min(100, persentase)
       });
-    }
+    });
 
-    perPeserta.sort((a, b) => b.hadir - a.hadir);
-    perPeserta.forEach((item, index) => { item.no = index + 1; });
+    rekapRingkasan.sort((a, b) => b.hadir - a.hadir);
+    rekapRingkasan.forEach((item, index) => { item.no = index + 1; });
+
+    const totalHadirCount = rekapRingkasan.filter(x => (x.hadir + x.izin) > 0).length;
+    const rataKehadiran = rekapRingkasan.length > 0 
+      ? Math.round(rekapRingkasan.reduce((acc, curr) => acc + curr.persentase, 0) / rekapRingkasan.length) 
+      : 0;
 
     return {
-      bulan: bulan || 'Semua',
-      totalEvent: totalKegiatan,
-      totalGuru: perPeserta.length,
-      totalPeserta: perPeserta.length,
-      totalGuruHadir: perPeserta.filter(x => (x.hadir + x.izin) > 0).length,
-      totalPesertaHadir: perPeserta.filter(x => (x.hadir + x.izin) > 0).length,
-      perGuru: perPeserta,
-      perPeserta: perPeserta
+      success: true,
+      startDate: tglMulai,
+      endDate: tglSelesai,
+      kegiatanId: kegId,
+      cabangLomba: cabang,
+      totalEvent: totalKegiatanFiltered,
+      totalKegiatan: totalKegiatanFiltered,
+      totalGuru: rekapRingkasan.length,
+      totalPeserta: rekapRingkasan.length,
+      totalGuruHadir: totalHadirCount,
+      totalPesertaHadir: totalHadirCount,
+      rataKehadiran: rataKehadiran,
+      rekapHarian: rekapHarian,
+      rekapRingkasan: rekapRingkasan,
+      perGuru: rekapRingkasan,
+      perPeserta: rekapRingkasan,
+      listKegiatan: Object.values(kegiatanMap)
     };
   } catch (e) {
-    Logger.log('Error getLaporan: ' + e.toString());
+    Logger.log('Error getLaporanMTQ: ' + e.toString());
     return {
-      bulan: bulan || '',
-      totalEvent: 0,
+      success: false,
+      error: e.toString(),
+      startDate: '',
+      endDate: '',
+      totalKegiatan: 0,
       totalPeserta: 0,
+      totalPesertaHadir: 0,
+      rataKehadiran: 0,
+      rekapHarian: [],
+      rekapRingkasan: [],
       perPeserta: []
     };
   }

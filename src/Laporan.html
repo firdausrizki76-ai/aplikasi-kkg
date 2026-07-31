@@ -78,8 +78,20 @@
           </div>
 
           <!-- Filter Bar -->
-          <div class="bg-white p-4 rounded-2xl shadow-card border border-gray-100 flex flex-col md:flex-row items-center gap-3 no-print">
-            <div class="w-full md:w-64">
+          <div class="bg-white p-5 rounded-2xl shadow-card border border-gray-100 flex flex-col md:flex-row items-end gap-4 no-print">
+            <div class="w-full md:w-48">
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Dari Tanggal</label>
+              <input type="date" id="filterTanggalMulai" onchange="loadLaporan()" 
+                class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+
+            <div class="w-full md:w-48">
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Sampai Tanggal</label>
+              <input type="date" id="filterTanggalSelesai" onchange="loadLaporan()" 
+                class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+
+            <div class="w-full md:w-56">
               <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Pilih Kegiatan MTQ</label>
               <select id="filterLaporanKegiatan" onchange="loadLaporan()" class="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
                 <option value="">Semua Kegiatan</option>
@@ -109,58 +121,61 @@
               </select>
             </div>
 
-            <div class="w-full md:w-48">
-              <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Filter Bulan (Opsional)</label>
-              <input type="month" id="filterLaporanBulan" onchange="loadLaporan()" 
-                class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+            <div class="w-full md:w-auto">
+              <button onclick="resetFilterLaporan()" class="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-sm transition-all">
+                Reset Filter
+              </button>
             </div>
           </div>
 
           <!-- Summary Stats Box -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-white p-4 rounded-xl border border-gray-100">
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
               <span class="text-xs text-gray-400 font-bold uppercase">Total Kegiatan</span>
               <h4 id="lapTotalKegiatan" class="text-2xl font-extrabold text-gray-900 mt-1">0</h4>
             </div>
-            <div class="bg-white p-4 rounded-xl border border-gray-100">
-              <span class="text-xs text-gray-400 font-bold uppercase">Total Peserta</span>
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+              <span class="text-xs text-gray-400 font-bold uppercase">Total Peserta MTQ</span>
               <h4 id="lapTotalPeserta" class="text-2xl font-extrabold text-emerald-700 mt-1">0</h4>
             </div>
-            <div class="bg-white p-4 rounded-xl border border-gray-100">
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
               <span class="text-xs text-gray-400 font-bold uppercase">Peserta Aktif Hadir</span>
               <h4 id="lapPesertaHadir" class="text-2xl font-extrabold text-amber-600 mt-1">0</h4>
             </div>
-            <div class="bg-white p-4 rounded-xl border border-gray-100">
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
               <span class="text-xs text-gray-400 font-bold uppercase">Rata-rata Kehadiran</span>
               <h4 id="lapRataKehadiran" class="text-2xl font-extrabold text-blue-700 mt-1">0%</h4>
             </div>
+          </div>
+
+          <!-- Tabs Header -->
+          <div class="flex items-center gap-2 border-b border-gray-200 pb-3 no-print">
+            <button id="btnTabHarian" onclick="switchLaporanTab('harian')" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white shadow-md transition-all">
+              <span class="material-symbols-outlined align-middle text-[18px] mr-1">calendar_month</span>
+              Rekap Harian per Kegiatan
+            </button>
+            <button id="btnTabRingkasan" onclick="switchLaporanTab('ringkasan')" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
+              <span class="material-symbols-outlined align-middle text-[18px] mr-1">groups</span>
+              Ringkasan per Peserta
+            </button>
           </div>
 
           <!-- Table Laporan -->
           <div class="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden" id="print-area">
             <div class="hidden print:block p-6 text-center border-b-2 border-emerald-700 mb-4">
               <h3 class="text-lg font-bold uppercase tracking-widest text-emerald-800">MUSABAQAH TILAWATIL QURAN</h3>
-              <h2 class="text-xl font-extrabold">LAPORAN REKAPITULASI KEHADIRAN PESERTA</h2>
+              <h2 id="printTabTitle" class="text-xl font-extrabold">LAPORAN REKAPITULASI KEHADIRAN PESERTA MTQ</h2>
               <p id="laporanSubtitle" class="text-xs text-gray-500 mt-1">Semua Kegiatan MTQ</p>
             </div>
 
             <div class="overflow-x-auto">
               <table id="tabelLaporanExport" class="w-full text-left border-collapse">
-                <thead>
-                  <tr class="bg-gray-50 border-b border-gray-200/80 text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
-                    <th class="py-3.5 px-4 w-12 text-center">No</th>
-                    <th class="py-3.5 px-4">No. Peserta / NIK</th>
-                    <th class="py-3.5 px-4">Nama Peserta</th>
-                    <th class="py-3.5 px-4">Cabang Lomba</th>
-                    <th class="py-3.5 px-4">Kafilah</th>
-                    <th class="py-3.5 px-4 text-center">Hadir</th>
-                    <th class="py-3.5 px-4 text-center">Izin</th>
-                    <th class="py-3.5 px-4 text-center">Persentase</th>
-                  </tr>
+                <thead id="tabelLaporanHead">
+                  <!-- Head akan dirender dinamis oleh JS sesuai active tab -->
                 </thead>
                 <tbody id="tabelLaporanBody" class="divide-y divide-gray-100 text-sm">
                   <tr>
-                    <td colspan="8" class="py-12 text-center text-gray-400">
+                    <td colspan="10" class="py-12 text-center text-gray-400">
                       <span class="material-symbols-outlined text-4xl block mb-2 animate-spin">progress_activity</span>
                       Memuat laporan...
                     </td>
@@ -172,10 +187,19 @@
         </div>
 
         <script>
-          let ALL_LAPORAN_LIST = [];
+          let CURRENT_LAPORAN_DATA = { rekapHarian: [], rekapRingkasan: [] };
+          let ACTIVE_TAB = 'harian';
 
           function initLaporanPage() {
             loadKegiatanFilterLaporan();
+          }
+
+          function resetFilterLaporan() {
+            if (document.getElementById('filterTanggalMulai')) document.getElementById('filterTanggalMulai').value = '';
+            if (document.getElementById('filterTanggalSelesai')) document.getElementById('filterTanggalSelesai').value = '';
+            if (document.getElementById('filterLaporanKegiatan')) document.getElementById('filterLaporanKegiatan').value = '';
+            if (document.getElementById('filterLaporanCabang')) document.getElementById('filterLaporanCabang').value = '';
+            loadLaporan();
           }
 
           function loadKegiatanFilterLaporan() {
@@ -192,16 +216,32 @@
               .getListKegiatan();
           }
 
+          function switchLaporanTab(tab) {
+            ACTIVE_TAB = tab;
+            const btnHarian = document.getElementById('btnTabHarian');
+            const btnRingkasan = document.getElementById('btnTabRingkasan');
+            if (tab === 'harian') {
+              btnHarian.className = 'px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white shadow-md transition-all';
+              btnRingkasan.className = 'px-5 py-2.5 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all';
+            } else {
+              btnRingkasan.className = 'px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white shadow-md transition-all';
+              btnHarian.className = 'px-5 py-2.5 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all';
+            }
+            renderActiveTabTable();
+          }
+
           function loadLaporan() {
+            const startDate = document.getElementById('filterTanggalMulai') ? document.getElementById('filterTanggalMulai').value : '';
+            const endDate = document.getElementById('filterTanggalSelesai') ? document.getElementById('filterTanggalSelesai').value : '';
             const kegiatanId = document.getElementById('filterLaporanKegiatan') ? document.getElementById('filterLaporanKegiatan').value : '';
-            const bulan = document.getElementById('filterLaporanBulan') ? document.getElementById('filterLaporanBulan').value : '';
+            const cabangLomba = document.getElementById('filterLaporanCabang') ? document.getElementById('filterLaporanCabang').value : '';
 
             const tbody = document.getElementById('tabelLaporanBody');
             tbody.innerHTML = `
               <tr>
-                <td colspan="8" class="py-12 text-center text-gray-400">
+                <td colspan="10" class="py-12 text-center text-gray-400">
                   <span class="material-symbols-outlined text-4xl block mb-2 animate-spin">progress_activity</span>
-                  Memuat rekapitulasi...
+                  Memuat rekapitulasi kehadiran MTQ...
                 </td>
               </tr>
             `;
@@ -209,74 +249,211 @@
             google.script.run
               .withSuccessHandler(data => {
                 if (!data) return;
-                ALL_LAPORAN_LIST = data.perPeserta || data.perGuru || [];
+                CURRENT_LAPORAN_DATA = data;
                 
-                document.getElementById('lapTotalKegiatan').textContent = data.totalEvent || 0;
-                document.getElementById('lapTotalPeserta').textContent = ALL_LAPORAN_LIST.length || 0;
+                document.getElementById('lapTotalKegiatan').textContent = data.totalKegiatan || 0;
+                document.getElementById('lapTotalPeserta').textContent = data.totalPeserta || 0;
                 document.getElementById('lapPesertaHadir').textContent = data.totalPesertaHadir || 0;
+                document.getElementById('lapRataKehadiran').textContent = (data.rataKehadiran || 0) + '%';
 
-                let totalPersen = 0;
-                ALL_LAPORAN_LIST.forEach(p => { totalPersen += (p.persentase || 0); });
-                const avg = ALL_LAPORAN_LIST.length > 0 ? Math.round(totalPersen / ALL_LAPORAN_LIST.length) : 0;
-                document.getElementById('lapRataKehadiran').textContent = avg + '%';
-
-                renderTabelLaporan(ALL_LAPORAN_LIST);
+                renderActiveTabTable();
               })
               .withFailureHandler(err => {
                 tbody.innerHTML = `
                   <tr>
-                    <td colspan="8" class="py-12 text-center text-red-500 font-semibold">
+                    <td colspan="10" class="py-12 text-center text-red-500 font-semibold">
                       Gagal memuat laporan: ${err.message || err}
                     </td>
                   </tr>
                 `;
               })
-              .getLaporan(bulan, kegiatanId);
+              .getLaporanMTQ(startDate, endDate, kegiatanId, cabangLomba);
           }
 
-          function renderTabelLaporan(list) {
-            const cabangFilter = document.getElementById('filterLaporanCabang') ? document.getElementById('filterLaporanCabang').value : '';
-            const filtered = list.filter(p => !cabangFilter || (p.cabangLomba || p.gelar) === cabangFilter);
-
+          function renderActiveTabTable() {
+            const thead = document.getElementById('tabelLaporanHead');
             const tbody = document.getElementById('tabelLaporanBody');
-            if (!filtered || filtered.length === 0) {
-              tbody.innerHTML = `
-                <tr>
-                  <td colspan="8" class="py-12 text-center text-gray-400">
-                    <span class="material-symbols-outlined text-4xl block mb-2 text-gray-300">analytics</span>
-                    Belum ada rekapitulasi untuk filter ini.
-                  </td>
+            const printTitle = document.getElementById('printTabTitle');
+            const subtitle = document.getElementById('laporanSubtitle');
+
+            const startDate = document.getElementById('filterTanggalMulai')?.value;
+            const endDate = document.getElementById('filterTanggalSelesai')?.value;
+            let periodeStr = 'Semua Periode';
+            if (startDate && endDate) periodeStr = `${startDate} s.d. ${endDate}`;
+            else if (startDate) periodeStr = `Mulai ${startDate}`;
+            else if (endDate) periodeStr = `Hingga ${endDate}`;
+            if (subtitle) subtitle.textContent = `Periode: ${periodeStr}`;
+
+            if (ACTIVE_TAB === 'harian') {
+              if (printTitle) printTitle.textContent = 'LAPORAN REKAPITULASI HARIAN KEHADIRAN MTQ PER KEGIATAN';
+              thead.innerHTML = `
+                <tr class="bg-gray-50 border-b border-gray-200/80 text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                  <th class="py-3.5 px-4 w-12 text-center">No</th>
+                  <th class="py-3.5 px-4">Hari & Tanggal</th>
+                  <th class="py-3.5 px-4">Jam</th>
+                  <th class="py-3.5 px-4">Nama Kegiatan MTQ</th>
+                  <th class="py-3.5 px-4">No. Peserta</th>
+                  <th class="py-3.5 px-4">Nama Peserta</th>
+                  <th class="py-3.5 px-4">Cabang Lomba</th>
+                  <th class="py-3.5 px-4">Kafilah</th>
+                  <th class="py-3.5 px-4 text-center">Status Kehadiran</th>
+                  <th class="py-3.5 px-4">Keterangan</th>
                 </tr>
               `;
-              return;
-            }
 
-            tbody.innerHTML = filtered.map((item, idx) => `
-              <tr class="hover:bg-emerald-50/40 transition-colors">
-                <td class="py-3.5 px-4 text-center font-semibold text-gray-500">${idx + 1}</td>
-                <td class="py-3.5 px-4 font-bold text-emerald-800">${escapeHtml(item.noPeserta || item.nip || '-')}</td>
-                <td class="py-3.5 px-4 font-bold text-gray-900">${escapeHtml(item.nama || '-')}</td>
-                <td class="py-3.5 px-4">
-                  <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">
-                    ${escapeHtml(item.cabangLomba || item.gelar || '-')}
-                  </span>
-                </td>
-                <td class="py-3.5 px-4 font-medium text-gray-700">${escapeHtml(item.kafilah || item.sekolah || '-')}</td>
-                <td class="py-3.5 px-4 text-center font-extrabold text-emerald-700">${item.hadir || 0}</td>
-                <td class="py-3.5 px-4 text-center font-bold text-amber-600">${item.izin || 0}</td>
-                <td class="py-3.5 px-4 text-center font-extrabold text-gray-900">${item.persentase || 0}%</td>
-              </tr>
-            `).join('');
+              const list = CURRENT_LAPORAN_DATA.rekapHarian || [];
+              if (list.length === 0) {
+                tbody.innerHTML = `
+                  <tr>
+                    <td colspan="10" class="py-12 text-center text-gray-400">
+                      <span class="material-symbols-outlined text-4xl block mb-2 text-gray-300">calendar_month</span>
+                      Belum ada data absensi pada rentang tanggal atau kegiatan yang dipilih.
+                    </td>
+                  </tr>
+                `;
+                return;
+              }
+
+              tbody.innerHTML = list.map((item, idx) => {
+                let statusBadge = `<span class="px-2.5 py-1 text-xs font-extrabold rounded-full bg-emerald-100 text-emerald-800">${item.status || 'HADIR'}</span>`;
+                if (item.status === 'IZIN') statusBadge = `<span class="px-2.5 py-1 text-xs font-extrabold rounded-full bg-amber-100 text-amber-800">IZIN</span>`;
+                if (item.status === 'SAKIT') statusBadge = `<span class="px-2.5 py-1 text-xs font-extrabold rounded-full bg-blue-100 text-blue-800">SAKIT</span>`;
+
+                return `
+                  <tr class="hover:bg-emerald-50/40 transition-colors">
+                    <td class="py-3 px-4 text-center font-semibold text-gray-500">${idx + 1}</td>
+                    <td class="py-3 px-4 font-bold text-gray-900 whitespace-nowrap">${escapeHtml(item.tanggal || '-')}</td>
+                    <td class="py-3 px-4 font-mono text-xs font-bold text-emerald-700">${escapeHtml(item.jam || '-')}</td>
+                    <td class="py-3 px-4 font-bold text-emerald-900">${escapeHtml(item.namaKegiatan || '-')}</td>
+                    <td class="py-3 px-4 font-mono text-xs font-bold text-gray-600">${escapeHtml(item.noPeserta || '-')}</td>
+                    <td class="py-3 px-4 font-extrabold text-gray-900">${escapeHtml(item.nama || '-')}</td>
+                    <td class="py-3 px-4">
+                      <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        ${escapeHtml(item.cabangLomba || '-')}
+                      </span>
+                    </td>
+                    <td class="py-3 px-4 font-medium text-gray-700">${escapeHtml(item.kafilah || '-')}</td>
+                    <td class="py-3 px-4 text-center">${statusBadge}</td>
+                    <td class="py-3 px-4 text-xs text-gray-600">${escapeHtml(item.keterangan || '-')}</td>
+                  </tr>
+                `;
+              }).join('');
+
+            } else {
+              // ACTIVE_TAB === 'ringkasan'
+              if (printTitle) printTitle.textContent = 'RINGKASAN KEHADIRAN PESERTA MTQ';
+              thead.innerHTML = `
+                <tr class="bg-gray-50 border-b border-gray-200/80 text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                  <th class="py-3.5 px-4 w-12 text-center">No</th>
+                  <th class="py-3.5 px-4">No. Peserta / NIK</th>
+                  <th class="py-3.5 px-4">Nama Peserta</th>
+                  <th class="py-3.5 px-4">Cabang Lomba</th>
+                  <th class="py-3.5 px-4">Kafilah</th>
+                  <th class="py-3.5 px-4 text-center">Total Kegiatan</th>
+                  <th class="py-3.5 px-4 text-center">Hadir</th>
+                  <th class="py-3.5 px-4 text-center">Izin</th>
+                  <th class="py-3.5 px-4 text-center">Persentase</th>
+                </tr>
+              `;
+
+              const list = CURRENT_LAPORAN_DATA.rekapRingkasan || [];
+              if (list.length === 0) {
+                tbody.innerHTML = `
+                  <tr>
+                    <td colspan="9" class="py-12 text-center text-gray-400">
+                      <span class="material-symbols-outlined text-4xl block mb-2 text-gray-300">analytics</span>
+                      Belum ada data peserta untuk filter ini.
+                    </td>
+                  </tr>
+                `;
+                return;
+              }
+
+              tbody.innerHTML = list.map((item, idx) => `
+                <tr class="hover:bg-emerald-50/40 transition-colors">
+                  <td class="py-3.5 px-4 text-center font-semibold text-gray-500">${idx + 1}</td>
+                  <td class="py-3.5 px-4 font-bold text-emerald-800">${escapeHtml(item.noPeserta || '-')}</td>
+                  <td class="py-3.5 px-4 font-extrabold text-gray-900">${escapeHtml(item.nama || '-')}</td>
+                  <td class="py-3.5 px-4">
+                    <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">
+                      ${escapeHtml(item.cabangLomba || '-')}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 font-medium text-gray-700">${escapeHtml(item.kafilah || '-')}</td>
+                  <td class="py-3.5 px-4 text-center font-bold text-gray-700">${item.totalKegiatan || 0}</td>
+                  <td class="py-3.5 px-4 text-center font-extrabold text-emerald-700">${item.hadir || 0}</td>
+                  <td class="py-3.5 px-4 text-center font-bold text-amber-600">${item.izin || 0}</td>
+                  <td class="py-3.5 px-4 text-center font-extrabold text-gray-900">${item.persentase || 0}%</td>
+                </tr>
+              `).join('');
+            }
           }
 
           function eksporLaporanExcel() {
-            const table = document.getElementById('tabelLaporanExport');
-            if (!table || typeof XLSX === 'undefined') {
-              alert('Tabel atau library XLSX tidak tersedia.');
+            if (typeof XLSX === 'undefined') {
+              alert('Library XLSX tidak tersedia.');
               return;
             }
-            const wb = XLSX.utils.table_to_book(table, { sheet: "Rekap_MTQ" });
-            XLSX.writeFile(wb, `Laporan_Rekap_Kehadiran_MTQ_${new Date().toISOString().slice(0,10)}.xlsx`);
+            const dataHarian = CURRENT_LAPORAN_DATA.rekapHarian || [];
+            const dataRingkasan = CURRENT_LAPORAN_DATA.rekapRingkasan || [];
+
+            const startDate = document.getElementById('filterTanggalMulai')?.value || 'Awal';
+            const endDate = document.getElementById('filterTanggalSelesai')?.value || 'Akhir';
+            const periodeStr = `Periode: ${startDate} s.d. ${endDate}`;
+
+            // Sheet 1: Rekap_Harian_MTQ
+            const headerHarian = [
+              ['LAPORAN REKAPITULASI KEHADIRAN PESERTA MTQ PER KEGIATAN PER HARI'],
+              [periodeStr],
+              [],
+              ['No', 'Hari & Tanggal', 'Jam Scan', 'Nama Kegiatan MTQ', 'No. Peserta', 'Nama Peserta', 'Cabang Lomba', 'Kafilah', 'Status Kehadiran', 'Keterangan']
+            ];
+            const rowsHarian = dataHarian.map((row, idx) => [
+              idx + 1,
+              row.tanggal || '-',
+              row.jam || '-',
+              row.namaKegiatan || '-',
+              row.noPeserta || '-',
+              row.nama || '-',
+              row.cabangLomba || '-',
+              row.kafilah || '-',
+              row.status || '-',
+              row.keterangan || '-'
+            ]);
+            const wsHarian = XLSX.utils.aoa_to_sheet(headerHarian.concat(rowsHarian));
+            wsHarian['!cols'] = [
+              { wch: 6 }, { wch: 22 }, { wch: 14 }, { wch: 32 }, { wch: 18 }, { wch: 30 }, { wch: 26 }, { wch: 26 }, { wch: 18 }, { wch: 28 }
+            ];
+
+            // Sheet 2: Ringkasan_Peserta_MTQ
+            const headerRingkasan = [
+              ['RINGKASAN AKUMULASI KEHADIRAN PESERTA MTQ'],
+              [periodeStr],
+              [],
+              ['No', 'No. Peserta', 'Nama Peserta', 'Cabang Lomba', 'Kafilah', 'Total Kegiatan', 'Hadir', 'Izin', 'Persentase Kehadiran (%)']
+            ];
+            const rowsRingkasan = dataRingkasan.map((row, idx) => [
+              idx + 1,
+              row.noPeserta || '-',
+              row.nama || '-',
+              row.cabangLomba || '-',
+              row.kafilah || '-',
+              row.totalKegiatan || 0,
+              row.hadir || 0,
+              row.izin || 0,
+              (row.persentase || 0) + '%'
+            ]);
+            const wsRingkasan = XLSX.utils.aoa_to_sheet(headerRingkasan.concat(rowsRingkasan));
+            wsRingkasan['!cols'] = [
+              { wch: 6 }, { wch: 18 }, { wch: 30 }, { wch: 26 }, { wch: 26 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 24 }
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsHarian, "Rekap_Harian_MTQ");
+            XLSX.utils.book_append_sheet(wb, wsRingkasan, "Ringkasan_Peserta_MTQ");
+
+            const tglNow = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `Laporan_Rekap_Kehadiran_MTQ_${tglNow}.xlsx`);
           }
 
           function escapeHtml(text) {

@@ -394,41 +394,80 @@ const PAGES = {
                 <header class="mb-6 lg:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h2 class="text-2xl font-extrabold text-gray-900">Laporan & Rekapitulasi MTQ</h2>
-                        <p class="text-gray-500 text-sm">Unduh rekap kehadiran per cabang atau kegiatan.</p>
+                        <p class="text-gray-500 text-sm">Unduh rekap kehadiran per kegiatan per hari pada rentang tanggal.</p>
                     </div>
                     <div class="flex gap-2 w-full sm:w-auto">
                         <button onclick="downloadExcel()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md">
-                            <span class="material-symbols-outlined text-sm">description</span> Download Excel (.xlsx)
+                            <span class="material-symbols-outlined text-sm">download</span> Download Excel (.xlsx)
                         </button>
                     </div>
                 </header>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border mb-6 flex flex-col sm:flex-row gap-4">
-                    <div class="flex-1">
+
+                <!-- Filter Box -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Dari Tanggal</label>
+                        <input type="date" id="lapTglMulai" onchange="loadLaporanData()" class="w-full p-2.5 bg-gray-50 border rounded-xl font-semibold text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Sampai Tanggal</label>
+                        <input type="date" id="lapTglSelesai" onchange="loadLaporanData()" class="w-full p-2.5 bg-gray-50 border rounded-xl font-semibold text-sm">
+                    </div>
+                    <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Filter Kegiatan</label>
-                        <select id="lapKegiatan" onchange="loadLaporanData()" class="w-full p-3 bg-gray-50 border rounded-xl font-bold text-sm">
+                        <select id="lapKegiatan" onchange="loadLaporanData()" class="w-full p-2.5 bg-gray-50 border rounded-xl font-bold text-sm">
                             <option value="">Semua Kegiatan</option>
                         </select>
                     </div>
-                    <div class="flex-1">
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Filter Cabang Lomba</label>
-                        <input type="text" id="lapCabang" onkeyup="loadLaporanData()" placeholder="Semua Cabang Lomba..." class="w-full p-3 bg-gray-50 border rounded-xl font-medium text-sm">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Cabang Lomba</label>
+                        <input type="text" id="lapCabang" onkeyup="loadLaporanData()" placeholder="Cari Cabang Lomba..." class="w-full p-2.5 bg-gray-50 border rounded-xl font-medium text-sm">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="resetLaporanFilter()" class="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-sm transition-all">
+                            Reset Filter
+                        </button>
                     </div>
                 </div>
+
+                <!-- Summary Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white p-4 rounded-xl border shadow-sm">
+                        <span class="text-xs text-gray-400 font-bold uppercase">Total Kegiatan</span>
+                        <h4 id="lapStatKegiatan" class="text-2xl font-extrabold text-gray-900 mt-1">0</h4>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border shadow-sm">
+                        <span class="text-xs text-gray-400 font-bold uppercase">Total Peserta MTQ</span>
+                        <h4 id="lapStatPeserta" class="text-2xl font-extrabold text-emerald-700 mt-1">0</h4>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border shadow-sm">
+                        <span class="text-xs text-gray-400 font-bold uppercase">Peserta Aktif Hadir</span>
+                        <h4 id="lapStatHadir" class="text-2xl font-extrabold text-amber-600 mt-1">0</h4>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border shadow-sm">
+                        <span class="text-xs text-gray-400 font-bold uppercase">Rata-rata Kehadiran</span>
+                        <h4 id="lapStatPersen" class="text-2xl font-extrabold text-blue-700 mt-1">0%</h4>
+                    </div>
+                </div>
+
+                <!-- Tab Header -->
+                <div class="flex items-center gap-2 border-b border-gray-200 pb-3 mb-4">
+                    <button id="tabBtnHarian" onclick="switchVercelLaporanTab('harian')" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white shadow-md transition-all">
+                        Rekap Harian per Kegiatan
+                    </button>
+                    <button id="tabBtnRingkasan" onclick="switchVercelLaporanTab('ringkasan')" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
+                        Ringkasan per Peserta
+                    </button>
+                </div>
+
+                <!-- Table Container -->
                 <div class="bg-white rounded-2xl shadow-sm border overflow-x-auto">
                     <table id="tableLaporanExport" class="w-full text-left text-sm min-w-[700px]">
-                        <thead class="bg-gray-50 text-gray-400 font-bold uppercase text-[10px] tracking-wider">
-                            <tr>
-                                <th class="p-4">No. Peserta</th>
-                                <th class="p-4">Nama Peserta</th>
-                                <th class="p-4">Cabang Lomba</th>
-                                <th class="p-4">Kafilah</th>
-                                <th class="p-4">Kegiatan</th>
-                                <th class="p-4 text-center">Masuk</th>
-                                <th class="p-4 text-center">Selesai</th>
-                            </tr>
+                        <thead id="laporanTableHead" class="bg-gray-50 text-gray-400 font-bold uppercase text-[10px] tracking-wider">
+                            <!-- JS will populate head -->
                         </thead>
                         <tbody id="laporanTableBody" class="divide-y divide-gray-50">
-                            <tr><td colspan="7" class="p-12 text-center text-gray-400 italic">Memuat rekap laporan...</td></tr>
+                            <tr><td colspan="10" class="p-12 text-center text-gray-400 italic">Memuat rekap laporan...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -759,10 +798,8 @@ function printIdCards() {
     const printArea = document.getElementById('printArea');
     if (!printArea || !Array.isArray(allPesertaData)) return;
     
-    let html = `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 20px; font-family: 'Inter', sans-serif;">`;
+    let html = `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 20px; font-family: 'Inter', sans-serif; background: white;">`;
     allPesertaData.forEach((row, idx) => {
-        const qrEl = document.getElementById('qrcode-' + idx);
-        const qrImg = qrEl ? qrEl.innerHTML : '';
         const cabang = row.cabangLomba || row.gelar || row[3] || '-';
         const nama = row.nama || row[2] || '-';
         const kafilah = row.kafilah || row.sekolah || row[4] || '-';
@@ -770,12 +807,15 @@ function printIdCards() {
         html += `
             <div style="border: 2px solid #059669; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; background: white; page-break-inside: avoid;">
                 <div>
-                    <div style="font-size: 10px; font-weight: bold; color: #059669; text-transform: uppercase;">KAFILAH MTQ</div>
+                    <div style="font-size: 10px; font-weight: bold; color: #059669; text-transform: uppercase;">KARTU PESERTA MTQ</div>
                     <div style="font-size: 16px; font-weight: 800; color: #111827; margin-top: 4px;">${nama}</div>
-                    <div style="font-size: 12px; color: #4B5563; font-weight: 600;">${cabang} | ${kafilah}</div>
-                    <div style="font-size: 11px; color: #6B7280; margin-top: 6px;">No. Peserta: <strong>${noPeserta}</strong></div>
+                    <div style="font-size: 12px; color: #047857; font-weight: 700; margin-top: 2px;">${cabang}</div>
+                    <div style="font-size: 12px; color: #4B5563; font-weight: 600;">Kafilah: ${kafilah}</div>
+                    <div style="font-size: 11px; color: #6B7280; margin-top: 6px;">No. Peserta: <strong style="color: #047857; font-family: monospace; font-size: 13px;">${noPeserta}</strong></div>
                 </div>
-                <div>${qrImg}</div>
+                <div style="padding: 6px; border: 1px solid #E5E7EB; border-radius: 12px; background: white;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(noPeserta)}&color=047857" alt="QR ${noPeserta}" style="width: 85px; height: 85px; object-fit: contain; display: block;" />
+                </div>
             </div>
         `;
     });
@@ -879,9 +919,12 @@ function loadDaftarHadirData() {
         .getDaftarHadir(tgl, kegId);
 }
 
+// // ============================================
+// LAPORAN & EKSPOR MTQ
 // ============================================
-// LAPORAN & EKSPOR
-// ============================================
+let VERCEL_LAPORAN_DATA = { rekapHarian: [], rekapRingkasan: [] };
+let VERCEL_ACTIVE_TAB = 'harian';
+
 function initLaporan() {
     google.script.run
         .withSuccessHandler(list => {
@@ -895,50 +938,216 @@ function initLaporan() {
         .getListKegiatan();
 }
 
+function resetLaporanFilter() {
+    if (document.getElementById('lapTglMulai')) document.getElementById('lapTglMulai').value = '';
+    if (document.getElementById('lapTglSelesai')) document.getElementById('lapTglSelesai').value = '';
+    if (document.getElementById('lapKegiatan')) document.getElementById('lapKegiatan').value = '';
+    if (document.getElementById('lapCabang')) document.getElementById('lapCabang').value = '';
+    loadLaporanData();
+}
+
+function switchVercelLaporanTab(tab) {
+    VERCEL_ACTIVE_TAB = tab;
+    const btnHarian = document.getElementById('tabBtnHarian');
+    const btnRingkasan = document.getElementById('tabBtnRingkasan');
+    if (tab === 'harian') {
+        if (btnHarian) btnHarian.className = 'px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white shadow-md transition-all';
+        if (btnRingkasan) btnRingkasan.className = 'px-5 py-2.5 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all';
+    } else {
+        if (btnRingkasan) btnRingkasan.className = 'px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white shadow-md transition-all';
+        if (btnHarian) btnHarian.className = 'px-5 py-2.5 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all';
+    }
+    renderVercelActiveTabTable();
+}
+
 function loadLaporanData() {
+    const startDate = document.getElementById('lapTglMulai') ? document.getElementById('lapTglMulai').value : '';
+    const endDate = document.getElementById('lapTglSelesai') ? document.getElementById('lapTglSelesai').value : '';
     const kegId = document.getElementById('lapKegiatan') ? document.getElementById('lapKegiatan').value : '';
     const cabang = document.getElementById('lapCabang') ? document.getElementById('lapCabang').value.trim() : '';
     
+    const tbody = document.getElementById('laporanTableBody');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="10" class="p-12 text-center text-gray-400 italic">Memuat rekapitulasi kehadiran MTQ...</td></tr>';
+    }
+
     google.script.run
         .withSuccessHandler(data => {
-            const tbody = document.getElementById('laporanTableBody');
-            if (!tbody) return;
-            const rows = Array.isArray(data) ? data : (data && (data.perPeserta || data.perGuru || []));
-            if (!Array.isArray(rows) || rows.length === 0) {
-                if (data && data.error) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center bg-red-50 text-red-600 font-semibold">Gagal memuat rekapitulasi: ${data.error}<br><span class="text-xs text-gray-500 font-normal mt-1 block">Pastikan Apps Script di-deploy dengan opsi "Who has access: Anyone".</span></td></tr>`;
-                    return;
-                }
-                tbody.innerHTML = '<tr><td colspan="7" class="p-12 text-center text-gray-400 italic">Belum ada data rekapitulasi.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = rows.map(row => {
-                const noPeserta = row.noPeserta || row.nip || row[1] || '-';
-                const nama = row.nama || row[2] || row[4] || '-';
-                const cabangVal = row.cabangLomba || row.gelar || row[3] || row[5] || '-';
-                const kafilah = row.kafilah || row.sekolah || row[4] || row[6] || '-';
-                const hadir = row.hadir !== undefined ? row.hadir : (row[8] || 0);
-                const izin = row.izin !== undefined ? row.izin : (row[10] || 0);
-                const persentase = row.persentase !== undefined ? row.persentase + '%' : '';
-                return `
-                    <tr class="hover:bg-gray-50 transition-all">
-                        <td class="p-4 font-mono text-xs text-gray-500">${noPeserta}</td>
-                        <td class="p-4 font-bold text-gray-900">${nama}</td>
-                        <td class="p-4 font-semibold text-emerald-700">${cabangVal}</td>
-                        <td class="p-4 text-gray-600">${kafilah}</td>
-                        <td class="p-4 text-xs font-medium">${persentase}</td>
-                        <td class="p-4 text-center font-mono text-xs font-bold text-emerald-600">${hadir}</td>
-                        <td class="p-4 text-center font-mono text-xs font-bold text-amber-600">${izin}</td>
-                    </tr>
-                `;
-            }).join('');
+            if (!data) return;
+            VERCEL_LAPORAN_DATA = data;
+
+            if (document.getElementById('lapStatKegiatan')) document.getElementById('lapStatKegiatan').textContent = data.totalKegiatan || 0;
+            if (document.getElementById('lapStatPeserta')) document.getElementById('lapStatPeserta').textContent = data.totalPeserta || 0;
+            if (document.getElementById('lapStatHadir')) document.getElementById('lapStatHadir').textContent = data.totalPesertaHadir || 0;
+            if (document.getElementById('lapStatPersen')) document.getElementById('lapStatPersen').textContent = (data.rataKehadiran || 0) + '%';
+
+            renderVercelActiveTabTable();
         })
-        .getLaporan(kegId, cabang);
+        .withFailureHandler(err => {
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center bg-red-50 text-red-600 font-semibold">Gagal memuat rekapitulasi: ${err.message || err}</td></tr>`;
+            }
+        })
+        .getLaporanMTQ(startDate, endDate, kegId, cabang);
+}
+
+function renderVercelActiveTabTable() {
+    const thead = document.getElementById('laporanTableHead');
+    const tbody = document.getElementById('laporanTableBody');
+    if (!thead || !tbody) return;
+
+    if (VERCEL_ACTIVE_TAB === 'harian') {
+        thead.innerHTML = `
+            <tr>
+                <th class="p-4 w-12 text-center">No</th>
+                <th class="p-4">Hari & Tanggal</th>
+                <th class="p-4">Jam</th>
+                <th class="p-4">Nama Kegiatan MTQ</th>
+                <th class="p-4">No. Peserta</th>
+                <th class="p-4">Nama Peserta</th>
+                <th class="p-4">Cabang Lomba</th>
+                <th class="p-4">Kafilah</th>
+                <th class="p-4 text-center">Status</th>
+                <th class="p-4">Keterangan</th>
+            </tr>
+        `;
+
+        const list = VERCEL_LAPORAN_DATA.rekapHarian || [];
+        if (list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" class="p-12 text-center text-gray-400 italic">Belum ada data absensi pada rentang tanggal atau kegiatan yang dipilih.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = list.map((item, idx) => {
+            let statusBadge = `<span class="px-2.5 py-1 text-xs font-extrabold rounded-full bg-emerald-100 text-emerald-800">${item.status || 'HADIR'}</span>`;
+            if (item.status === 'IZIN') statusBadge = `<span class="px-2.5 py-1 text-xs font-extrabold rounded-full bg-amber-100 text-amber-800">IZIN</span>`;
+            if (item.status === 'SAKIT') statusBadge = `<span class="px-2.5 py-1 text-xs font-extrabold rounded-full bg-blue-100 text-blue-800">SAKIT</span>`;
+
+            return `
+                <tr class="hover:bg-emerald-50/40 transition-colors">
+                    <td class="p-4 text-center font-semibold text-gray-500">${idx + 1}</td>
+                    <td class="p-4 font-bold text-gray-900 whitespace-nowrap">${item.tanggal || '-'}</td>
+                    <td class="p-4 font-mono text-xs font-bold text-emerald-700">${item.jam || '-'}</td>
+                    <td class="p-4 font-bold text-emerald-900">${item.namaKegiatan || '-'}</td>
+                    <td class="p-4 font-mono text-xs font-bold text-gray-600">${item.noPeserta || '-'}</td>
+                    <td class="p-4 font-extrabold text-gray-900">${item.nama || '-'}</td>
+                    <td class="p-4">
+                        <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            ${item.cabangLomba || '-'}
+                        </span>
+                    </td>
+                    <td class="p-4 text-gray-700">${item.kafilah || '-'}</td>
+                    <td class="p-4 text-center">${statusBadge}</td>
+                    <td class="p-4 text-xs text-gray-600">${item.keterangan || '-'}</td>
+                </tr>
+            `;
+        }).join('');
+
+    } else {
+        // VERCEL_ACTIVE_TAB === 'ringkasan'
+        thead.innerHTML = `
+            <tr>
+                <th class="p-4 w-12 text-center">No</th>
+                <th class="p-4">No. Peserta</th>
+                <th class="p-4">Nama Peserta</th>
+                <th class="p-4">Cabang Lomba</th>
+                <th class="p-4">Kafilah</th>
+                <th class="p-4 text-center">Total Kegiatan</th>
+                <th class="p-4 text-center">Hadir</th>
+                <th class="p-4 text-center">Izin</th>
+                <th class="p-4 text-center">Persentase</th>
+            </tr>
+        `;
+
+        const list = VERCEL_LAPORAN_DATA.rekapRingkasan || [];
+        if (list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="p-12 text-center text-gray-400 italic">Belum ada data peserta untuk filter ini.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = list.map((item, idx) => `
+            <tr class="hover:bg-emerald-50/40 transition-colors">
+                <td class="p-4 text-center font-semibold text-gray-500">${idx + 1}</td>
+                <td class="p-4 font-mono text-xs font-bold text-emerald-800">${item.noPeserta || '-'}</td>
+                <td class="p-4 font-extrabold text-gray-900">${item.nama || '-'}</td>
+                <td class="p-4">
+                    <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">
+                        ${item.cabangLomba || '-'}
+                    </span>
+                </td>
+                <td class="p-4 font-medium text-gray-700">${item.kafilah || '-'}</td>
+                <td class="p-4 text-center font-bold text-gray-700">${item.totalKegiatan || 0}</td>
+                <td class="p-4 text-center font-extrabold text-emerald-700">${item.hadir || 0}</td>
+                <td class="p-4 text-center font-bold text-amber-600">${item.izin || 0}</td>
+                <td class="p-4 text-center font-extrabold text-gray-900">${item.persentase || 0}%</td>
+            </tr>
+        `).join('');
+    }
 }
 
 function downloadExcel() {
-    const table = document.getElementById('tableLaporanExport');
-    if (!table) return;
-    const wb = XLSX.utils.table_to_book(table, { sheet: "Rekap MTQ" });
-    XLSX.writeFile(wb, "Rekapitulasi_Kehadiran_MTQ.xlsx");
+    if (typeof XLSX === 'undefined') {
+        alert('Library XLSX tidak tersedia.');
+        return;
+    }
+    const dataHarian = VERCEL_LAPORAN_DATA.rekapHarian || [];
+    const dataRingkasan = VERCEL_LAPORAN_DATA.rekapRingkasan || [];
+
+    const startDate = document.getElementById('lapTglMulai')?.value || 'Awal';
+    const endDate = document.getElementById('lapTglSelesai')?.value || 'Akhir';
+    const periodeStr = `Periode: ${startDate} s.d. ${endDate}`;
+
+    // Sheet 1: Rekap_Harian_MTQ
+    const headerHarian = [
+        ['LAPORAN REKAPITULASI KEHADIRAN PESERTA MTQ PER KEGIATAN PER HARI'],
+        [periodeStr],
+        [],
+        ['No', 'Hari & Tanggal', 'Jam Scan', 'Nama Kegiatan MTQ', 'No. Peserta', 'Nama Peserta', 'Cabang Lomba', 'Kafilah', 'Status Kehadiran', 'Keterangan']
+    ];
+    const rowsHarian = dataHarian.map((row, idx) => [
+        idx + 1,
+        row.tanggal || '-',
+        row.jam || '-',
+        row.namaKegiatan || '-',
+        row.noPeserta || '-',
+        row.nama || '-',
+        row.cabangLomba || '-',
+        row.kafilah || '-',
+        row.status || '-',
+        row.keterangan || '-'
+    ]);
+    const wsHarian = XLSX.utils.aoa_to_sheet(headerHarian.concat(rowsHarian));
+    wsHarian['!cols'] = [
+        { wch: 6 }, { wch: 22 }, { wch: 14 }, { wch: 32 }, { wch: 18 }, { wch: 30 }, { wch: 26 }, { wch: 26 }, { wch: 18 }, { wch: 28 }
+    ];
+
+    // Sheet 2: Ringkasan_Peserta_MTQ
+    const headerRingkasan = [
+        ['RINGKASAN AKUMULASI KEHADIRAN PESERTA MTQ'],
+        [periodeStr],
+        [],
+        ['No', 'No. Peserta', 'Nama Peserta', 'Cabang Lomba', 'Kafilah', 'Total Kegiatan', 'Hadir', 'Izin', 'Persentase Kehadiran (%)']
+    ];
+    const rowsRingkasan = dataRingkasan.map((row, idx) => [
+        idx + 1,
+        row.noPeserta || '-',
+        row.nama || '-',
+        row.cabangLomba || '-',
+        row.kafilah || '-',
+        row.totalKegiatan || 0,
+        row.hadir || 0,
+        row.izin || 0,
+        (row.persentase || 0) + '%'
+    ]);
+    const wsRingkasan = XLSX.utils.aoa_to_sheet(headerRingkasan.concat(rowsRingkasan));
+    wsRingkasan['!cols'] = [
+        { wch: 6 }, { wch: 18 }, { wch: 30 }, { wch: 26 }, { wch: 26 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 24 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsHarian, "Rekap_Harian_MTQ");
+    XLSX.utils.book_append_sheet(wb, wsRingkasan, "Ringkasan_Peserta_MTQ");
+
+    const tglNow = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Laporan_Rekap_Kehadiran_MTQ_${tglNow}.xlsx`);
 }
