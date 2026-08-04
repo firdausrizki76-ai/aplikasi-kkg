@@ -79,7 +79,7 @@ const PAGES = {
                     </div>
                     <div class="space-y-1">
                         <label class="text-[11px] font-bold text-gray-500 uppercase tracking-widest ml-1">Password</label>
-                        <input type="password" id="loginPass" required placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:border-emerald-600 outline-none transition-all text-sm font-medium">
+                        <input type="password" id="loginPass" required placeholder="********" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:border-emerald-600 outline-none transition-all text-sm font-medium">
                     </div>
                     <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-bold shadow-lg transition-all mt-4 active:scale-95">MASUK PORTAL</button>
                 </form>
@@ -101,19 +101,27 @@ const PAGES = {
                 </header>
                 <div id="dashboardStats" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-xl">ðŸ‘¥</div>
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined text-2xl">groups</span>
+                        </div>
                         <div><p class="text-xs text-gray-400 font-bold uppercase">Total Peserta</p><h3 id="statTotalPeserta" class="text-2xl font-black text-gray-900">...</h3></div>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold text-xl">âœ…</div>
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined text-2xl">check_circle</span>
+                        </div>
                         <div><p class="text-xs text-gray-400 font-bold uppercase">Hadir Hari Ini</p><h3 id="statHadirHariIni" class="text-2xl font-black text-gray-900">...</h3></div>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center font-bold text-xl">ðŸŸ¡</div>
+                        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined text-2xl">pause_circle</span>
+                        </div>
                         <div><p class="text-xs text-gray-400 font-bold uppercase">Izin Hari Ini</p><h3 id="statIzinHariIni" class="text-2xl font-black text-gray-900">...</h3></div>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center font-bold text-xl">ðŸ•Œ</div>
+                        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined text-2xl">event_available</span>
+                        </div>
                         <div><p class="text-xs text-gray-400 font-bold uppercase">Kegiatan Aktif</p><h3 id="statKegiatanAktif" class="text-sm font-bold text-gray-900 truncate">...</h3></div>
                     </div>
                 </div>
@@ -322,11 +330,11 @@ const PAGES = {
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">3. Status Kehadiran Peserta:</label>
                             <div class="flex gap-2 items-center">
-                                <button id="statusHadir" onclick="setStatusAbsen('HADIR')" class="px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 text-white shadow-sm">
-                                    ðŸŸ¢ HADIR (Normal)
+                                <button id="statusHadir" onclick="setStatusAbsen('HADIR')" class="px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 text-white shadow-sm inline-flex items-center gap-1.5">
+                                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-300"></span> HADIR (Normal)
                                 </button>
-                                <button id="statusIzin" onclick="setStatusAbsen('IZIN')" class="px-5 py-2.5 rounded-xl font-bold text-xs bg-white text-gray-500 border border-gray-200">
-                                    ðŸŸ¡ IZIN (Sakit/Udhur)
+                                <button id="statusIzin" onclick="setStatusAbsen('IZIN')" class="px-5 py-2.5 rounded-xl font-bold text-xs bg-white text-gray-500 border border-gray-200 inline-flex items-center gap-1.5">
+                                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400"></span> IZIN (Sakit/Udhur)
                                 </button>
                                 <div id="ketIzinWrapper" class="flex-1 hidden">
                                     <input type="text" id="ketIzin" placeholder="Keterangan Izin..." class="w-full p-2 text-xs bg-gray-50 border rounded-lg">
@@ -560,8 +568,14 @@ function initKegiatan() {
                                 <button onclick="hapusKegiatan('${id}')" class="text-red-400 hover:text-red-600 text-xs font-bold">Hapus</button>
                             </div>
                             <h3 class="text-lg font-bold text-gray-900 mt-2">${nama}</h3>
-                            <p class="text-xs text-gray-600 mt-1.5 font-medium">ðŸ“… ${tanggal} &nbsp;|&nbsp; â° <strong>${jam}</strong></p>
-                            <p class="text-xs text-gray-500 mt-1">ðŸ“ ${lokasi}</p>
+                            <p class="text-xs text-gray-600 mt-1.5 font-medium flex items-center gap-2">
+                                <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm text-gray-400">calendar_today</span> ${tanggal}</span>
+                                <span>|</span>
+                                <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-sm text-gray-400">schedule</span> <strong>${jam}</strong></span>
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm text-gray-400">location_on</span> ${lokasi}
+                            </p>
                             <p class="text-xs text-gray-400 mt-2 italic">${ket}</p>
                         </div>
                         <div class="mt-6 pt-4 border-t">
@@ -570,7 +584,9 @@ function initKegiatan() {
                                     Aktifkan Kegiatan Ini
                                 </button>
                             ` : `
-                                <p class="text-center text-xs text-emerald-700 font-bold">âœ” Sedang Berlangsung</p>
+                                <p class="text-center text-xs text-emerald-700 font-bold inline-flex items-center justify-center w-full gap-1">
+                                    <span class="material-symbols-outlined text-sm">check_circle</span>Sedang Berlangsung
+                                </p>
                             `}
                         </div>
                     </div>
@@ -867,7 +883,7 @@ function initScannerPage() {
                 const status = item.status || item[6] || item[5] || '';
                 return `
                     <option value="${id}" ${status === 'AKTIF' ? 'selected' : ''}>
-                        ${nama} | â° ${jam} (${tgl}) ${status === 'AKTIF' ? 'ðŸŸ¢ AKTIF' : ''}
+                        ${nama} | Jam ${jam} (${tgl}) ${status === 'AKTIF' ? '[ AKTIF ]' : ''}
                     </option>
                 `;
             }).join('');
