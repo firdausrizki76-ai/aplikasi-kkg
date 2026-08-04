@@ -177,9 +177,61 @@
 
         function onScanFailure(error) {}
 
+        // Sound Feedback: Suara "TITTT" Khas Scanner Barcode Indomaret / Kasir Supermarket
+        function playBeep(isSuccess = true) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+                const now = ctx.currentTime;
+
+                if (isSuccess) {
+                    // Suara "TITTT!" (2750 Hz Triangle Wave - khas scanner kasir Indomaret)
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(2750, now);
+
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.4, now + 0.008);
+                    gain.gain.setValueAtTime(0.4, now + 0.075);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.095);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.095);
+                } else {
+                    // Suara Error / Gagal (220 Hz Sawtooth)
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.25, now + 0.01);
+                    gain.gain.setValueAtTime(0.25, now + 0.30);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                }
+            } catch (e) {
+                console.warn('Web Audio API error:', e);
+            }
+        }
+
         function onScanSuccess(decodedText, decodedResult) {
             if (isProcessing) return;
             isProcessing = true;
+            playBeep(true); // Suara TITTT instan saat barcode terbaca
             processBarcode(decodedText);
             setTimeout(() => { isProcessing = false; }, 2000);
         }
@@ -187,6 +239,7 @@
         function processManual() {
             const input = document.getElementById('manualInput');
             if (!input || !input.value.trim()) return;
+            playBeep(true); // Suara TITTT instan saat submit manual
             processBarcode(input.value.trim());
             input.value = '';
         }
@@ -200,10 +253,12 @@
                     if (res && res.success) {
                         showStatus(true, res.message, res.nama ? `${res.nama} (${res.cabang || res.kafilah || ''})` : '');
                     } else {
+                        playBeep(false);
                         showStatus(false, 'Gagal Presensi', res ? res.message : 'Peserta tidak ditemukan atau kegiatan belum dipilih.');
                     }
                 })
                 .withFailureHandler(err => {
+                    playBeep(false);
                     showStatus(false, 'Kesalahan Jaringan', 'Periksa koneksi server Anda.');
                 })
                 .prosesScan({

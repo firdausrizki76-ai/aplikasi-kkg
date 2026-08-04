@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // APLIKASI PERTEMUAN PESERTA MTQ - GOOGLE APPS SCRIPT
 // ============================================
 
@@ -365,7 +365,7 @@ function simpanPeserta(params) {
       }
     }
 
-    const newId = 'MTQ-' + Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyMMddssSSS');
+    const newId = 'MTQ-' + Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyMMddssSSS');
     const noPeserta = params.noPeserta || params.nip || newId;
     const rawQr = params.rawQr || noPeserta;
     const now = new Date();
@@ -439,7 +439,7 @@ function importPesertaExcel(dataArray) {
     dataArray.forEach((item, idx) => {
       const noPeserta = String(item.noPeserta || item.nip || ('MTQ-' + (idx + 100))).trim();
       if (!existingNos.has(noPeserta.toLowerCase())) {
-        const newId = 'MTQ-' + Utilities.formatDate(now, ss.getSpreadsheetTimeZone(), 'yyMMdd') + '-' + (idx + 101);
+        const newId = 'MTQ-' + Utilities.formatDate(now, 'Asia/Jakarta', 'yyMMdd') + '-' + (idx + 101);
         rowsToAppend.push([
           newId,
           noPeserta,
@@ -587,7 +587,7 @@ function getKegiatanById(id) {
         return {
           id: String(data[i][0]),
           nama: String(data[i][1]),
-          tanggal: data[i][2] ? (data[i][2] instanceof Date ? Utilities.formatDate(data[i][2], ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : String(data[i][2])) : Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd'),
+          tanggal: data[i][2] ? (data[i][2] instanceof Date ? Utilities.formatDate(data[i][2], 'Asia/Jakarta', 'yyyy-MM-dd') : String(data[i][2])) : Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd'),
           jam: idxJam !== -1 ? String(data[i][idxJam] || '08:00 - 12:00 WIB') : '08:00 - 12:00 WIB',
           lokasi: String(data[i][idxLok] || '-'),
           keterangan: String(data[i][idxKet] || '-'),
@@ -610,7 +610,7 @@ function getKegiatanAktif() {
     const data = sheet.getDataRange().getValues();
     if (data.length < 2) return { error: "Belum ada Kegiatan MTQ yang dibuat. Silakan buat di menu Kegiatan." };
     
-    const todayStr = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+    const todayStr = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd');
     let result = null;
     let fallback = null;
     
@@ -629,7 +629,7 @@ function getKegiatanAktif() {
       let tglStr = '';
       if (data[i][2]) {
         try {
-          tglStr = (data[i][2] instanceof Date) ? Utilities.formatDate(data[i][2], ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : String(data[i][2]).split('T')[0];
+          tglStr = (data[i][2] instanceof Date) ? Utilities.formatDate(data[i][2], 'Asia/Jakarta', 'yyyy-MM-dd') : String(data[i][2]).split('T')[0];
         } catch(e) {}
       }
 
@@ -679,7 +679,7 @@ function getListKegiatan() {
 
     const data = sheet.getDataRange().getValues();
     const result = [];
-    const tz = ss.getSpreadsheetTimeZone();
+    const tz = 'Asia/Jakarta';
 
     const hasJam = String(data[0][3] || '').toUpperCase() === 'JAM' || String(data[0][3] || '').toUpperCase() === 'WAKTU';
     const idxJam = hasJam ? 3 : -1;
@@ -754,7 +754,7 @@ function simpanKegiatan(params) {
       }
     }
 
-    const newId = 'KEG-' + Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyMMddssSSS');
+    const newId = 'KEG-' + Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyMMddssSSS');
     sheet.appendRow([
       newId,
       params.nama,
@@ -844,7 +844,7 @@ function prosesScan(rawBarcode, kegiatanId, tipe, statusKehadiran, keterangan) {
     }
     
     const ss = getSS();
-    const tz = ss.getSpreadsheetTimeZone();
+    const tz = 'Asia/Jakarta';
     let sheet = getSheetAbsensi(ss);
     if (sheet.getLastRow() === 0) {
       sheet.getRange(1, 1, 1, 10).setValues([['ID', 'EVENT_ID', 'GURU_ID', 'NIP', 'NAMA', 'SEKOLAH', 'TANGGAL', 'JAM_HADIR', 'STATUS', 'JAM_PULANG']]);
@@ -1043,7 +1043,7 @@ function getDaftarHadirByKegiatan(kegiatanId) {
     if (!sheet) return [];
 
     const data = sheet.getDataRange().getValues();
-    const tz = ss.getSpreadsheetTimeZone();
+    const tz = 'Asia/Jakarta';
     const result = [];
     
     for (let i = 1; i < data.length; i++) {
@@ -1114,7 +1114,7 @@ function getDaftarHadirByTanggal(tanggal, kegiatanId) {
     if (!sheet) return [];
 
     const data = sheet.getDataRange().getValues();
-    const tz = ss.getSpreadsheetTimeZone();
+    const tz = 'Asia/Jakarta';
     const targetDateStr = tanggal ? String(tanggal).split('T')[0] : '';
     const result = [];
 
@@ -1236,7 +1236,7 @@ function getLaporanMTQ(startDate, endDate, kegiatanId, cabangLomba) {
     }
 
     const ss = getSS();
-    const tz = ss.getSpreadsheetTimeZone();
+    const tz = 'Asia/Jakarta';
     let sheetAbsensi = getSheetAbsensi(ss);
     let sheetPeserta = getSheetPeserta(ss);
     let sheetKegiatan = getSheetKegiatan(ss);
@@ -1450,7 +1450,7 @@ function getDashboardStats() {
     const dataPeserta = sheetPeserta ? sheetPeserta.getDataRange().getValues() : [];
     const dataKegiatan = sheetKegiatan ? sheetKegiatan.getDataRange().getValues() : [];
     
-    const tz = ss.getSpreadsheetTimeZone();
+    const tz = 'Asia/Jakarta';
     const today = new Date();
     const todayStr = Utilities.formatDate(today, tz, 'yyyy-MM-dd');
     

@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // APLIKASI ABSENSI KKG - GOOGLE APPS SCRIPT
 // ============================================
 
@@ -390,7 +390,7 @@ function getEventAktif() {
     if (data.length < 2) return { error: "Sheet EVENT kosong. Tidak ada data baris ke-2." };
     
     const today = new Date();
-    const todayStr = Utilities.formatDate(today, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    const todayStr = Utilities.formatDate(today, 'Asia/Jakarta', 'yyyy-MM-dd');
     
     let result = null;
     let fallback = null;
@@ -431,7 +431,7 @@ function getEventAktif() {
         if (data[i][2]) {
           try {
             const d = new Date(data[i][2]);
-            if (Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd') === todayStr) {
+            if (Utilities.formatDate(d, 'Asia/Jakarta', 'yyyy-MM-dd') === todayStr) {
               result = eventInfo;
               break; // Ketemu! AKTIF + Hari ini
             }
@@ -543,7 +543,7 @@ function catatAbsensi(guruId, eventId, parsedData) {
     
     const newId = 'ABS-' + String(lastRow).padStart(4, '0');
     const now = new Date();
-    const jamHadir = Utilities.formatDate(now, Session.getScriptTimeZone(), 'HH:mm:ss');
+    const jamHadir = Utilities.formatDate(now, 'Asia/Jakarta', 'HH:mm:ss');
     
     sheet.appendRow([
       newId,

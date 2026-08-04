@@ -203,27 +203,56 @@
         let activeCamIdx = 0;
         let isProcessingScan = false;
 
-        // Sound Feedback via Web Audio API
-        function playBeep(isSuccess) {
+        // Sound Feedback: Suara "TITTT" Khas Scanner Barcode Indomaret / Kasir Supermarket
+        function playBeep(isSuccess = true) {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+                const now = ctx.currentTime;
 
                 if (isSuccess) {
-                    osc.frequency.value = 880; // A5
-                    gain.gain.value = 0.1;
-                    osc.start();
-                    setTimeout(() => { osc.stop(); }, 120);
+                    // Suara "TITTT!" (Khas Scanner Barcode Indomaret - 2750 Hz Triangle Wave dengan envelope tajam & crisp)
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.type = 'triangle'; // Timbre piezo yang tajam dan jernih khas scanner kasir
+                    osc.frequency.setValueAtTime(2750, now); // Frekuensi standar scanner barcode Indomaret
+
+                    // Envelope attack & release cepat dan bersih (durasi ~95ms)
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.4, now + 0.008); // Attack cepat 8ms
+                    gain.gain.setValueAtTime(0.4, now + 0.075);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.095); // Fade out bersih
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.095);
                 } else {
-                    osc.frequency.value = 220; // A3 (buzz)
-                    gain.gain.value = 0.2;
-                    osc.start();
-                    setTimeout(() => { osc.stop(); }, 350);
+                    // Suara Error / Gagal (Buzzer nada rendah)
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.25, now + 0.01);
+                    gain.gain.setValueAtTime(0.25, now + 0.30);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.35);
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.warn('Web Audio API error:', e);
+            }
         }
 
         function initScannerPage() {
@@ -371,6 +400,7 @@
         function onScanSuccess(decodedText, decodedResult) {
             if (isProcessingScan) return;
             isProcessingScan = true;
+            playBeep(true); // Suara TITTT instan saat kamera berhasil membaca QR (khas scanner Indomaret)
 
             const card = document.getElementById('scanResultCard');
             const iconBox = document.getElementById('resultIconBox');
@@ -387,7 +417,6 @@
                 .withSuccessHandler(res => {
                     isProcessingScan = false;
                     if (res && res.success) {
-                        playBeep(true);
                         const p = res.peserta || {};
                         card.className = "p-6 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-center transition-all";
                         iconBox.className = "inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-600 text-white mb-3";
