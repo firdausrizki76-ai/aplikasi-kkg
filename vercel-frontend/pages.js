@@ -532,7 +532,13 @@ function initKegiatan() {
             if (!container) return;
             if (!Array.isArray(list) || list.length === 0) {
                 if (list && list.error) {
-                    container.innerHTML = `<div class="col-span-full p-8 text-center bg-red-50 rounded-2xl border border-red-200 text-red-600 font-semibold">Gagal memuat kegiatan: ${list.error}<br><span class="text-xs text-gray-500 font-normal mt-1 block">Pastikan Apps Script di-deploy sebagai Web App dengan pengaturan "Who has access: Anyone".</span></div>`;
+                    container.innerHTML = `<div class="col-span-full p-8 text-center bg-red-50 rounded-2xl border border-red-200 text-red-600 font-semibold">
+                        <div class="mb-1">Gagal memuat kegiatan: ${list.error}</div>
+                        <span class="text-xs text-gray-500 font-normal block mb-4">Pastikan Apps Script di-deploy sebagai Web App dengan pengaturan "Who has access: Anyone".</span>
+                        <button onclick="initKegiatan()" class="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg shadow hover:bg-red-700 active:scale-95 transition-all inline-flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-sm">refresh</span> Coba Lagi
+                        </button>
+                    </div>`;
                     return;
                 }
                 container.innerHTML = '<div class="col-span-full p-12 text-center text-gray-400 italic">Belum ada kegiatan MTQ. Klik Tambah Kegiatan.</div>';
@@ -619,10 +625,17 @@ function aktifkanKegiatan(id) {
 let allPesertaData = [];
 
 function initPeserta() {
+    const tbody = document.getElementById('pesertaTableBody');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500 font-medium">Memuat data peserta...</td></tr>';
+    }
     google.script.run
         .withSuccessHandler(data => {
             allPesertaData = Array.isArray(data) ? data : [];
             renderPesertaList(data);
+        })
+        .withFailureHandler(err => {
+            renderPesertaList({ error: err ? err.toString() : 'Terjadi kesalahan server' });
         })
         .getListPeserta();
 }
@@ -632,7 +645,13 @@ function renderPesertaList(data) {
     if (!tbody) return;
     if (!Array.isArray(data) || data.length === 0) {
         if (data && data.error) {
-            tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center bg-red-50 text-red-600 font-semibold">Gagal memuat data peserta: ${data.error}<br><span class="text-xs text-gray-500 font-normal mt-1 block">Pastikan Google Apps Script di-deploy dengan opsi "Who has access: Anyone".</span></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center bg-red-50 text-red-600 font-semibold">
+                <div class="mb-1">Gagal memuat data peserta: ${data.error}</div>
+                <span class="text-xs text-gray-500 font-normal block mb-4">Pastikan Google Apps Script di-deploy dengan opsi "Who has access: Anyone".</span>
+                <button onclick="initPeserta()" class="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg shadow hover:bg-red-700 active:scale-95 transition-all inline-flex items-center justify-center gap-1">
+                    <span class="material-symbols-outlined text-sm">refresh</span> Coba Lagi
+                </button>
+            </td></tr>`;
             return;
         }
         tbody.innerHTML = '<tr><td colspan="6" class="p-12 text-center text-gray-400 italic">Belum ada peserta terdaftar.</td></tr>';
@@ -879,7 +898,13 @@ function loadDaftarHadirData() {
             if (!tbody) return;
             if (!Array.isArray(data) || data.length === 0) {
                 if (data && data.error) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center bg-red-50 text-red-600 font-semibold">Gagal memuat kehadiran: ${data.error}<br><span class="text-xs text-gray-500 font-normal mt-1 block">Pastikan Apps Script di-deploy dengan opsi "Who has access: Anyone".</span></td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center bg-red-50 text-red-600 font-semibold">
+                        <div class="mb-1">Gagal memuat kehadiran: ${data.error}</div>
+                        <span class="text-xs text-gray-500 font-normal block mb-4">Pastikan Apps Script di-deploy dengan opsi "Who has access: Anyone".</span>
+                        <button onclick="loadDaftarHadirData()" class="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg shadow hover:bg-red-700 active:scale-95 transition-all inline-flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-sm">refresh</span> Coba Lagi
+                        </button>
+                    </td></tr>`;
                     return;
                 }
                 tbody.innerHTML = '<tr><td colspan="6" class="p-12 text-center text-gray-400 italic">Belum ada riwayat kehadiran.</td></tr>';

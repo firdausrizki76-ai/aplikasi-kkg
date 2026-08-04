@@ -22,7 +22,7 @@ export default async function handler(req, res) {
             method: req.method,
             redirect: 'follow',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'User-Agent': 'Google-Apps-Script-Proxy-Client/1.0',
                 'Accept': 'application/json, text/plain, */*'
             }
         };
@@ -32,24 +32,35 @@ export default async function handler(req, res) {
             fetchOptions.body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
         }
 
-        const response = await fetch(url.toString(), fetchOptions);
+        // Retry logic hingga 3 kali jika terjadi cold-start HTML atau gangguan sementara dari Google Apps Script
+        const maxRetries = 3;
+        let lastText = '';
 
-        const text = await response.text();
-        console.log('Response from GAS:', text.substring(0, 100));
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const response = await fetch(url.toString(), fetchOptions);
+                const text = await response.text();
+                lastText = text;
 
-        try {
-            const data = JSON.parse(text);
-            return res.status(200).json(data);
-        } catch (e) {
-            // If not JSON, return as error with the text
-            return res.status(200).json({ 
-                error: 'GAS returned non-JSON response', 
-                detail: text,
-                hint: 'Pastikan di Google Apps Script sudah di-deploy dengan Who has access: Anyone' 
-            });
+                // Cek apakah response berupa JSON yang valid
+                const data = JSON.parse(text);
+                return res.status(200).json(data);
+            } catch (e) {
+                console.warn(`Attempt ${attempt}: GAS returned non-JSON/HTML snippet:`, lastText.substring(0, 100));
+                if (attempt === maxRetries) {
+                    return res.status(200).json({ 
+                        error: 'GAS returned non-JSON response', 
+                        detail: lastText.substring(0, 500),
+                        hint: 'Pastikan di Google Apps Script sudah di-deploy dengan Who has access: Anyone' 
+                    });
+                }
+                // Tunggu sebentar sebelum mencoba lagi (exponential backoff: 600ms, 1200ms)
+                await new Promise(resolve => setTimeout(resolve, attempt * 600));
+            }
         }
     } catch (error) {
         console.error('Proxy Server Error:', error);
         return res.status(200).json({ error: 'Proxy Server Error', message: error.message });
     }
 }
+
