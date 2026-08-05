@@ -495,12 +495,30 @@ function handleLoginVercel(e) {
 
 function initDashboard() {
     google.script.run
+        .withFailureHandler(err => {
+            const listEl = document.getElementById('dashboardRecentList');
+            if (listEl) {
+                listEl.innerHTML = `<div class="p-6 text-center bg-red-50 rounded-2xl border border-red-200 text-red-600 font-semibold">
+                    <div class="mb-1">Gagal memuat statistik dashboard</div>
+                    <button onclick="initDashboard()" class="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg shadow hover:bg-red-700 active:scale-95 transition-all inline-flex items-center justify-center gap-1 mt-2">
+                        <span class="material-symbols-outlined text-sm">refresh</span> Coba Lagi
+                    </button>
+                </div>`;
+            }
+        })
         .withSuccessHandler(res => {
             if (!res) return;
             const elTotal = document.getElementById('statTotalPeserta');
             const elHadir = document.getElementById('statHadirHariIni');
             const elIzin = document.getElementById('statIzinHariIni');
             const elKegiatan = document.getElementById('statKegiatanAktif');
+            if (res.error) {
+                if (elTotal) elTotal.innerText = '-';
+                if (elHadir) elHadir.innerText = '-';
+                if (elIzin) elIzin.innerText = '-';
+                if (elKegiatan) elKegiatan.innerText = 'Error';
+                return;
+            }
             if (elTotal) elTotal.innerText = res.totalPeserta || 0;
             if (elHadir) elHadir.innerText = res.hadirHariIni || 0;
             if (elIzin) elIzin.innerText = res.izinHariIni || 0;
@@ -534,7 +552,22 @@ function initDashboard() {
 }
 
 function initKegiatan() {
+    const cont = document.getElementById('kegiatanList');
+    if (cont && !cont.innerHTML.includes('Gagal')) {
+        cont.innerHTML = '<div class="col-span-full p-12 text-center text-gray-500 font-medium flex items-center justify-center gap-2"><span class="material-symbols-outlined animate-spin">refresh</span> Memuat daftar kegiatan...</div>';
+    }
     google.script.run
+        .withFailureHandler(err => {
+            const c = document.getElementById('kegiatanList');
+            if (c) {
+                c.innerHTML = `<div class="col-span-full p-8 text-center bg-red-50 rounded-2xl border border-red-200 text-red-600 font-semibold">
+                    <div class="mb-1">Gagal memuat kegiatan: ${err.message || err}</div>
+                    <button onclick="initKegiatan()" class="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg shadow hover:bg-red-700 active:scale-95 transition-all inline-flex items-center justify-center gap-1 mt-3">
+                        <span class="material-symbols-outlined text-sm">refresh</span> Coba Lagi
+                    </button>
+                </div>`;
+            }
+        })
         .withSuccessHandler(list => {
             const container = document.getElementById('kegiatanList');
             if (!container) return;

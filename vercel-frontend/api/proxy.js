@@ -22,7 +22,6 @@ export default async function handler(req, res) {
             method: req.method,
             redirect: 'follow',
             headers: {
-                'User-Agent': 'Google-Apps-Script-Proxy-Client/1.0',
                 'Accept': 'application/json, text/plain, */*'
             }
         };
