@@ -49,15 +49,26 @@ function fastFormatDate(dateObj, format) {
 const SHEET_GURU = 'GURU';
 const SHEET_EVENT = 'EVENT_KKG';
 
-// Helper pemanggilan nama sheet otomatis (mendukung KKG maupun MTQ)
+// Helper: case-insensitive sheet finder agar tab 'event_kkg', 'Event_KKG', 'EVENT' dll semua ditemukan
+function findSheetCI(ss, names) {
+  const allSheets = ss.getSheets();
+  for (const targetName of names) {
+    const lower = targetName.toLowerCase();
+    for (const s of allSheets) {
+      if (s.getName().toLowerCase() === lower) return s;
+    }
+  }
+  return null;
+}
+
 function getSheetPeserta(ss) {
-  return ss.getSheetByName('GURU') || ss.getSheetByName('PESERTA_MTQ') || ss.getSheetByName('PESERTA') || ss.insertSheet('GURU');
+  return findSheetCI(ss, ['GURU', 'PESERTA_MTQ', 'PESERTA']) || ss.insertSheet('GURU');
 }
 function getSheetKegiatan(ss) {
-  return ss.getSheetByName('EVENT_KKG') || ss.getSheetByName('KEGIATAN_MTQ') || ss.getSheetByName('KEGIATAN') || ss.insertSheet('EVENT_KKG');
+  return findSheetCI(ss, ['EVENT_KKG', 'EVENT', 'KEGIATAN_MTQ', 'KEGIATAN', 'KEGIATAN_KKG']) || ss.insertSheet('EVENT_KKG');
 }
 function getSheetAbsensi(ss) {
-  return ss.getSheetByName('ABSENSI') || ss.getSheetByName('ABSENSI_MTQ') || ss.getSheetByName('KEHADIRAN') || ss.insertSheet('ABSENSI');
+  return findSheetCI(ss, ['ABSENSI', 'ABSENSI_MTQ', 'KEHADIRAN']) || ss.insertSheet('ABSENSI');
 }
 
 // ============================================
@@ -146,7 +157,7 @@ function doGet(e) {
     }
     
     template.SPREADSHEET_ID = SPREADSHEET_ID;
-    template.scriptUrl = ScriptApp.getService().getUrl();
+    template.scriptUrl = getScriptUrl_();
     
     return template.evaluate()
       .setTitle('Portal MTQ - Pertemuan & Absensi')
@@ -239,9 +250,16 @@ function handleAction(action, params) {
   }
 }
 
+// Cache scriptUrl agar tidak memanggil ScriptApp.getService().getUrl() berulang kali
+let _cachedScriptUrl = null;
+function getScriptUrl_() {
+  if (!_cachedScriptUrl) _cachedScriptUrl = ScriptApp.getService().getUrl();
+  return _cachedScriptUrl;
+}
+
 function include(filename) {
   const tpl = HtmlService.createTemplateFromFile(filename);
-  tpl.scriptUrl = ScriptApp.getService().getUrl();
+  tpl.scriptUrl = getScriptUrl_();
   return tpl.evaluate().getContent();
 }
 
@@ -815,15 +833,23 @@ function hapusKegiatan(id) {
     lock.waitLock(10000);
     const ss = getSS();
     const sheet = getSheetKegiatan(ss);
-    if (!sheet) return { success: false, message: 'Sheet tidak ditemukan' };
+    if (!sheet) return { success: false, message: 'Sheet kegiatan tidak ditemukan di spreadsheet!' };
 
     const sheetName = sheet.getName();
     const data = sheet.getDataRange().getValues();
+    const totalRows = data.length;
+    const targetId = String(id).trim();
     let deletedCount = 0;
+    
+    // DEBUG: kumpulkan semua ID yang ada di sheet
+    const allIds = [];
+    for (let i = 1; i < data.length; i++) {
+      allIds.push(String(data[i][0]).trim());
+    }
     
     // Loop dari bawah ke atas agar index aman saat deleteRow
     for (let i = data.length - 1; i >= 1; i--) {
-      if (String(data[i][0]).trim() === String(id).trim()) {
+      if (String(data[i][0]).trim() === targetId) {
         sheet.deleteRow(i + 1);
         deletedCount++;
       }
@@ -834,7 +860,11 @@ function hapusKegiatan(id) {
       return { success: true, message: 'Berhasil menghapus kegiatan dari tab: ' + sheetName };
     }
     
-    return { success: false, message: 'ID Kegiatan tidak ditemukan di tab ' + sheetName + '. Pastikan tab yang dibaca sudah benar.' };
+    // Pesan error detail untuk debugging
+    return { 
+      success: false, 
+      message: 'ID [' + targetId + '] tidak ditemukan di tab [' + sheetName + ']. Total baris: ' + totalRows + '. ID yang ada: [' + allIds.slice(0, 10).join(', ') + ']'
+    };
   } catch (e) {
     return { success: false, message: 'Error sistem: ' + e.toString() };
   } finally {
