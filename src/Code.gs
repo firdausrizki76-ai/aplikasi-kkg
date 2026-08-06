@@ -10,6 +10,41 @@ const SHEET_ABSENSI = 'ABSENSI';
 const SHEET_LOG = 'LOG';
 const SHEET_USERS = 'USERS';
 
+// Native fast date formatter to replace slow Utilities.formatDate calls
+function fastFormatDate(dateObj, format) {
+  if (!(dateObj instanceof Date) || isNaN(dateObj)) return '';
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  if (format === 'yyyy-MM-dd') return `${y}-${m}-${d}`;
+  if (format === 'HH:mm:ss') {
+    const hh = String(dateObj.getHours()).padStart(2, '0');
+    const mm = String(dateObj.getMinutes()).padStart(2, '0');
+    const ss = String(dateObj.getSeconds()).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  }
+  if (format === 'yyMMddssSSS') {
+    const yy = String(y).slice(-2);
+    const ss = String(dateObj.getSeconds()).padStart(2, '0');
+    const ms = String(dateObj.getMilliseconds()).padStart(3, '0');
+    return `${yy}${m}${d}${ss}${ms}`;
+  }
+  if (format === 'yyMMddHHmmssSSS') {
+    const yy = String(y).slice(-2);
+    const hh = String(dateObj.getHours()).padStart(2, '0');
+    const mm = String(dateObj.getMinutes()).padStart(2, '0');
+    const ss = String(dateObj.getSeconds()).padStart(2, '0');
+    const ms = String(dateObj.getMilliseconds()).padStart(3, '0');
+    return `${yy}${m}${d}${hh}${mm}${ss}${ms}`;
+  }
+  if (format === 'yyMMdd') {
+    const yy = String(y).slice(-2);
+    return `${yy}${m}${d}`;
+  }
+  return Utilities.formatDate(dateObj, 'Asia/Jakarta', format); // Fallback
+}
+
+
 // Alias backward compatibility untuk integrasi lama jika dibutuhkan
 const SHEET_GURU = 'GURU';
 const SHEET_EVENT = 'EVENT_KKG';
@@ -365,7 +400,7 @@ function simpanPeserta(params) {
       }
     }
 
-    const newId = 'MTQ-' + Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyMMddssSSS');
+    const newId = 'MTQ-' + fastFormatDate(new Date(), 'yyMMddssSSS');
     const noPeserta = params.noPeserta || params.nip || newId;
     const rawQr = params.rawQr || noPeserta;
     const now = new Date();
@@ -439,7 +474,7 @@ function importPesertaExcel(dataArray) {
     dataArray.forEach((item, idx) => {
       const noPeserta = String(item.noPeserta || item.nip || ('MTQ-' + (idx + 100))).trim();
       if (!existingNos.has(noPeserta.toLowerCase())) {
-        const newId = 'MTQ-' + Utilities.formatDate(now, 'Asia/Jakarta', 'yyMMdd') + '-' + (idx + 101);
+        const newId = 'MTQ-' + fastFormatDate(now, 'yyMMdd') + '-' + (idx + 101);
         rowsToAppend.push([
           newId,
           noPeserta,
@@ -587,7 +622,7 @@ function getKegiatanById(id) {
         return {
           id: String(data[i][0]),
           nama: String(data[i][1]),
-          tanggal: data[i][2] ? (data[i][2] instanceof Date ? Utilities.formatDate(data[i][2], 'Asia/Jakarta', 'yyyy-MM-dd') : String(data[i][2])) : Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd'),
+          tanggal: data[i][2] ? (data[i][2] instanceof Date ? fastFormatDate(data[i][2], 'yyyy-MM-dd') : String(data[i][2])) : fastFormatDate(new Date(), 'yyyy-MM-dd'),
           jam: idxJam !== -1 ? String(data[i][idxJam] || '08:00 - 12:00 WIB') : '08:00 - 12:00 WIB',
           lokasi: String(data[i][idxLok] || '-'),
           keterangan: String(data[i][idxKet] || '-'),
@@ -610,7 +645,7 @@ function getKegiatanAktif() {
     const data = sheet.getDataRange().getValues();
     if (data.length < 2) return { error: "Belum ada Kegiatan MTQ yang dibuat. Silakan buat di menu Kegiatan." };
     
-    const todayStr = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd');
+    const todayStr = fastFormatDate(new Date(), 'yyyy-MM-dd');
     let result = null;
     let fallback = null;
     
@@ -629,7 +664,7 @@ function getKegiatanAktif() {
       let tglStr = '';
       if (data[i][2]) {
         try {
-          tglStr = (data[i][2] instanceof Date) ? Utilities.formatDate(data[i][2], 'Asia/Jakarta', 'yyyy-MM-dd') : String(data[i][2]).split('T')[0];
+          tglStr = (data[i][2] instanceof Date) ? fastFormatDate(data[i][2], 'yyyy-MM-dd') : String(data[i][2]).split('T')[0];
         } catch(e) {}
       }
 
@@ -693,7 +728,7 @@ function getListKegiatan() {
       let tglStr = '-';
       if (data[i][2]) {
         try {
-          tglStr = (data[i][2] instanceof Date) ? Utilities.formatDate(data[i][2], tz, 'yyyy-MM-dd') : String(data[i][2]).split('T')[0];
+          tglStr = (data[i][2] instanceof Date) ? fastFormatDate(data[i][2], 'yyyy-MM-dd') : String(data[i][2]).split('T')[0];
         } catch(e) { tglStr = String(data[i][2]); }
       }
 
@@ -754,7 +789,7 @@ function simpanKegiatan(params) {
       }
     }
 
-    const newId = 'KEG-' + Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyMMddssSSS');
+    const newId = 'KEG-' + fastFormatDate(new Date(), 'yyMMddssSSS');
     sheet.appendRow([
       newId,
       params.nama,
@@ -852,8 +887,8 @@ function prosesScan(rawBarcode, kegiatanId, tipe, statusKehadiran, keterangan) {
     }
     
     const today = new Date();
-    const todayStr = Utilities.formatDate(today, tz, 'yyyy-MM-dd');
-    const jamSekarang = Utilities.formatDate(today, tz, 'HH:mm:ss');
+    const todayStr = fastFormatDate(today, 'yyyy-MM-dd');
+    const jamSekarang = fastFormatDate(today, 'HH:mm:ss');
     const data = sheet.getDataRange().getValues();
     
     // 2. CEK APAKAH PESERTA SUDAH ABSEN DI KEGIATAN INI PADA TANGGAL INI
@@ -868,7 +903,7 @@ function prosesScan(rawBarcode, kegiatanId, tipe, statusKehadiran, keterangan) {
       
       let rowDateStr = '';
       try {
-        rowDateStr = (data[i][7] instanceof Date) ? Utilities.formatDate(data[i][7], tz, 'yyyy-MM-dd') : String(data[i][7]).split('T')[0];
+        rowDateStr = (data[i][7] instanceof Date) ? fastFormatDate(data[i][7], 'yyyy-MM-dd') : String(data[i][7]).split('T')[0];
       } catch(e) {}
       
       if (dbKegiatanId === String(kegiatanId) && 
@@ -899,7 +934,7 @@ function prosesScan(rawBarcode, kegiatanId, tipe, statusKehadiran, keterangan) {
         };
       }
       
-      const newId = 'ABS-' + Utilities.formatDate(today, tz, 'yyMMddHHmmssSSS');
+      const newId = 'ABS-' + fastFormatDate(today, 'yyMMddHHmmssSSS');
       sheet.appendRow([
         newId,
         kegiatanId,
@@ -932,7 +967,7 @@ function prosesScan(rawBarcode, kegiatanId, tipe, statusKehadiran, keterangan) {
     else if (tipe === 'selesai' || tipe === 'pulang') {
       if (!existingData) {
         // Jika belum Absen Masuk tapi langsung scan selesai, kita tetap buat rekap dengan jam masuk kosong atau catat selesai langsung
-        const newId = 'ABS-' + Utilities.formatDate(today, tz, 'yyMMddHHmmssSSS');
+        const newId = 'ABS-' + fastFormatDate(today, 'yyMMddHHmmssSSS');
         sheet.appendRow([
           newId,
           kegiatanId,
@@ -1055,7 +1090,7 @@ function getDaftarHadirByKegiatan(kegiatanId) {
       let jamMasukStr = '-';
       if (data[i][8]) {
         try {
-          jamMasukStr = (data[i][8] instanceof Date) ? Utilities.formatDate(data[i][8], tz, 'HH:mm:ss') : String(data[i][8]);
+          jamMasukStr = (data[i][8] instanceof Date) ? fastFormatDate(data[i][8], 'HH:mm:ss') : String(data[i][8]);
           if (jamMasukStr.includes('T')) jamMasukStr = jamMasukStr.split('T')[1].substring(0, 8);
         } catch(e) { jamMasukStr = String(data[i][8]); }
       }
@@ -1063,7 +1098,7 @@ function getDaftarHadirByKegiatan(kegiatanId) {
       let jamSelesaiStr = '-';
       if (data[i][10]) {
         try {
-          jamSelesaiStr = (data[i][10] instanceof Date) ? Utilities.formatDate(data[i][10], tz, 'HH:mm:ss') : String(data[i][10]);
+          jamSelesaiStr = (data[i][10] instanceof Date) ? fastFormatDate(data[i][10], 'HH:mm:ss') : String(data[i][10]);
           if (jamSelesaiStr.includes('T')) jamSelesaiStr = jamSelesaiStr.split('T')[1].substring(0, 8);
         } catch(e) { jamSelesaiStr = String(data[i][10]); }
       }
@@ -1071,7 +1106,7 @@ function getDaftarHadirByKegiatan(kegiatanId) {
       let tanggalStr = '-';
       if (data[i][7]) {
         try {
-          tanggalStr = (data[i][7] instanceof Date) ? Utilities.formatDate(data[i][7], tz, 'yyyy-MM-dd') : String(data[i][7]).split('T')[0];
+          tanggalStr = (data[i][7] instanceof Date) ? fastFormatDate(data[i][7], 'yyyy-MM-dd') : String(data[i][7]).split('T')[0];
         } catch(e) { tanggalStr = String(data[i][7]); }
       }
 
@@ -1123,7 +1158,7 @@ function getDaftarHadirByTanggal(tanggal, kegiatanId) {
       
       let rowDateStr = '';
       try {
-        rowDateStr = (data[i][7] instanceof Date) ? Utilities.formatDate(data[i][7], tz, 'yyyy-MM-dd') : String(data[i][7]).split('T')[0];
+        rowDateStr = (data[i][7] instanceof Date) ? fastFormatDate(data[i][7], 'yyyy-MM-dd') : String(data[i][7]).split('T')[0];
       } catch(e) { rowDateStr = String(data[i][7]); }
 
       if (targetDateStr && rowDateStr !== targetDateStr) continue;
@@ -1132,7 +1167,7 @@ function getDaftarHadirByTanggal(tanggal, kegiatanId) {
       let jamMasukStr = '-';
       if (data[i][8]) {
         try {
-          jamMasukStr = (data[i][8] instanceof Date) ? Utilities.formatDate(data[i][8], tz, 'HH:mm:ss') : String(data[i][8]);
+          jamMasukStr = (data[i][8] instanceof Date) ? fastFormatDate(data[i][8], 'HH:mm:ss') : String(data[i][8]);
           if (jamMasukStr.includes('T')) jamMasukStr = jamMasukStr.split('T')[1].substring(0, 8);
         } catch(e) { jamMasukStr = String(data[i][8]); }
       }
@@ -1140,7 +1175,7 @@ function getDaftarHadirByTanggal(tanggal, kegiatanId) {
       let jamSelesaiStr = '-';
       if (data[i][10]) {
         try {
-          jamSelesaiStr = (data[i][10] instanceof Date) ? Utilities.formatDate(data[i][10], tz, 'HH:mm:ss') : String(data[i][10]);
+          jamSelesaiStr = (data[i][10] instanceof Date) ? fastFormatDate(data[i][10], 'HH:mm:ss') : String(data[i][10]);
           if (jamSelesaiStr.includes('T')) jamSelesaiStr = jamSelesaiStr.split('T')[1].substring(0, 8);
         } catch(e) { jamSelesaiStr = String(data[i][10]); }
       }
@@ -1258,7 +1293,7 @@ function getLaporanMTQ(startDate, endDate, kegiatanId, cabangLomba) {
       const idK = String(dataKegiatan[i][0]);
       let tglStr = '';
       try {
-        tglStr = (dataKegiatan[i][2] instanceof Date) ? Utilities.formatDate(dataKegiatan[i][2], tz, 'yyyy-MM-dd') : String(dataKegiatan[i][2]).split('T')[0];
+        tglStr = (dataKegiatan[i][2] instanceof Date) ? fastFormatDate(dataKegiatan[i][2], 'yyyy-MM-dd') : String(dataKegiatan[i][2]).split('T')[0];
       } catch(e) { tglStr = String(dataKegiatan[i][2]); }
       
       const jamK = idxJamKeg !== -1 ? String(dataKegiatan[i][idxJamKeg] || '08:00 WIB') : '08:00 WIB';
@@ -1315,7 +1350,7 @@ function getLaporanMTQ(startDate, endDate, kegiatanId, cabangLomba) {
 
       let tglStr = '';
       try {
-        tglStr = (dataAbsensi[i][7] instanceof Date) ? Utilities.formatDate(dataAbsensi[i][7], tz, 'yyyy-MM-dd') : String(dataAbsensi[i][7]).split('T')[0];
+        tglStr = (dataAbsensi[i][7] instanceof Date) ? fastFormatDate(dataAbsensi[i][7], 'yyyy-MM-dd') : String(dataAbsensi[i][7]).split('T')[0];
       } catch(e) { tglStr = String(dataAbsensi[i][7]); }
 
       // Filter tanggal
@@ -1452,7 +1487,7 @@ function getDashboardStats() {
     
     const tz = 'Asia/Jakarta';
     const today = new Date();
-    const todayStr = Utilities.formatDate(today, tz, 'yyyy-MM-dd');
+    const todayStr = fastFormatDate(today, 'yyyy-MM-dd');
     
     let hadirHariIni = 0;
     let izinHariIni = 0;
@@ -1463,7 +1498,7 @@ function getDashboardStats() {
       
       let rowDateStr = '';
       try {
-        rowDateStr = (dataAbsensi[i][7] instanceof Date) ? Utilities.formatDate(dataAbsensi[i][7], tz, 'yyyy-MM-dd') : String(dataAbsensi[i][7]).split('T')[0];
+        rowDateStr = (dataAbsensi[i][7] instanceof Date) ? fastFormatDate(dataAbsensi[i][7], 'yyyy-MM-dd') : String(dataAbsensi[i][7]).split('T')[0];
       } catch(e) { rowDateStr = String(dataAbsensi[i][7]); }
 
       if (rowDateStr === todayStr) {
@@ -1477,7 +1512,7 @@ function getDashboardStats() {
         let jamMasukStr = '-';
         if (dataAbsensi[i][8]) {
           try {
-            jamMasukStr = (dataAbsensi[i][8] instanceof Date) ? Utilities.formatDate(dataAbsensi[i][8], tz, 'HH:mm:ss') : String(dataAbsensi[i][8]);
+            jamMasukStr = (dataAbsensi[i][8] instanceof Date) ? fastFormatDate(dataAbsensi[i][8], 'HH:mm:ss') : String(dataAbsensi[i][8]);
             if (jamMasukStr.includes('T')) jamMasukStr = jamMasukStr.split('T')[1].substring(0, 8);
           } catch(e) { jamMasukStr = String(dataAbsensi[i][8]); }
         }
@@ -1485,7 +1520,7 @@ function getDashboardStats() {
         let jamSelesaiStr = '-';
         if (dataAbsensi[i][10]) {
           try {
-            jamSelesaiStr = (dataAbsensi[i][10] instanceof Date) ? Utilities.formatDate(dataAbsensi[i][10], tz, 'HH:mm:ss') : String(dataAbsensi[i][10]);
+            jamSelesaiStr = (dataAbsensi[i][10] instanceof Date) ? fastFormatDate(dataAbsensi[i][10], 'HH:mm:ss') : String(dataAbsensi[i][10]);
             if (jamSelesaiStr.includes('T')) jamSelesaiStr = jamSelesaiStr.split('T')[1].substring(0, 8);
           } catch(e) { jamSelesaiStr = String(dataAbsensi[i][10]); }
         }
