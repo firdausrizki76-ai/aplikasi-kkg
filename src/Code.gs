@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // APLIKASI PERTEMUAN PESERTA MTQ - GOOGLE APPS SCRIPT
 // ============================================
 
@@ -731,7 +731,7 @@ function simpanKegiatan(params) {
 
     if (isEdit) {
       for (let i = 1; i < data.length; i++) {
-        if (String(data[i][0]) === String(params.id)) {
+        if (String(data[i][0]).trim() === String(params.id).trim()) {
           sheet.getRange(i + 1, 2).setValue(params.nama || '-');
           sheet.getRange(i + 1, 3).setValue(params.tanggal || new Date());
           sheet.getRange(i + 1, 4).setValue(params.jam || '08:00 - 12:00 WIB');
@@ -784,7 +784,7 @@ function hapusKegiatan(id) {
 
     const data = sheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
-      if (String(data[i][0]) === String(id)) {
+      if (String(data[i][0]).trim() === String(id).trim()) {
         sheet.deleteRow(i + 1);
         tuliLog('HAPUS_KEGIATAN', id, 'Hapus kegiatan');
         return { success: true, message: 'Kegiatan berhasil dihapus' };
@@ -809,7 +809,7 @@ function setKegiatanStatus(id, status) {
     const idxSts = hasJam ? 7 : 6;
 
     for (let i = 1; i < data.length; i++) {
-      if (String(data[i][0]) === String(id)) {
+      if (String(data[i][0]).trim() === String(id).trim()) {
         sheet.getRange(i + 1, idxSts).setValue(status);
         tuliLog('STATUS_KEGIATAN', id, 'Ubah status ke ' + status);
         return { success: true, message: 'Status berhasil diubah menjadi ' + status };

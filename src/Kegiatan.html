@@ -233,15 +233,15 @@
                   <td class="py-3.5 px-4 text-center">
                     <div class="flex items-center justify-center gap-1.5">
                       ${!isAktif ? `
-                      <button onclick="setAktifKegiatan('${item.id}', '${escapeHtml(item.nama)}')" 
+                      <button onclick="setAktifKegiatan('${item.id}', '${escapeJs(item.nama)}')" 
                         class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold transition-all" title="Jadikan Aktif">
                         Aktifkan
                       </button>` : ''}
-                      <button onclick="editKegiatan('${item.id}', '${escapeHtml(item.nama)}', '${item.tanggal}', '${escapeHtml(item.lokasi || '')}', '${escapeHtml(item.keterangan || '')}', '${item.status}')" 
+                      <button onclick="editKegiatan('${item.id}', '${escapeJs(item.nama)}', '${item.tanggal}', '${escapeJs(item.lokasi || '')}', '${escapeJs(item.keterangan || '')}', '${item.status}')" 
                         class="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all" title="Edit Kegiatan">
                         <span class="material-symbols-outlined text-[18px]">edit</span>
                       </button>
-                      <button onclick="hapusKegiatanConfirm('${item.id}', '${escapeHtml(item.nama)}')" 
+                      <button onclick="hapusKegiatanConfirm('${item.id}', '${escapeJs(item.nama)}')" 
                         class="p-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all" title="Hapus Kegiatan">
                         <span class="material-symbols-outlined text-[18px]">delete</span>
                       </button>
@@ -349,6 +349,16 @@
               .replace(/>/g, "&gt;")
               .replace(/"/g, "&quot;")
               .replace(/'/g, "&#039;");
+          }
+
+          function escapeJs(text) {
+            if (!text) return '';
+            return String(text)
+              .replace(/\\/g, '\\\\')
+              .replace(/'/g, "\\'")
+              .replace(/"/g, '&quot;')
+              .replace(/\n/g, '\\n')
+              .replace(/\r/g, '\\r');
           }
 
           window.addEventListener('DOMContentLoaded', () => {
