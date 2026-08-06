@@ -130,6 +130,8 @@ function doGet(e) {
     switch(page) {
       case 'debug':
         return ContentService.createTextOutput(JSON.stringify(getKegiatanAktif(), null, 2)).setMimeType(ContentService.MimeType.JSON);
+      case 'debug_sheets':
+        return ContentService.createTextOutput(JSON.stringify(debugAllSheets(), null, 2)).setMimeType(ContentService.MimeType.JSON);
       case 'login':
         template = HtmlService.createTemplateFromFile('Login');
         break;
@@ -832,44 +834,84 @@ function hapusKegiatan(id) {
   try {
     lock.waitLock(10000);
     const ss = getSS();
-    const sheet = getSheetKegiatan(ss);
-    if (!sheet) return { success: false, message: 'Sheet kegiatan tidak ditemukan di spreadsheet!' };
-
-    const sheetName = sheet.getName();
-    const data = sheet.getDataRange().getValues();
-    const totalRows = data.length;
     const targetId = String(id).trim();
     let deletedCount = 0;
+    let deletedFrom = [];
     
-    // DEBUG: kumpulkan semua ID yang ada di sheet
-    const allIds = [];
-    for (let i = 1; i < data.length; i++) {
-      allIds.push(String(data[i][0]).trim());
-    }
-    
-    // Loop dari bawah ke atas agar index aman saat deleteRow
-    for (let i = data.length - 1; i >= 1; i--) {
-      if (String(data[i][0]).trim() === targetId) {
-        sheet.deleteRow(i + 1);
-        deletedCount++;
+    // NUCLEAR: cari ID di SEMUA sheet yang ada di spreadsheet
+    const allSheets = ss.getSheets();
+    for (const sheet of allSheets) {
+      const name = sheet.getName();
+      const nameLower = name.toLowerCase();
+      
+      // Hanya cek sheet yang kemungkinan berisi kegiatan
+      if (nameLower.includes('event') || nameLower.includes('kegiatan') || nameLower === 'event_kkg') {
+        const data = sheet.getDataRange().getValues();
+        // Loop dari bawah ke atas
+        for (let i = data.length - 1; i >= 1; i--) {
+          if (String(data[i][0]).trim() === targetId) {
+            sheet.deleteRow(i + 1);
+            deletedCount++;
+            if (deletedFrom.indexOf(name) === -1) deletedFrom.push(name);
+          }
+        }
       }
     }
     
     if (deletedCount > 0) {
-      tuliLog('HAPUS_KEGIATAN', id, 'Hapus ' + deletedCount + ' kegiatan di tab ' + sheetName);
-      return { success: true, message: 'Berhasil menghapus kegiatan dari tab: ' + sheetName };
+      tuliLog('HAPUS_KEGIATAN', id, 'Hapus ' + deletedCount + ' baris dari tab: ' + deletedFrom.join(', '));
+      return { success: true, message: 'Berhasil menghapus dari tab: ' + deletedFrom.join(', ') };
     }
     
-    // Pesan error detail untuk debugging
+    // Jika tidak ditemukan di sheet manapun, kumpulkan info debug
+    const debugInfo = [];
+    for (const sheet of allSheets) {
+      const name = sheet.getName();
+      const nameLower = name.toLowerCase();
+      if (nameLower.includes('event') || nameLower.includes('kegiatan')) {
+        const data = sheet.getDataRange().getValues();
+        const ids = [];
+        for (let i = 1; i < data.length; i++) {
+          ids.push(String(data[i][0]).trim());
+        }
+        debugInfo.push(name + ' (' + (data.length - 1) + ' baris): [' + ids.join(', ') + ']');
+      }
+    }
+    
     return { 
       success: false, 
-      message: 'ID [' + targetId + '] tidak ditemukan di tab [' + sheetName + ']. Total baris: ' + totalRows + '. ID yang ada: [' + allIds.slice(0, 10).join(', ') + ']'
+      message: 'ID [' + targetId + '] tidak ditemukan. Tab event: ' + (debugInfo.join(' | ') || 'TIDAK ADA TAB EVENT')
     };
   } catch (e) {
-    return { success: false, message: 'Error sistem: ' + e.toString() };
+    return { success: false, message: 'Error: ' + e.toString() };
   } finally {
     lock.releaseLock();
   }
+}
+
+// Debug: tampilkan semua tab dan data kegiatan. Akses via URL: ?page=debug_sheets
+function debugAllSheets() {
+  const ss = getSS();
+  const allSheets = ss.getSheets();
+  const result = { allTabNames: [], kegiatanTabs: [] };
+  
+  for (const sheet of allSheets) {
+    const name = sheet.getName();
+    result.allTabNames.push(name);
+    
+    const nameLower = name.toLowerCase();
+    if (nameLower.includes('event') || nameLower.includes('kegiatan')) {
+      const data = sheet.getDataRange().getValues();
+      const rows = [];
+      for (let i = 0; i < Math.min(data.length, 20); i++) {
+        rows.push(data[i].map(c => String(c)).slice(0, 7));
+      }
+      result.kegiatanTabs.push({ tabName: name, totalRows: data.length, data: rows });
+    }
+  }
+  
+  result.getSheetKegiatanReturns = getSheetKegiatan(ss).getName();
+  return result;
 }
 
 function setKegiatanStatus(id, status) {
