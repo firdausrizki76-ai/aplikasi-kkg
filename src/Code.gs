@@ -817,17 +817,26 @@ function hapusKegiatan(id) {
     const sheet = getSheetKegiatan(ss);
     if (!sheet) return { success: false, message: 'Sheet tidak ditemukan' };
 
+    const sheetName = sheet.getName();
     const data = sheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
+    let deletedCount = 0;
+    
+    // Loop dari bawah ke atas agar index aman saat deleteRow
+    for (let i = data.length - 1; i >= 1; i--) {
       if (String(data[i][0]).trim() === String(id).trim()) {
         sheet.deleteRow(i + 1);
-        tuliLog('HAPUS_KEGIATAN', id, 'Hapus kegiatan');
-        return { success: true, message: 'Kegiatan berhasil dihapus' };
+        deletedCount++;
       }
     }
-    return { success: false, message: 'Kegiatan tidak ditemukan' };
+    
+    if (deletedCount > 0) {
+      tuliLog('HAPUS_KEGIATAN', id, 'Hapus ' + deletedCount + ' kegiatan di tab ' + sheetName);
+      return { success: true, message: 'Berhasil menghapus kegiatan dari tab: ' + sheetName };
+    }
+    
+    return { success: false, message: 'ID Kegiatan tidak ditemukan di tab ' + sheetName + '. Pastikan tab yang dibaca sudah benar.' };
   } catch (e) {
-    return { success: false, message: e.toString() };
+    return { success: false, message: 'Error sistem: ' + e.toString() };
   } finally {
     lock.releaseLock();
   }

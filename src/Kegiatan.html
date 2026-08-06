@@ -332,6 +332,7 @@
             google.script.run
               .withSuccessHandler(res => {
                 if (res && res.success) {
+                  alert(res.message); // Tampilkan pesan detail dari server
                   loadKegiatan();
                 } else {
                   alert(res ? res.message : 'Gagal menghapus kegiatan');
