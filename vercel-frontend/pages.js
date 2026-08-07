@@ -658,7 +658,15 @@ function simpanKegiatan(e) {
 function hapusKegiatan(id) {
     if (!confirm('Yakin ingin menghapus agenda ini?')) return;
     google.script.run
-        .withSuccessHandler(() => initKegiatan())
+        .withSuccessHandler(res => {
+            if (res && res.success) {
+                showStatus(true, 'Berhasil', res.message);
+            } else {
+                showStatus(false, 'Gagal', res ? res.message : 'Gagal menghapus');
+            }
+            initKegiatan();
+        })
+        .withFailureHandler(err => showStatus(false, 'Error', String(err)))
         .hapusKegiatan(id);
 }
 

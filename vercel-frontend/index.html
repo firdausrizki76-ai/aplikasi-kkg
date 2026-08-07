@@ -57,8 +57,17 @@
                         try {
                             const url = new URL(window.location.origin + API_URL);
                             url.searchParams.append('action', action);
-                            if (args.length > 0 && typeof args[0] === 'object') {
-                                Object.keys(args[0]).forEach(k => url.searchParams.append(k, args[0][k]));
+                            if (args.length > 0) {
+                                if (typeof args[0] === 'object' && args[0] !== null) {
+                                    Object.keys(args[0]).forEach(k => url.searchParams.append(k, args[0][k]));
+                                } else if (typeof args[0] === 'string' || typeof args[0] === 'number') {
+                                    // Untuk fungsi yang dipanggil dengan argument tunggal (misal hapusKegiatan(id))
+                                    url.searchParams.append('id', args[0]);
+                                }
+                                // Jika ada arg kedua (misal setKegiatanStatus(id, status))
+                                if (args.length > 1 && (typeof args[1] === 'string' || typeof args[1] === 'number')) {
+                                    url.searchParams.append('status', args[1]);
+                                }
                             }
                             const res = await fetch(url);
                             const data = await res.json();
